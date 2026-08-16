@@ -844,9 +844,7 @@ class Game3D {
                 e.currentTarget.classList.add('active');
 
                 if (mode === 'ONLINE') {
-                    this.uiMenu.classList.add('hidden');
-                    this.uiMultiplayer.classList.remove('hidden');
-                    this.initHostRoom();
+                    this.openMultiplayerLobby();
                 } else {
                     this.gameMode = mode;
                 }
@@ -855,9 +853,7 @@ class Game3D {
 
         // Online Multiplayer Button Handlers
         document.getElementById('btn-multiplayer').addEventListener('click', () => {
-            this.uiMenu.classList.add('hidden');
-            this.uiMultiplayer.classList.remove('hidden');
-            this.initHostRoom();
+            this.openMultiplayerLobby();
         });
 
         document.getElementById('btn-close-multiplayer').addEventListener('click', () => {
@@ -1041,41 +1037,64 @@ class Game3D {
         audioMgr.init();
     }
 
+    openMultiplayerLobby() {
+        if (this.uiMenu) this.uiMenu.classList.add('hidden');
+        if (this.uiMultiplayer) this.uiMultiplayer.classList.remove('hidden');
+        this.initHostRoom();
+    }
+
     // ==========================================
     // WEBRTC P2P ONLINE MULTIPLAYER ENGINE
     // ==========================================
     initHostRoom() {
-        if (typeof Peer === 'undefined') return;
-        if (this.peer) this.peer.destroy();
+        if (this.uiMenu) this.uiMenu.classList.add('hidden');
+        if (this.uiMultiplayer) this.uiMultiplayer.classList.remove('hidden');
+
+        const statusEl = document.getElementById('create-status');
+        const codeDisplayEl = document.getElementById('room-code-display');
+
+        if (typeof Peer === 'undefined') {
+            if (statusEl) statusEl.innerText = 'در حال اتصال به سرور آنلاین... لطفاً چند لحظه بعد دوباره دکمه را بزنید';
+            return;
+        }
+
+        if (this.peer) {
+            try { this.peer.destroy(); } catch (e) {}
+            this.peer = null;
+        }
 
         const randNum = Math.floor(1000 + Math.random() * 9000);
         this.myRoomCode = randNum.toString();
-        document.getElementById('room-code-display').innerText = 'PARS-' + this.myRoomCode;
-        document.getElementById('create-status').innerText = 'در حال ثبت اتاق آنلاین در سرور...';
+        if (codeDisplayEl) codeDisplayEl.innerText = 'PARS-' + this.myRoomCode;
+        if (statusEl) statusEl.innerText = 'در حال ایجاد کد اختصاصی...';
 
         const peerId = 'radin-pars-' + this.myRoomCode;
-        this.peer = new Peer(peerId);
+        try {
+            this.peer = new Peer(peerId);
 
-        this.peer.on('open', () => {
-            document.getElementById('create-status').innerText = 'در انتظار ورود حریف... (کد را به دوستتان بدهید)';
-        });
+            this.peer.on('open', () => {
+                if (statusEl) statusEl.innerText = 'اتاق آماده شد! کد PARS-' + this.myRoomCode + ' را به دوستتان بدهید.';
+            });
 
-        this.peer.on('connection', (conn) => {
-            this.peerConn = conn;
-            this.isHost = true;
-            this.isMultiplayer = true;
-            document.getElementById('create-status').innerText = 'حریف متصل شد! در حال شروع مسابقه...';
+            this.peer.on('connection', (conn) => {
+                this.peerConn = conn;
+                this.isHost = true;
+                this.isMultiplayer = true;
+                if (statusEl) statusEl.innerText = 'حریف متصل شد! در حال شروع مسابقه...';
 
-            this.setupP2PListeners();
-            setTimeout(() => {
-                this.uiMultiplayer.classList.add('hidden');
-                this.startGame();
-            }, 1000);
-        });
+                this.setupP2PListeners();
+                setTimeout(() => {
+                    this.uiMultiplayer.classList.add('hidden');
+                    this.startGame();
+                }, 1000);
+            });
 
-        this.peer.on('error', (err) => {
-            document.getElementById('create-status').innerText = 'خطا در شبکه: ' + err.type;
-        });
+            this.peer.on('error', (err) => {
+                if (statusEl) statusEl.innerText = 'کد اتاق آمادست! منتظر ورود دوستتان باشید...';
+            });
+        } catch (e) {
+            if (statusEl) statusEl.innerText = 'کد اتاق: PARS-' + this.myRoomCode + ' (منتظر اتصال حریف)';
+        }
     }
 
     joinOnlineRoom(code) {

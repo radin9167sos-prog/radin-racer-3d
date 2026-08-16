@@ -310,7 +310,12 @@ body, html {
     transition: opacity 0.3s ease;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .overlay-screen.hidden {
+    display: none !important;
     opacity: 0;
     pointer-events: none;
 }

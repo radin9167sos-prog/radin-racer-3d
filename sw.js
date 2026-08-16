@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v6-online-menu';
+const CACHE_NAME = 'iranian-highway-v7-multiplayer-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
