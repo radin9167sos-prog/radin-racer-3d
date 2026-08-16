@@ -25,6 +25,8 @@ class Game3D {
         this.maxSpeed = 30;
         this.timeRemaining = 30;
 
+        this.cameraMode = localStorage.getItem('neon_cammode') || 'COCKPIT'; // COCKPIT, CHASE, HOOD
+
         // 5-Lane 3D World Coordinates (X-axis: Far Left, Inner Left, Center, Inner Right, Far Right)
         this.laneX = [-7.2, -3.6, 0.0, 3.6, 7.2];
         this.currentLane = 2; // Center Lane (Lane 2)
@@ -569,6 +571,78 @@ class Game3D {
             });
         }
 
+        // ==========================================
+        // REALISTIC PEUGEOT PARS 3D INTERIOR COCKPIT
+        // ==========================================
+        this.cockpitGroup = new THREE.Group();
+
+        // 1. Dashboard Console Frame
+        const dashGeo = new THREE.BoxGeometry(1.45, 0.45, 0.7);
+        const dashMat = new THREE.MeshStandardMaterial({ color: 0x181a24, roughness: 0.85 });
+        const dashboard = new THREE.Mesh(dashGeo, dashMat);
+        dashboard.position.set(0, 0.85, -0.45);
+        this.cockpitGroup.add(dashboard);
+
+        // Center A/C Vent Panel & Controls
+        const consoleGeo = new THREE.BoxGeometry(0.35, 0.3, 0.1);
+        const consoleMat = new THREE.MeshBasicMaterial({ color: 0x090a12 });
+        const centerConsole = new THREE.Mesh(consoleGeo, consoleMat);
+        centerConsole.position.set(0, 0.82, -0.08);
+        this.cockpitGroup.add(centerConsole);
+
+        // 2. Peugeot Pars Steering Wheel (فرمان سه‌بعدی پژو پارس)
+        const wheelRingGeo = new THREE.TorusGeometry(0.24, 0.035, 12, 24);
+        const wheelHubGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
+        wheelHubGeo.rotateX(Math.PI / 2);
+
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111218, roughness: 0.6 });
+        const logoMat = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 }); // Peugeot Lion Emblem Silver
+
+        this.steeringWheel = new THREE.Group();
+        const ringMesh = new THREE.Mesh(wheelRingGeo, wheelMat);
+        const hubMesh = new THREE.Mesh(wheelHubGeo, wheelMat);
+        const logoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.06), logoMat);
+
+        this.steeringWheel.add(ringMesh);
+        this.steeringWheel.add(hubMesh);
+        this.steeringWheel.add(logoMesh);
+
+        // Steering Column Stem
+        const colGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.4, 8);
+        colGeo.rotateX(Math.PI / 3);
+        const column = new THREE.Mesh(colGeo, wheelMat);
+        column.position.set(-0.35, 0.85, -0.2);
+        this.cockpitGroup.add(column);
+
+        this.steeringWheel.position.set(-0.35, 0.96, 0.02);
+        this.steeringWheel.rotation.x = -0.3; // Angle towards driver
+        this.cockpitGroup.add(this.steeringWheel);
+
+        // 3. Glowing Peugeot Speedometer Gauge Cluster Behind Wheel (صفحه کیلومتر پارس)
+        const gaugeBoxGeo = new THREE.BoxGeometry(0.38, 0.18, 0.06);
+        const gaugeMat = new THREE.MeshBasicMaterial({ color: 0x050714 });
+        const gaugeBox = new THREE.Mesh(gaugeBoxGeo, gaugeMat);
+        gaugeBox.position.set(-0.35, 0.98, -0.22);
+        this.cockpitGroup.add(gaugeBox);
+
+        const dialGeo = new THREE.CircleGeometry(0.06, 16);
+        const dialMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+        const speedoDial = new THREE.Mesh(dialGeo, dialMat);
+        speedoDial.position.set(-0.41, 0.98, -0.18);
+        const tachoDial = new THREE.Mesh(dialGeo, dialMat);
+        tachoDial.position.set(-0.29, 0.98, -0.18);
+        this.cockpitGroup.add(speedoDial);
+        this.cockpitGroup.add(tachoDial);
+
+        // 4. Rear View Mirror (آینه وسط)
+        const mirrorGeo = new THREE.BoxGeometry(0.28, 0.09, 0.04);
+        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x8899aa, metalness: 0.9, roughness: 0.1 });
+        const mirror = new THREE.Mesh(mirrorGeo, mirrorMat);
+        mirror.position.set(0, 1.25, -0.25);
+        this.cockpitGroup.add(mirror);
+
+        this.playerCarGroup.add(this.cockpitGroup);
+
         // Common Sport Alloy Wheels for all Cars
         const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.35, 20);
         const tireMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.8 });
@@ -661,6 +735,7 @@ class Game3D {
             this.keys[e.code] = true;
 
             if (e.code === 'KeyP' || e.code === 'Escape') this.togglePause();
+            if (e.code === 'KeyC') this.toggleCameraMode();
 
             if (this.state === 'PLAYING' && !this.player.isSpinning) {
                 if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.moveLane(-1);
@@ -671,6 +746,7 @@ class Game3D {
 
         window.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
 
+        document.getElementById('camera-btn').addEventListener('click', () => this.toggleCameraMode());
         document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(-1); });
         document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(1); });
         document.getElementById('btn-nitro').addEventListener('click', (e) => { e.preventDefault(); this.activateNitro(); });
@@ -821,6 +897,22 @@ class Game3D {
         this.player.isNitroActive = true;
         this.player.nitroTime = 180;
         audioMgr.playNitro();
+    }
+
+    toggleCameraMode() {
+        const modes = ['COCKPIT', 'CHASE', 'HOOD'];
+        const nextIdx = (modes.indexOf(this.cameraMode) + 1) % modes.length;
+        this.cameraMode = modes[nextIdx];
+        localStorage.setItem('neon_cammode', this.cameraMode);
+
+        const names = {
+            'COCKPIT': '🎥 نمای داخل کابین (پشت فرمان پارس)',
+            'CHASE': '🏎️ نمای بیرون (تعقیب دید کامل)',
+            'HOOD': '💨 نمای روی کاپوت (سرعت هیجانی)'
+        };
+
+        this.addFloatingText(names[this.cameraMode], this.canvas.width / 2, 160, '#00f0ff');
+        audioMgr.playCoin();
     }
 
     startGame() {
@@ -1066,10 +1158,33 @@ class Game3D {
 
         this.shieldMesh.visible = this.player.hasShield;
 
-        // 3D Camera Chase Position & Dynamic Pitch on Acceleration/Braking
-        this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.1);
+        // 3D Camera Modes & Dynamic Steering Wheel Rotation
         const pitchTarget = isGasPressed ? -0.03 : (isBrakePressed ? 0.04 : 0.0);
-        this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+
+        if (this.cameraMode === 'COCKPIT') {
+            // First-Person Cockpit View (Behind Peugeot Pars Steering Wheel)
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x - 0.35, 0.2);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 1.08, 0.2);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 0.1, 0.2);
+            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+
+            // Dynamic Peugeot Steering Wheel Rotation when turning!
+            if (this.steeringWheel) {
+                this.steeringWheel.rotation.z = -diffX * 0.85;
+            }
+        } else if (this.cameraMode === 'HOOD') {
+            // Hood Bumper View
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x, 0.2);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.75, 0.2);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -1.2, 0.2);
+            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+        } else {
+            // 3rd-Person Chase View
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.1);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.1, 0.1);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 5.2, 0.1);
+            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+        }
 
         // Spawn 3D Obstacles
         const now = performance.now();
