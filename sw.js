@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v8-photoreal-pars-cockpit';
+const CACHE_NAME = 'iranian-highway-v9-cockpit-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

@@ -1448,24 +1448,31 @@ class Game3D {
 
         this.shieldMesh.visible = this.player.hasShield;
 
-        // Camera Modes & Dynamic Steering Wheel Rotation
+        // Camera Modes & Dynamic Steering Wheel Rotation (Bug-Free Cockpit View)
         const pitchTarget = isGasPressed ? -0.03 : (isBrakePressed ? 0.04 : 0.0);
 
         if (this.cameraMode === 'COCKPIT') {
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x - 0.35, 0.2);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 1.08, 0.2);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 0.1, 0.2);
+            if (this.cockpitGroup) this.cockpitGroup.visible = true;
+
+            // Driver Seat Eye Level Position (Behind Peugeot Steering Wheel & Dashboard)
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x - 0.35, 0.25);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.98, 0.25);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -0.22, 0.25);
             this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
 
             if (this.steeringWheel) {
                 this.steeringWheel.rotation.z = -diffX * 0.85;
             }
         } else if (this.cameraMode === 'HOOD') {
+            if (this.cockpitGroup) this.cockpitGroup.visible = false;
+
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x, 0.2);
             this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.75, 0.2);
             this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -1.2, 0.2);
             this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
         } else {
+            if (this.cockpitGroup) this.cockpitGroup.visible = false;
+
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.1);
             this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.1, 0.1);
             this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 5.2, 0.1);
