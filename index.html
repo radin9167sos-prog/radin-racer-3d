@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=10.0.0">
+    <link rel="stylesheet" href="style.css?v=11.0.0">
     <!-- Three.js 3D WebGL Engine & PeerJS WebRTC -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -21,7 +21,7 @@
                 for (let r of regs) r.update();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=10.0.0', { updateViaCache: 'none' });
+                navigator.serviceWorker.register('./sw.js?v=11.0.0', { updateViaCache: 'none' });
             });
         }
     </script>
@@ -110,11 +110,29 @@
             </div>
         </div>
 
-        <!-- START MENU SCREEN -->
-        <div id="menu-screen" class="overlay-screen">
-            <div class="modal-card">
-                <h1 class="game-title">سلطان جاده ۳بعدی</h1>
-                <p class="subtitle">بازی رانندگی واقعی ایرانی با نمای داخل کابین و آزادراه</p>
+        <!-- START MENU SCREEN (Style 1: 3D Dynamic Garage Showcase) -->
+        <div id="menu-screen" class="overlay-screen garage-menu-overlay">
+            <!-- Top Header Driver Profile Bar -->
+            <div class="menu-top-bar">
+                <div class="menu-brand">
+                    <span class="game-logo">🏎️</span>
+                    <span class="game-title-text">سلطان جاده ۳بعدی</span>
+                </div>
+                <div class="driver-stats-pill">
+                    <span id="menu-coins">🪙 ۰</span>
+                    <span class="stat-divider">|</span>
+                    <span id="menu-highscore">🏆 ۰</span>
+                    <span class="stat-divider">|</span>
+                    <span class="driver-rank-badge">👑 شوتی‌باز برتر</span>
+                </div>
+            </div>
+
+            <!-- Tilted Frosted Glass Side Card -->
+            <div class="garage-showcase-card">
+                <div class="car-status-header">
+                    <span class="car-status-label">🚘 خودروی آماده مسابقه:</span>
+                    <span id="menu-selected-car-name" class="car-status-name">پژو پارس ELX (شوتی سلطان)</span>
+                </div>
 
                 <!-- Game Mode Selector -->
                 <div class="mode-selector">
@@ -135,16 +153,19 @@
                         <span class="mode-title">حالت زِن</span>
                     </div>
                 </div>
-                
-                <div class="controls-hint">
-                    <span>🎮 جابجایی لاین: <span class="key-cap">◀</span> <span class="key-cap">▶</span> یا <span class="key-cap">A</span> <span class="key-cap">D</span></span>
-                    <span>تغییر دوربین: <span class="key-cap">C</span></span>
-                    <span>نیترو: <span class="key-cap">Space</span></span>
+
+                <div class="menu-action-stack">
+                    <button id="btn-start" class="btn-primary btn-garage-start">🚀 شروع رانندگی در آزادراه</button>
+                    <button id="btn-multiplayer" class="btn-primary btn-garage-online">🌐 مسابقه آنلاین ۲ نفره</button>
+                    <div class="menu-btn-row">
+                        <button id="btn-garage" class="btn-secondary" style="flex:1;">🏎️ گاراژ و تیونینگ</button>
+                        <button id="btn-menu-settings" class="btn-secondary" style="width:48px; padding:0; font-size:1.2rem;">⚙️</button>
+                    </div>
                 </div>
 
-                <button id="btn-start" class="btn-primary">🚀 شروع رانندگی تک‌نفره</button>
-                <button id="btn-multiplayer" class="btn-primary" style="background: linear-gradient(135deg, #00c853, #00e676); color:#000; font-weight:bold; margin-top:8px;">🌐 اتاق مسابقه آنلاین ۲ نفره</button>
-                <button id="btn-garage" class="btn-secondary">🏎️ گاراژ و تیونینگ ایرانی</button>
+                <div class="controls-hint" style="margin-top:12px;">
+                    <span>💡 لمس و درگ صفحه = چرخش ۳۶۰ درجه دوربین دور ماشین</span>
+                </div>
             </div>
         </div>
 
@@ -311,7 +332,7 @@
         </div>
     </div>
 
-    <script src="audio.js?v=10.0.0"></script>
-    <script src="game.js?v=10.0.0"></script>
+    <script src="audio.js?v=11.0.0"></script>
+    <script src="game.js?v=11.0.0"></script>
 </body>
 </html>

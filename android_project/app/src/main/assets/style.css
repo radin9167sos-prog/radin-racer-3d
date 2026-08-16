@@ -674,9 +674,134 @@ body, html {
     box-shadow: 0 0 12px rgba(0, 230, 118, 0.5);
 }
 
-.online-status {
-    font-size: 0.85rem;
-    color: #a0aec0;
-    margin-top: 8px;
-    min-height: 20px;
+/* Style 1: 3D Dynamic Garage Showcase Menu */
+.garage-menu-overlay {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    pointer-events: none;
+}
+
+.menu-top-bar {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(14, 18, 30, 0.75);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 12px 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.menu-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.driver-stats-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Orbitron', 'Vazirmatn', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.stat-divider {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.driver-rank-badge {
+    background: linear-gradient(135deg, #ffaa00, #ff5500);
+    color: #000000;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+}
+
+.garage-showcase-card {
+    pointer-events: auto;
+    align-self: flex-start;
+    background: rgba(14, 18, 32, 0.82);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 0 30px rgba(0, 240, 255, 0.08);
+    border-radius: 24px;
+    padding: 24px 28px;
+    width: 420px;
+    max-width: 95vw;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transform: perspective(800px) rotateY(6deg);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.garage-showcase-card:hover {
+    transform: perspective(800px) rotateY(0deg);
+    box-shadow: 0 25px 60px rgba(0, 240, 255, 0.25);
+}
+
+.car-status-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: right;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.car-status-label {
+    font-size: 0.8rem;
+    color: #8899aa;
+}
+
+.car-status-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #00f0ff;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.menu-action-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.btn-garage-start {
+    height: 52px;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
+    color: #000000;
+    font-weight: 800;
+    box-shadow: 0 6px 20px rgba(0, 230, 118, 0.4);
+}
+
+.btn-garage-online {
+    height: 48px;
+    font-size: 1.0rem;
+    background: linear-gradient(135deg, #ffaa00 0%, #ff5500 100%);
+    color: #000000;
+    font-weight: 800;
+    box-shadow: 0 6px 20px rgba(255, 170, 0, 0.4);
+}
+
+.menu-btn-row {
+    display: flex;
+    gap: 10px;
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v10-car-radio';
+const CACHE_NAME = 'iranian-highway-v11-style1-garage-showcase';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

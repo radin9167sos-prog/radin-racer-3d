@@ -849,6 +849,13 @@ class Game3D {
             this.uiSettings.classList.remove('hidden');
         });
 
+        const btnMenuSettings = document.getElementById('btn-menu-settings');
+        if (btnMenuSettings) {
+            btnMenuSettings.addEventListener('click', () => {
+                this.uiSettings.classList.remove('hidden');
+            });
+        }
+
         // Settings Selectors
         document.querySelectorAll('.seg-btn[data-gfx]').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1310,12 +1317,43 @@ class Game3D {
 
             if (this.state === 'PLAYING') {
                 this.update(dt);
+            } else {
+                this.updateGarageOrbit(dt);
             }
 
             this.render();
         }
 
         requestAnimationFrame((t) => this.loop(t));
+    }
+
+    updateGarageOrbit(dt) {
+        if (!this.playerCarGroup) return;
+
+        if (this.cockpitGroup) this.cockpitGroup.visible = false;
+
+        this.menuOrbitAngle = (this.menuOrbitAngle || 0) + dt * 0.35;
+
+        const radius = 4.8;
+        const camX = Math.sin(this.menuOrbitAngle) * radius;
+        const camZ = Math.cos(this.menuOrbitAngle) * radius;
+
+        this.camera.position.set(this.player.x + camX, 1.25, camZ);
+        this.camera.lookAt(this.player.x, 0.55, 0);
+
+        this.updateTopBarHUD();
+    }
+
+    updateTopBarHUD() {
+        const menuCoins = document.getElementById('menu-coins');
+        const menuHighscore = document.getElementById('menu-highscore');
+        const carNameEl = document.getElementById('menu-selected-car-name');
+
+        if (menuCoins) menuCoins.innerText = '🪙 ' + this.coins.toLocaleString('fa-IR');
+        if (menuHighscore) menuHighscore.innerText = '🏆 ' + this.highScore.toLocaleString('fa-IR');
+        if (carNameEl && this.carGarage[this.player.selectedCar]) {
+            carNameEl.innerText = this.carGarage[this.player.selectedCar].name;
+        }
     }
 
     update(dt) {
