@@ -634,3 +634,43 @@ body, html {
     border-color: var(--secondary);
     box-shadow: 0 0 15px var(--secondary);
 }
+
+/* Online Multiplayer Lobby & Room Code Styles */
+.room-code-badge {
+    font-size: 1.8rem;
+    font-weight: 900;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 4px;
+    color: #00e676;
+    background: rgba(0, 230, 118, 0.15);
+    border: 2px dashed #00e676;
+    padding: 8px 20px;
+    border-radius: 12px;
+    text-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+}
+
+.room-input {
+    width: 100%;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1.5px solid rgba(0, 230, 118, 0.5);
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 1.4rem;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    letter-spacing: 3px;
+    outline: none;
+}
+
+.room-input:focus {
+    border-color: #00e676;
+    box-shadow: 0 0 12px rgba(0, 230, 118, 0.5);
+}
+
+.online-status {
+    font-size: 0.85rem;
+    color: #a0aec0;
+    margin-top: 8px;
+    min-height: 20px;
+}

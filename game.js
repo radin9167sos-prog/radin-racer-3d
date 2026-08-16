@@ -26,6 +26,15 @@ class Game3D {
         this.maxSpeed = 32;
         this.timeRemaining = 30;
 
+        // Multiplayer P2P WebRTC Properties
+        this.isMultiplayer = false;
+        this.peer = null;
+        this.peerConn = null;
+        this.isHost = false;
+        this.myRoomCode = '';
+        this.opponentData = null;
+        this.opponentCarGroup = null;
+
         // 5-Lane 3D Highway Coordinates (X-axis: Far Left, Inner Left, Center, Inner Right, Far Right)
         this.laneX = [-7.2, -3.6, 0.0, 3.6, 7.2];
         this.currentLane = 2; // Center Lane (Lane 2)
@@ -106,6 +115,7 @@ class Game3D {
         this.uiSettings = document.getElementById('settings-screen');
         this.uiGameOver = document.getElementById('gameover-screen');
         this.uiGarage = document.getElementById('garage-screen');
+        this.uiMultiplayer = document.getElementById('multiplayer-screen');
         
         this.hudScore = document.getElementById('hud-score');
         this.hudCoins = document.getElementById('hud-coins');
@@ -113,6 +123,8 @@ class Game3D {
         this.hudDistance = document.getElementById('hud-distance');
         this.hudTimerCard = document.getElementById('hud-timer-card');
         this.hudTimer = document.getElementById('hud-timer');
+        this.hudMpCard = document.getElementById('hud-mp-card');
+        this.hudMpGap = document.getElementById('hud-mp-gap');
         this.powerupBar = document.getElementById('powerup-bar');
     }
 
@@ -824,6 +836,53 @@ class Game3D {
         document.getElementById('btn-start').addEventListener('click', () => { audioMgr.init(); this.startGame(); });
         document.getElementById('btn-restart').addEventListener('click', () => { this.startGame(); });
 
+        // Online Multiplayer Button Handlers
+        document.getElementById('btn-multiplayer').addEventListener('click', () => {
+            this.uiMenu.classList.add('hidden');
+            this.uiMultiplayer.classList.remove('hidden');
+            this.initHostRoom();
+        });
+
+        document.getElementById('btn-close-multiplayer').addEventListener('click', () => {
+            this.uiMultiplayer.classList.add('hidden');
+            this.uiMenu.classList.remove('hidden');
+            if (this.peer) {
+                this.peer.destroy();
+                this.peer = null;
+            }
+        });
+
+        document.getElementById('tab-create-room').addEventListener('click', (e) => {
+            document.getElementById('tab-create-room').classList.add('active');
+            document.getElementById('tab-join-room').classList.remove('active');
+            document.getElementById('create-room-box').classList.remove('hidden');
+            document.getElementById('join-room-box').classList.add('hidden');
+            this.initHostRoom();
+        });
+
+        document.getElementById('tab-join-room').addEventListener('click', (e) => {
+            document.getElementById('tab-join-room').classList.add('active');
+            document.getElementById('tab-create-room').classList.remove('active');
+            document.getElementById('join-room-box').classList.remove('hidden');
+            document.getElementById('create-room-box').classList.add('hidden');
+        });
+
+        document.getElementById('btn-copy-code').addEventListener('click', () => {
+            if (this.myRoomCode) {
+                navigator.clipboard.writeText(this.myRoomCode);
+                this.addFloatingText('📋 کد اتاق کپی شد!', this.canvas.width / 2, 160, '#00e676');
+            }
+        });
+
+        document.getElementById('btn-join-match').addEventListener('click', () => {
+            const inputCode = document.getElementById('join-code-input').value.trim();
+            if (inputCode.length >= 4) {
+                this.joinOnlineRoom(inputCode);
+            } else {
+                alert('لطفاً کد ۴ رقمی معتبر وارد کنید!');
+            }
+        });
+
         document.getElementById('btn-garage').addEventListener('click', () => {
             this.uiMenu.classList.add('hidden');
             this.uiGarage.classList.remove('hidden');
@@ -934,6 +993,9 @@ class Game3D {
         if (this.gameMode === 'TIME_ATTACK') this.hudTimerCard.classList.remove('hidden');
         else this.hudTimerCard.classList.add('hidden');
 
+        if (this.isMultiplayer) this.hudMpCard.classList.remove('hidden');
+        else this.hudMpCard.classList.add('hidden');
+
         if (this.player.selectedCar === 3) {
             this.player.hasShield = true;
         } else {
@@ -957,8 +1019,143 @@ class Game3D {
         this.uiGameOver.classList.add('hidden');
         this.uiGarage.classList.add('hidden');
         this.uiSettings.classList.add('hidden');
+        this.uiMultiplayer.classList.add('hidden');
 
         audioMgr.init();
+    }
+
+    // ==========================================
+    // WEBRTC P2P ONLINE MULTIPLAYER ENGINE
+    // ==========================================
+    initHostRoom() {
+        if (typeof Peer === 'undefined') return;
+        if (this.peer) this.peer.destroy();
+
+        const randNum = Math.floor(1000 + Math.random() * 9000);
+        this.myRoomCode = randNum.toString();
+        document.getElementById('room-code-display').innerText = 'PARS-' + this.myRoomCode;
+        document.getElementById('create-status').innerText = 'در حال ثبت اتاق آنلاین در سرور...';
+
+        const peerId = 'radin-pars-' + this.myRoomCode;
+        this.peer = new Peer(peerId);
+
+        this.peer.on('open', () => {
+            document.getElementById('create-status').innerText = 'در انتظار ورود حریف... (کد را به دوستتان بدهید)';
+        });
+
+        this.peer.on('connection', (conn) => {
+            this.peerConn = conn;
+            this.isHost = true;
+            this.isMultiplayer = true;
+            document.getElementById('create-status').innerText = 'حریف متصل شد! در حال شروع مسابقه...';
+
+            this.setupP2PListeners();
+            setTimeout(() => {
+                this.uiMultiplayer.classList.add('hidden');
+                this.startGame();
+            }, 1000);
+        });
+
+        this.peer.on('error', (err) => {
+            document.getElementById('create-status').innerText = 'خطا در شبکه: ' + err.type;
+        });
+    }
+
+    joinOnlineRoom(code) {
+        if (typeof Peer === 'undefined') return;
+        if (this.peer) this.peer.destroy();
+
+        const cleanCode = code.replace(/[^0-9]/g, '');
+        document.getElementById('join-status').innerText = 'در حال اتصال به اتاق ' + cleanCode + '...';
+        this.peer = new Peer();
+
+        this.peer.on('open', () => {
+            const targetPeerId = 'radin-pars-' + cleanCode;
+            const conn = this.peer.connect(targetPeerId);
+
+            conn.on('open', () => {
+                this.peerConn = conn;
+                this.isHost = false;
+                this.isMultiplayer = true;
+                document.getElementById('join-status').innerText = 'با موفقیت متصل شدید! شروع مسابقه...';
+
+                this.setupP2PListeners();
+                setTimeout(() => {
+                    this.uiMultiplayer.classList.add('hidden');
+                    this.startGame();
+                }, 1000);
+            });
+
+            conn.on('error', () => {
+                document.getElementById('join-status').innerText = 'خطا در یافتن اتاق! کد را بررسی کنید.';
+            });
+        });
+    }
+
+    setupP2PListeners() {
+        if (!this.peerConn) return;
+
+        this.peerConn.on('data', (data) => {
+            if (data && data.type === 'SYNC') {
+                this.opponentData = data;
+                this.update3DOpponentCar(data);
+            }
+        });
+    }
+
+    sendP2PState() {
+        if (this.isMultiplayer && this.peerConn && this.peerConn.open) {
+            this.peerConn.send({
+                type: 'SYNC',
+                x: this.player.x,
+                distance: this.distance,
+                speed: this.speed,
+                selectedCar: this.player.selectedCar,
+                stance: this.player.stance,
+                sticker: this.player.sticker,
+                underglow: this.player.underglowColor
+            });
+        }
+    }
+
+    update3DOpponentCar(data) {
+        if (!this.opponentCarGroup) {
+            this.opponentCarGroup = new THREE.Group();
+            const bodyGeo = new THREE.BoxGeometry(1.8, 0.52, 4.0);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00e676, roughness: 0.3, metalness: 0.7 });
+            const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+            bodyMesh.position.y = 0.45;
+            this.opponentCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.46, 0.52, 2.0);
+            const glassMat = new THREE.MeshPhongMaterial({ color: 0x050710, shininess: 90 });
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.9, -0.1);
+            this.opponentCarGroup.add(cabinMesh);
+
+            const labelBadgeGeo = new THREE.BoxGeometry(1.2, 0.3, 0.05);
+            const labelMat = new THREE.MeshBasicMaterial({ color: 0x00e676 });
+            const labelMesh = new THREE.Mesh(labelBadgeGeo, labelMat);
+            labelMesh.position.set(0, 1.8, 0);
+            this.opponentCarGroup.add(labelMesh);
+
+            this.scene.add(this.opponentCarGroup);
+        }
+
+        const distDiff = data.distance - this.distance;
+        const relZ = -distDiff;
+
+        this.opponentCarGroup.position.x = THREE.MathUtils.lerp(this.opponentCarGroup.position.x, data.x, 0.2);
+        this.opponentCarGroup.position.z = THREE.MathUtils.lerp(this.opponentCarGroup.position.z, relZ, 0.2);
+
+        const gapVal = Math.floor(Math.abs(distDiff));
+        if (distDiff > 0) {
+            this.hudMpGap.innerText = `حریف ${gapVal}m جلوتر است! 🥈`;
+            this.hudMpGap.style.color = '#ff0055';
+        } else {
+            this.hudMpGap.innerText = `شما ${gapVal}m جلوتر هستید! 🥇`;
+            this.hudMpGap.style.color = '#00e676';
+        }
     }
 
     togglePause() {
@@ -1153,6 +1350,10 @@ class Game3D {
         this.playerCarGroup.position.x = this.player.x;
         this.playerCarGroup.rotation.y = this.player.spinAngle;
         this.playerCarGroup.rotation.z = this.player.tilt;
+
+        if (this.isMultiplayer) {
+            this.sendP2PState();
+        }
 
         this.shieldMesh.visible = this.player.hasShield;
 

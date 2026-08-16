@@ -11,8 +11,9 @@
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css?v=4.0.0">
-    <!-- Three.js 3D WebGL Engine -->
+    <!-- Three.js 3D WebGL Engine & PeerJS WebRTC -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script>
         // Automatic Cache-Buster & Fresh Reload Handler
         if ('serviceWorker' in navigator) {
@@ -20,7 +21,7 @@
                 for (let r of regs) r.update();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=4.0.0', { updateViaCache: 'none' });
+                navigator.serviceWorker.register('./sw.js?v=5.0.0', { updateViaCache: 'none' });
             });
         }
     </script>
@@ -49,6 +50,10 @@
                 <div id="hud-timer-card" class="hud-card hidden">
                     <span class="hud-title">زمان:</span>
                     <span id="hud-timer" class="hud-value timer-value">۳۰s</span>
+                </div>
+                <div id="hud-mp-card" class="hud-card hidden" style="border-color:#00e676;">
+                    <span class="hud-title">رقابت آنلاین:</span>
+                    <span id="hud-mp-gap" class="hud-value" style="color:#00e676; font-size:0.85rem;">حریف متصل شد!</span>
                 </div>
             </div>
 
@@ -132,8 +137,44 @@
                     <span>نیترو: <span class="key-cap">Space</span></span>
                 </div>
 
-                <button id="btn-start" class="btn-primary">🚀 شروع رانندگی سه‌بعدی</button>
+                <button id="btn-start" class="btn-primary">🚀 شروع رانندگی تک‌نفره</button>
+                <button id="btn-multiplayer" class="btn-primary" style="background: linear-gradient(135deg, #00c853, #00e676); color:#000; font-weight:bold;">🌐 مسابقه آنلاین ۲ نفره</button>
                 <button id="btn-garage" class="btn-secondary">🏎️ گاراژ و تیونینگ ایرانی</button>
+            </div>
+        </div>
+
+        <!-- MULTIPLAYER ONLINE LOBBY MODAL -->
+        <div id="multiplayer-screen" class="overlay-screen hidden">
+            <div class="modal-card" style="max-width:520px;">
+                <h2 style="color:#00e676;">🌐 مسابقه آنلاین دو نفره</h2>
+                <p class="subtitle">با دوست خود آنلاین کل‌کل کنید و در آزادراه مسابقه دهید!</p>
+
+                <div class="segmented-control" style="margin: 15px 0;">
+                    <button id="tab-create-room" class="seg-btn active">🔑 ساخت اتاق مسابقه</button>
+                    <button id="tab-join-room" class="seg-btn">👥 ورود با کد دعوت</button>
+                </div>
+
+                <!-- Create Room Section -->
+                <div id="create-room-box">
+                    <div class="tuning-title">کد اختصاصی اتاق شما:</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin: 15px 0;">
+                        <span id="room-code-display" class="room-code-badge">PARS-----</span>
+                        <button id="btn-copy-code" class="btn-secondary" style="padding: 8px 14px;">📋 کپی کد</button>
+                    </div>
+                    <div id="create-status" class="online-status">در حال دریافت کد اتاق از سرور...</div>
+                </div>
+
+                <!-- Join Room Section -->
+                <div id="join-room-box" class="hidden">
+                    <div class="tuning-title">کد ۴ رقمی اتاق دوستتان را وارد کنید:</div>
+                    <div style="display:flex; gap:10px; margin: 15px 0;">
+                        <input type="text" id="join-code-input" placeholder="مثال: 8492" maxlength="6" class="room-input">
+                        <button id="btn-join-match" class="btn-primary" style="white-space:nowrap; background:#00e676; color:#000;">🚀 ورود به مسابقه</button>
+                    </div>
+                    <div id="join-status" class="online-status">آماده اتصال...</div>
+                </div>
+
+                <button id="btn-close-multiplayer" class="btn-secondary" style="margin-top:15px;">انصراف و بازگشت</button>
             </div>
         </div>
 
