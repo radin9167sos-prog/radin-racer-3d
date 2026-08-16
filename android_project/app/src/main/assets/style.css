@@ -538,13 +538,28 @@ body, html {
     background: rgba(0, 240, 255, 0.12);
 }
 
-.tuning-box {
-    background: rgba(10, 12, 28, 0.7);
-    border-radius: 16px;
-    padding: 15px;
+.tuning-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.tuning-title {
+    font-weight: 700;
+    color: var(--secondary);
+    font-size: 0.88rem;
+    margin-bottom: 2px;
+}
+
+.tuning-box {
+    background: rgba(10, 12, 28, 0.7);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: 16px;
+    padding: 12px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     text-align: right;
 }
 

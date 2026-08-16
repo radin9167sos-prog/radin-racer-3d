@@ -30,7 +30,7 @@ class Game3D {
         this.currentLane = 2; // Center Lane (Lane 2)
         this.targetLane = 2;
 
-        // Player Stats & Tuning
+        // Player Stats & Iranian Tuning Properties
         this.player = {
             x: 0,
             y: 0.5,
@@ -41,6 +41,8 @@ class Game3D {
             spinTime: 0,
             selectedCar: parseInt(localStorage.getItem('neon_car') || '0'),
             underglowColor: localStorage.getItem('neon_underglow') || '#00f0ff',
+            stance: localStorage.getItem('neon_stance') || 'SHOOTI', // NORMAL, SHOOTI, LOW
+            sticker: localStorage.getItem('neon_sticker') || 'SOLTAN', // NONE, SOLTAN, SHOOTI, SALAR
             hasShield: false,
             hasMagnet: false,
             magnetTime: 0,
@@ -49,12 +51,14 @@ class Game3D {
             nitroTime: 0
         };
 
-        // Car Garage Data (Toyota Supra MK4 Specifications)
+        // Iconic Iranian & JDM Car Garage Fleet
         this.carGarage = [
-            { id: 0, name: 'Toyota Supra MK4 (Orange JDM)', color: 0xff5500, secondary: 0x222222, price: 0, stat: 'افسانه‌ای JDM 2JZ' },
-            { id: 1, name: 'Toyota Supra MK4 (Midnight Cyan)', color: 0x00f0ff, secondary: 0x0055ff, price: 150, stat: 'ضریب امتیاز ۲۰٪+' },
-            { id: 2, name: 'Toyota Supra MK4 (Nitro Blaze)', color: 0xff0055, secondary: 0xffaa00, price: 300, stat: 'شارژ نیترو سریع‌تر' },
-            { id: 3, name: 'Toyota Supra MK4 (Titan Shield)', color: 0x00ff66, secondary: 0x009944, price: 500, stat: 'شروع با سپر دفاعی' }
+            { id: 0, name: 'پژو پارس ELX (شوتی سلطان)', color: 0xffffff, secondary: 0x111111, price: 0, stat: 'سلطان جاده - شتاب شوتی', modelType: 'PARS' },
+            { id: 1, name: 'پیکان جوانان (گوجه‌ای کلکسیونی)', color: 0xcc0000, secondary: 0xdddddd, price: 150, stat: 'کلاسیک نوستالژیک ایرانی', modelType: 'PEYKAN' },
+            { id: 2, name: 'پراید ۱۱۱ (اسپرت کف‌خواب)', color: 0x0088ff, secondary: 0x111111, price: 250, stat: 'چابک و فرماندهی سریع', modelType: 'PRIDE' },
+            { id: 3, name: 'پژو ۲۰۶ تیپ ۵ (GT اسپرت)', color: 0xcccccc, secondary: 0xff0055, price: 400, stat: 'شتاب توربو و باله عقب GT', modelType: 'P206' },
+            { id: 4, name: 'سمند سورن توربو (مشکی سالار)', color: 0x11121c, secondary: 0x00f0ff, price: 600, stat: 'ملی توربو - بدنه مقاوم', modelType: 'SOREN' },
+            { id: 5, name: 'تویوتا سوپرا (JDM King)', color: 0xff5500, secondary: 0x222222, price: 800, stat: 'افسانه‌ای JDM 2JZ', modelType: 'SUPRA' }
         ];
 
         this.unlockedCars = JSON.parse(localStorage.getItem('neon_unlocked_cars') || '[0]');
@@ -357,140 +361,253 @@ class Game3D {
     buildPlayer3DCar() {
         if (this.playerCarGroup) this.scene.remove(this.playerCarGroup);
 
-        const carData = this.carGarage[this.player.selectedCar];
+        const carData = this.carGarage[this.player.selectedCar] || this.carGarage[0];
         this.playerCarGroup = new THREE.Group();
 
-        // High-Performance Glossy Automotive Paint (MeshPhongMaterial for 60 FPS fluidity)
         const carMat = new THREE.MeshPhongMaterial({
             color: carData.color,
             shininess: 90,
-            specular: 0x666666
+            specular: 0x777777
         });
-
         const darkTrimMat = new THREE.MeshBasicMaterial({ color: 0x11121c });
-
-        // 1. Toyota Supra MK4 Main Body Chassis
-        const bodyGeo = new THREE.BoxGeometry(1.9, 0.5, 3.9);
-        const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
-        bodyMesh.position.y = 0.45;
-        this.playerCarGroup.add(bodyMesh);
-
-        // Flared Side Skirts / Widebody Wheel Arches
-        const skirtGeo = new THREE.BoxGeometry(2.05, 0.25, 3.6);
-        const skirtMesh = new THREE.Mesh(skirtGeo, carMat);
-        skirtMesh.position.y = 0.32;
-        this.playerCarGroup.add(skirtMesh);
-
-        // Curved Supra Bonnet / Hood Scoop
-        const hoodGeo = new THREE.BoxGeometry(1.5, 0.12, 1.4);
-        const hoodMesh = new THREE.Mesh(hoodGeo, carMat);
-        hoodMesh.position.set(0, 0.72, -1.05);
-        hoodMesh.rotation.x = -0.06;
-        this.playerCarGroup.add(hoodMesh);
-
-        // Front Lip Splitter & Grille Intake
-        const lipGeo = new THREE.BoxGeometry(1.85, 0.15, 0.4);
-        const lipMesh = new THREE.Mesh(lipGeo, darkTrimMat);
-        lipMesh.position.set(0, 0.22, -1.95);
-        this.playerCarGroup.add(lipMesh);
-
-        // 2. Supra Aerodynamic Fastback Cockpit & Windshield
-        const glassGeo = new THREE.BoxGeometry(1.48, 0.52, 2.0);
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.95, roughness: 0.1 });
         const glassMat = new THREE.MeshPhongMaterial({ color: 0x080915, shininess: 100, transparent: true, opacity: 0.9 });
-        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-        glassMesh.position.set(0, 0.88, -0.15);
-        this.playerCarGroup.add(glassMesh);
-
-        // Roof Panel
-        const roofGeo = new THREE.BoxGeometry(1.35, 0.08, 1.2);
-        const roofMesh = new THREE.Mesh(roofGeo, carMat);
-        roofMesh.position.set(0, 1.15, -0.15);
-        this.playerCarGroup.add(roofMesh);
-
-        // 3. AUTHENTIC HIGH REAR SPOILER WING (The Legendary Supra Wing)
-        const wingPostGeo = new THREE.BoxGeometry(0.12, 0.6, 0.4);
-        const postL = new THREE.Mesh(wingPostGeo, carMat);
-        postL.position.set(-0.78, 1.0, 1.68);
-        const postR = new THREE.Mesh(wingPostGeo, carMat);
-        postR.position.set(0.78, 1.0, 1.68);
-        this.playerCarGroup.add(postL);
-        this.playerCarGroup.add(postR);
-
-        // Aerofoil Top Wing Blade with Curved Endplates
-        const wingBladeGeo = new THREE.BoxGeometry(1.98, 0.1, 0.5);
-        const wingBlade = new THREE.Mesh(wingBladeGeo, carMat);
-        wingBlade.position.set(0, 1.32, 1.68);
-        wingBlade.rotation.x = -0.05;
-        this.playerCarGroup.add(wingBlade);
-
-        // 4. QUAD ROUND SUPRA TAILLIGHTS (4 Iconic Circular Lights)
-        const tailFasciaGeo = new THREE.BoxGeometry(1.65, 0.32, 0.08);
-        const tailFascia = new THREE.Mesh(tailFasciaGeo, darkTrimMat);
-        tailFascia.position.set(0, 0.55, 1.96);
-        this.playerCarGroup.add(tailFascia);
-
-        const circleLightGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.08, 16);
-        circleLightGeo.rotateX(Math.PI / 2);
-        this.brakeLightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
         this.taillights = [];
-        [-0.62, -0.31, 0.31, 0.62].forEach(xPos => {
-            const light = new THREE.Mesh(circleLightGeo, this.brakeLightMat);
-            light.position.set(xPos, 0.55, 1.98);
-            this.playerCarGroup.add(light);
-            this.taillights.push(light);
-        });
+        this.brakeLightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
-        // 5. Supra Slanted Headlight Pods
-        const headGeo = new THREE.BoxGeometry(0.48, 0.14, 0.12);
-        const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const headL = new THREE.Mesh(headGeo, headMat);
-        headL.position.set(-0.68, 0.52, -1.96);
-        const headR = new THREE.Mesh(headGeo, headMat);
-        headR.position.set(0.68, 0.52, -1.96);
-        this.playerCarGroup.add(headL);
-        this.playerCarGroup.add(headR);
+        const modelType = carData.modelType || 'PARS';
 
-        // 6. Sport Alloy Wheels with Red Brembo Brake Calipers
+        if (modelType === 'PEYKAN') {
+            // ==========================================
+            // 1. PEYKAN JAVANAN CLASSIC (پیکان جوانان گوجه‌ای)
+            // ==========================================
+            const bodyGeo = new THREE.BoxGeometry(1.75, 0.55, 3.8);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.45;
+            this.playerCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.42, 0.52, 1.8);
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.9, -0.1);
+            this.playerCarGroup.add(cabinMesh);
+
+            const roofGeo = new THREE.BoxGeometry(1.35, 0.08, 1.3);
+            const roofMesh = new THREE.Mesh(roofGeo, carMat);
+            roofMesh.position.set(0, 1.16, -0.1);
+            this.playerCarGroup.add(roofMesh);
+
+            // Classic Chrome Front Bumper & Dual Round Headlights
+            const bumperGeo = new THREE.BoxGeometry(1.8, 0.14, 0.2);
+            const bumperFront = new THREE.Mesh(bumperGeo, chromeMat);
+            bumperFront.position.set(0, 0.32, -1.92);
+            this.playerCarGroup.add(bumperFront);
+
+            const bumperRear = new THREE.Mesh(bumperGeo, chromeMat);
+            bumperRear.position.set(0, 0.32, 1.92);
+            this.playerCarGroup.add(bumperRear);
+
+            const roundHeadGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16);
+            roundHeadGeo.rotateX(Math.PI / 2);
+            const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            [-0.65, -0.42, 0.42, 0.65].forEach(x => {
+                const hl = new THREE.Mesh(roundHeadGeo, headMat);
+                hl.position.set(x, 0.52, -1.91);
+                this.playerCarGroup.add(hl);
+            });
+
+            // Classic Peykan Vertical Taillights
+            const tailGeo = new THREE.BoxGeometry(0.22, 0.25, 0.08);
+            [-0.6, 0.6].forEach(x => {
+                const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
+                tl.position.set(x, 0.52, 1.91);
+                this.playerCarGroup.add(tl);
+                this.taillights.push(tl);
+            });
+
+        } else if (modelType === 'PRIDE') {
+            // ==========================================
+            // 2. PRIDE 111 SPORT HATCHBACK (پراید ۱۱۱ اسپرت)
+            // ==========================================
+            const bodyGeo = new THREE.BoxGeometry(1.68, 0.5, 3.4);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.42;
+            this.playerCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.4, 0.55, 1.6);
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.88, -0.1);
+            this.playerCarGroup.add(cabinMesh);
+
+            const roofGeo = new THREE.BoxGeometry(1.3, 0.08, 1.1);
+            const roofMesh = new THREE.Mesh(roofGeo, carMat);
+            roofMesh.position.set(0, 1.15, -0.1);
+            this.playerCarGroup.add(roofMesh);
+
+            // Hatchback Rear Taillights
+            const tailGeo = new THREE.BoxGeometry(0.35, 0.2, 0.08);
+            [-0.55, 0.55].forEach(x => {
+                const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
+                tl.position.set(x, 0.52, 1.71);
+                this.playerCarGroup.add(tl);
+                this.taillights.push(tl);
+            });
+
+        } else if (modelType === 'P206') {
+            // ==========================================
+            // 3. PEUGEOT 206 GT SPORT (پژو ۲۰۶ اسپرت)
+            // ==========================================
+            const bodyGeo = new THREE.BoxGeometry(1.72, 0.52, 3.5);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.44;
+            this.playerCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.42, 0.54, 1.7);
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.9, -0.15);
+            this.playerCarGroup.add(cabinMesh);
+
+            // Peugeot GT Rear Wing Spoiler
+            const wingGeo = new THREE.BoxGeometry(1.5, 0.08, 0.35);
+            const wing = new THREE.Mesh(wingGeo, carMat);
+            wing.position.set(0, 1.22, 1.55);
+            this.playerCarGroup.add(wing);
+
+            // 206 Curved Headlights & Taillights
+            const tailGeo = new THREE.BoxGeometry(0.32, 0.22, 0.08);
+            [-0.58, 0.58].forEach(x => {
+                const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
+                tl.position.set(x, 0.54, 1.76);
+                this.playerCarGroup.add(tl);
+                this.taillights.push(tl);
+            });
+
+        } else if (modelType === 'SOREN') {
+            // ==========================================
+            // 4. SAMAND SOREN TURBO (سمند سورن توربو)
+            // ==========================================
+            const bodyGeo = new THREE.BoxGeometry(1.82, 0.54, 4.0);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.46;
+            this.playerCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.48, 0.54, 2.0);
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.92, -0.1);
+            this.playerCarGroup.add(cabinMesh);
+
+            const tailGeo = new THREE.BoxGeometry(0.42, 0.22, 0.08);
+            [-0.6, 0.6].forEach(x => {
+                const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
+                tl.position.set(x, 0.54, 2.01);
+                this.playerCarGroup.add(tl);
+                this.taillights.push(tl);
+            });
+
+        } else if (modelType === 'SUPRA') {
+            // ==========================================
+            // 5. TOYOTA SUPRA MK4 JDM (تویوتا سوپرا)
+            // ==========================================
+            const bodyGeo = new THREE.BoxGeometry(1.9, 0.5, 3.9);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.45;
+            this.playerCarGroup.add(bodyMesh);
+
+            const glassGeo = new THREE.BoxGeometry(1.48, 0.52, 2.0);
+            const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+            glassMesh.position.set(0, 0.88, -0.15);
+            this.playerCarGroup.add(glassMesh);
+
+            const wingPostGeo = new THREE.BoxGeometry(0.12, 0.6, 0.4);
+            const postL = new THREE.Mesh(wingPostGeo, carMat);
+            postL.position.set(-0.78, 1.0, 1.68);
+            const postR = new THREE.Mesh(wingPostGeo, carMat);
+            postR.position.set(0.78, 1.0, 1.68);
+            this.playerCarGroup.add(postL);
+            this.playerCarGroup.add(postR);
+
+            const wingBladeGeo = new THREE.BoxGeometry(1.98, 0.1, 0.5);
+            const wingBlade = new THREE.Mesh(wingBladeGeo, carMat);
+            wingBlade.position.set(0, 1.32, 1.68);
+            this.playerCarGroup.add(wingBlade);
+
+            const circleLightGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.08, 16);
+            circleLightGeo.rotateX(Math.PI / 2);
+            [-0.62, -0.31, 0.31, 0.62].forEach(xPos => {
+                const light = new THREE.Mesh(circleLightGeo, this.brakeLightMat);
+                light.position.set(xPos, 0.55, 1.96);
+                this.playerCarGroup.add(light);
+                this.taillights.push(light);
+            });
+
+        } else {
+            // ==========================================
+            // 6. PEUGEOT PARS ELX (پژو پارس شوتی)
+            // ==========================================
+            const bodyGeo = new THREE.BoxGeometry(1.8, 0.52, 4.0);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.45;
+            this.playerCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.46, 0.52, 2.0);
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.9, -0.1);
+            this.playerCarGroup.add(cabinMesh);
+
+            const roofGeo = new THREE.BoxGeometry(1.38, 0.08, 1.3);
+            const roofMesh = new THREE.Mesh(roofGeo, carMat);
+            roofMesh.position.set(0, 1.16, -0.1);
+            this.playerCarGroup.add(roofMesh);
+
+            // ELX Smoked Taillights
+            const tailGeo = new THREE.BoxGeometry(0.48, 0.22, 0.08);
+            [-0.58, 0.58].forEach(x => {
+                const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
+                tl.position.set(x, 0.54, 2.01);
+                this.playerCarGroup.add(tl);
+                this.taillights.push(tl);
+            });
+        }
+
+        // Common Sport Alloy Wheels for all Cars
         const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.35, 20);
         const tireMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.8 });
         const rimGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.36, 12);
         const rimMat = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, metalness: 0.95, roughness: 0.08 });
-        const caliperGeo = new THREE.BoxGeometry(0.15, 0.22, 0.2);
-        const caliperMat = new THREE.MeshBasicMaterial({ color: 0xcc0000 });
 
         wheelGeo.rotateZ(Math.PI / 2);
         rimGeo.rotateZ(Math.PI / 2);
 
-        [[-1.0, 0.38, 1.2], [1.0, 0.38, 1.2], [-1.0, 0.38, -1.2], [1.0, 0.38, -1.2]].forEach(pos => {
+        [[-0.95, 0.38, 1.2], [0.95, 0.38, 1.2], [-0.95, 0.38, -1.2], [0.95, 0.38, -1.2]].forEach(pos => {
             const tire = new THREE.Mesh(wheelGeo, tireMat);
             const rim = new THREE.Mesh(rimGeo, rimMat);
-            const caliper = new THREE.Mesh(caliperGeo, caliperMat);
-
             tire.position.set(pos[0], pos[1], pos[2]);
             rim.position.set(pos[0], pos[1], pos[2]);
-            caliper.position.set(pos[0] * 0.85, pos[1] + 0.05, pos[2]);
-
             this.playerCarGroup.add(tire);
             this.playerCarGroup.add(rim);
-            this.playerCarGroup.add(caliper);
         });
 
-        // 7. Chrome Dual Exhaust Canister Pipe
-        const exhaustGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.4, 12);
-        const exhaustMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.95, roughness: 0.05 });
-        exhaustGeo.rotateX(Math.PI / 2);
-        const exhaust = new THREE.Mesh(exhaustGeo, exhaustMat);
-        exhaust.position.set(0.6, 0.25, 2.0);
-        this.playerCarGroup.add(exhaust);
+        // 3D Persian Rear Window Sticker Badge
+        if (this.player.sticker && this.player.sticker !== 'NONE') {
+            const stickerBadgeGeo = new THREE.BoxGeometry(0.85, 0.18, 0.05);
+            let stickerColor = 0xffea00; // SOLTAN Yellow
+            if (this.player.sticker === 'SHOOTI') stickerColor = 0xff0055;
+            if (this.player.sticker === 'SALAR') stickerColor = 0x00f0ff;
 
-        // 8. 3D Neon Underglow PointLight
+            const stickerMat = new THREE.MeshBasicMaterial({ color: stickerColor });
+            const stickerMesh = new THREE.Mesh(stickerBadgeGeo, stickerMat);
+            stickerMesh.position.set(0, 0.92, 0.85);
+            stickerMesh.rotation.x = -0.3;
+            this.playerCarGroup.add(stickerMesh);
+        }
+
+        // 3D Neon Underglow PointLight
         const underglowHex = parseInt(this.player.underglowColor.replace('#', '0x'));
         this.underglowLight = new THREE.PointLight(underglowHex, 3.0, 8);
         this.underglowLight.position.set(0, 0.1, 0);
         this.playerCarGroup.add(this.underglowLight);
 
-        // 9. 3D Shield Globe Mesh
+        // 3D Shield Globe Mesh
         const shieldGeo = new THREE.SphereGeometry(2.5, 16, 16);
         const shieldMat = new THREE.MeshBasicMaterial({ color: 0x00ff66, wireframe: true, transparent: true, opacity: 0.5 });
         this.shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
@@ -498,7 +615,19 @@ class Game3D {
         this.shieldMesh.visible = false;
         this.playerCarGroup.add(this.shieldMesh);
 
-        this.playerCarGroup.position.set(this.laneX[this.currentLane], 0, 0);
+        // Apply Iranian Tuning Stance Stance (SHOOTI vs LOW vs NORMAL)
+        if (this.player.stance === 'SHOOTI') {
+            this.playerCarGroup.rotation.x = -0.06; // Rear raised high
+            this.playerCarGroup.position.y = 0.22;
+        } else if (this.player.stance === 'LOW') {
+            this.playerCarGroup.position.y = -0.12; // Lowered stance
+            this.playerCarGroup.rotation.x = 0;
+        } else {
+            this.playerCarGroup.position.y = 0;
+            this.playerCarGroup.rotation.x = 0;
+        }
+
+        this.playerCarGroup.position.x = this.laneX[this.currentLane];
         this.scene.add(this.playerCarGroup);
     }
 
@@ -640,6 +769,28 @@ class Game3D {
                 if (this.underglowLight) {
                     this.underglowLight.color.setHex(parseInt(this.player.underglowColor.replace('#', '0x')));
                 }
+            });
+        });
+
+        // Iranian Shooti Stance Selector Handlers
+        document.querySelectorAll('.stance-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.player.stance = e.target.dataset.stance;
+                localStorage.setItem('neon_stance', this.player.stance);
+                this.buildPlayer3DCar();
+            });
+        });
+
+        // Iranian Window Sticker Selector Handlers
+        document.querySelectorAll('.sticker-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.sticker-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.player.sticker = e.target.dataset.sticker;
+                localStorage.setItem('neon_sticker', this.player.sticker);
+                this.buildPlayer3DCar();
             });
         });
 
@@ -1297,6 +1448,14 @@ class Game3D {
             });
 
             garageContainer.appendChild(card);
+        });
+
+        // Sync Iranian Tuning UI Active States
+        document.querySelectorAll('.stance-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.stance === this.player.stance);
+        });
+        document.querySelectorAll('.sticker-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.sticker === this.player.sticker);
         });
     }
 

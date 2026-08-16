@@ -180,28 +180,52 @@
             </div>
         </div>
 
-        <!-- GARAGE & TUNING MODAL -->
+        <!-- GARAGE & TUNING MODAL (Iranian Tuning & Garage) -->
         <div id="garage-screen" class="overlay-screen hidden">
-            <div class="modal-card" style="max-width:580px;">
-                <h2 style="color:var(--secondary);">🏎️ گاراژ و تیونینگ سه‌بعدی</h2>
-                <p class="subtitle">ماشین خود را انتخاب کنید و رنگ زیرنئون (Underglow) آن را تغییر دهید</p>
+            <div class="modal-card" style="max-width:640px;">
+                <h2 style="color:var(--secondary);">🏎️ گاراژ و تیونینگ خودروهای ایرانی</h2>
+                <p class="subtitle">ماشین محبوب خود را انتخاب کرده و حالت شوتی، استیکر شیشه و نور نئون آن را اسپرت کنید</p>
 
                 <!-- Car Selection -->
                 <div id="garage-cars-list" class="garage-cars"></div>
 
-                <!-- Underglow Tuning Section -->
-                <div class="tuning-box">
-                    <span style="font-weight:700; color:var(--secondary); font-size:0.9rem;">💡 رنگ نور نئون زیر ماشین (Underglow):</span>
-                    <div class="color-swatches">
-                        <div class="color-swatch active" data-underglow="#00f0ff" style="background:#00f0ff;"></div>
-                        <div class="color-swatch" data-underglow="#ff007f" style="background:#ff007f;"></div>
-                        <div class="color-swatch" data-underglow="#00ff66" style="background:#00ff66;"></div>
-                        <div class="color-swatch" data-underglow="#ffe600" style="background:#ffe600;"></div>
-                        <div class="color-swatch" data-underglow="#aa00ff" style="background:#aa00ff;"></div>
+                <!-- Iranian Tuning Controls Section -->
+                <div class="tuning-grid">
+                    <!-- Shooti Stance Selector -->
+                    <div class="tuning-box">
+                        <span class="tuning-title">⚖️ وضعیت ارتفاع خودرو:</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn stance-btn active" data-stance="NORMAL">معمولی</button>
+                            <button class="seg-btn stance-btn" data-stance="SHOOTI">🚀 شوتی (عقب بالا)</button>
+                            <button class="seg-btn stance-btn" data-stance="LOW">👇 کف‌خواب اسپرت</button>
+                        </div>
+                    </div>
+
+                    <!-- Window Sticker Selector -->
+                    <div class="tuning-box">
+                        <span class="tuning-title">🏷️ برچسب شیشه عقب:</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn sticker-btn active" data-sticker="NONE">بدون برچسب</button>
+                            <button class="seg-btn sticker-btn" data-sticker="SOLTAN">👑 سلطان</button>
+                            <button class="seg-btn sticker-btn" data-sticker="SHOOTI">⚡ عشق شوتی</button>
+                            <button class="seg-btn sticker-btn" data-sticker="SALAR">💎 سالار</button>
+                        </div>
+                    </div>
+
+                    <!-- Underglow Tuning Section -->
+                    <div class="tuning-box">
+                        <span class="tuning-title">💡 رنگ نور نئون زیر ماشین (Underglow):</span>
+                        <div class="color-swatches">
+                            <div class="color-swatch active" data-underglow="#00f0ff" style="background:#00f0ff;"></div>
+                            <div class="color-swatch" data-underglow="#ff007f" style="background:#ff007f;"></div>
+                            <div class="color-swatch" data-underglow="#00ff66" style="background:#00ff66;"></div>
+                            <div class="color-swatch" data-underglow="#ffe600" style="background:#ffe600;"></div>
+                            <div class="color-swatch" data-underglow="#aa00ff" style="background:#aa00ff;"></div>
+                        </div>
                     </div>
                 </div>
 
-                <button id="btn-close-garage" class="btn-primary">بازگشت به منو</button>
+                <button id="btn-close-garage" class="btn-primary" style="margin-top:15px;">🚀 ذخیره و بازگشت به بازی</button>
             </div>
         </div>
 
