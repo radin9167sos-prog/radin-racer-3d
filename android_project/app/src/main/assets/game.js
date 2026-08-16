@@ -585,74 +585,129 @@ class Game3D {
         }
 
         // ==========================================
-        // REALISTIC PEUGEOT PARS 3D INTERIOR COCKPIT
+        // PHOTOREALISTIC PEUGEOT PARS 3D INTERIOR COCKPIT
         // ==========================================
         this.cockpitGroup = new THREE.Group();
 
-        // 1. Dashboard Console Frame
-        const dashGeo = new THREE.BoxGeometry(1.45, 0.45, 0.7);
-        const dashMat = new THREE.MeshStandardMaterial({ color: 0x181a24, roughness: 0.85 });
+        // 1. Dashboard Console Frame (Dark Charcoal Leather Finish)
+        const dashGeo = new THREE.BoxGeometry(1.48, 0.48, 0.72);
+        const dashMat = new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.85, metalness: 0.1 });
         const dashboard = new THREE.Mesh(dashGeo, dashMat);
         dashboard.position.set(0, 0.85, -0.45);
         this.cockpitGroup.add(dashboard);
 
-        // Center A/C Vent Panel & Controls
-        const consoleGeo = new THREE.BoxGeometry(0.35, 0.3, 0.1);
-        const consoleMat = new THREE.MeshBasicMaterial({ color: 0x090a12 });
+        // Peugeot Pars Signature Walnut Wood Trim Panel (تریم طرح چوب پارس)
+        const woodTrimGeo = new THREE.BoxGeometry(1.46, 0.08, 0.73);
+        const woodTrimMat = new THREE.MeshStandardMaterial({ color: 0x663311, roughness: 0.4, metalness: 0.2 });
+        const woodTrim = new THREE.Mesh(woodTrimGeo, woodTrimMat);
+        woodTrim.position.set(0, 0.74, -0.45);
+        this.cockpitGroup.add(woodTrim);
+
+        // Center Console Unit with A/C Vents & Audio Unit
+        const consoleGeo = new THREE.BoxGeometry(0.38, 0.32, 0.12);
+        const consoleMat = new THREE.MeshStandardMaterial({ color: 0x0c0e18, roughness: 0.6 });
         const centerConsole = new THREE.Mesh(consoleGeo, consoleMat);
         centerConsole.position.set(0, 0.82, -0.08);
         this.cockpitGroup.add(centerConsole);
 
-        // 2. Peugeot Pars Steering Wheel (فرمان سه‌بعدی پژو پارس)
-        const wheelRingGeo = new THREE.TorusGeometry(0.24, 0.035, 12, 24);
-        const wheelHubGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
+        // Chrome Vent Trim Strips
+        const ventTrimGeo = new THREE.BoxGeometry(0.36, 0.04, 0.13);
+        const chromeTrimMat = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, metalness: 0.9, roughness: 0.1 });
+        const ventTrimTop = new THREE.Mesh(ventTrimGeo, chromeTrimMat);
+        ventTrimTop.position.set(0, 0.94, -0.08);
+        this.cockpitGroup.add(ventTrimTop);
+
+        // 2. Peugeot 3-Spoke Leather Steering Wheel (فرمان ۳بعدی اسپرت پژو)
+        const wheelRingGeo = new THREE.TorusGeometry(0.24, 0.035, 16, 32);
+        const wheelHubGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.05, 20);
         wheelHubGeo.rotateX(Math.PI / 2);
 
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111218, roughness: 0.6 });
-        const logoMat = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 }); // Peugeot Lion Emblem Silver
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111218, roughness: 0.7 });
+        const logoMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e8, metalness: 0.95, roughness: 0.05 });
 
         this.steeringWheel = new THREE.Group();
         const ringMesh = new THREE.Mesh(wheelRingGeo, wheelMat);
         const hubMesh = new THREE.Mesh(wheelHubGeo, wheelMat);
-        const logoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.06), logoMat);
+        
+        // Peugeot Silver Lion Emblem Badge
+        const logoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.065), logoMat);
+
+        // Steering Wheel Spokes (3 Spokes)
+        const spokeGeo = new THREE.BoxGeometry(0.04, 0.18, 0.03);
+        const spokeL = new THREE.Mesh(spokeGeo, wheelMat);
+        spokeL.position.set(-0.11, -0.06, 0);
+        spokeL.rotation.z = 0.7;
+        const spokeR = new THREE.Mesh(spokeGeo, wheelMat);
+        spokeR.position.set(0.11, -0.06, 0);
+        spokeR.rotation.z = -0.7;
+        const spokeB = new THREE.Mesh(spokeGeo, wheelMat);
+        spokeB.position.set(0, -0.14, 0);
 
         this.steeringWheel.add(ringMesh);
         this.steeringWheel.add(hubMesh);
         this.steeringWheel.add(logoMesh);
+        this.steeringWheel.add(spokeL);
+        this.steeringWheel.add(spokeR);
+        this.steeringWheel.add(spokeB);
 
-        // Steering Column Stem
-        const colGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.4, 8);
+        // Steering Column & Indicator/Wiper Stalks (دسته راهنما و برف‌پاک‌کن)
+        const colGeo = new THREE.CylinderGeometry(0.055, 0.065, 0.42, 12);
         colGeo.rotateX(Math.PI / 3);
         const column = new THREE.Mesh(colGeo, wheelMat);
         column.position.set(-0.35, 0.85, -0.2);
         this.cockpitGroup.add(column);
 
+        const stalkGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.22, 8);
+        stalkGeo.rotateZ(Math.PI / 2);
+        const indicatorStalk = new THREE.Mesh(stalkGeo, wheelMat);
+        indicatorStalk.position.set(-0.48, 0.92, -0.08);
+        this.cockpitGroup.add(indicatorStalk);
+
         this.steeringWheel.position.set(-0.35, 0.96, 0.02);
         this.steeringWheel.rotation.x = -0.3; // Angle towards driver
         this.cockpitGroup.add(this.steeringWheel);
 
-        // 3. Glowing Peugeot Speedometer Gauge Cluster Behind Wheel (صفحه کیلومتر پارس)
-        const gaugeBoxGeo = new THREE.BoxGeometry(0.38, 0.18, 0.06);
-        const gaugeMat = new THREE.MeshBasicMaterial({ color: 0x050714 });
+        // 3. Peugeot Speedometer Gauge Cluster (صفحه کیلومتر انالوگ پارس)
+        const gaugeBoxGeo = new THREE.BoxGeometry(0.42, 0.2, 0.06);
+        const gaugeMat = new THREE.MeshBasicMaterial({ color: 0x04050d });
         const gaugeBox = new THREE.Mesh(gaugeBoxGeo, gaugeMat);
         gaugeBox.position.set(-0.35, 0.98, -0.22);
         this.cockpitGroup.add(gaugeBox);
 
-        const dialGeo = new THREE.CircleGeometry(0.06, 16);
-        const dialMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-        const speedoDial = new THREE.Mesh(dialGeo, dialMat);
-        speedoDial.position.set(-0.41, 0.98, -0.18);
-        const tachoDial = new THREE.Mesh(dialGeo, dialMat);
-        tachoDial.position.set(-0.29, 0.98, -0.18);
+        const dialGeo = new THREE.CircleGeometry(0.07, 24);
+        const speedoMat = new THREE.MeshBasicMaterial({ color: 0xffa500 });
+        const speedoDial = new THREE.Mesh(dialGeo, speedoMat);
+        speedoDial.position.set(-0.42, 0.98, -0.18);
+        const tachoDial = new THREE.Mesh(dialGeo, speedoMat);
+        tachoDial.position.set(-0.28, 0.98, -0.18);
         this.cockpitGroup.add(speedoDial);
         this.cockpitGroup.add(tachoDial);
 
-        // 4. Rear View Mirror (آینه وسط)
-        const mirrorGeo = new THREE.BoxGeometry(0.28, 0.09, 0.04);
-        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x8899aa, metalness: 0.9, roughness: 0.1 });
+        // Red Speedometer Needle
+        const needleGeo = new THREE.BoxGeometry(0.008, 0.06, 0.01);
+        const needleMat = new THREE.MeshBasicMaterial({ color: 0xff0022 });
+        const needleMesh = new THREE.Mesh(needleGeo, needleMat);
+        needleMesh.position.set(-0.42, 0.99, -0.17);
+        needleMesh.rotation.z = -0.6;
+        this.cockpitGroup.add(needleMesh);
+
+        // 4. Rearview Mirror & Sun Visors (آینه وسط و آفتاب‌گیر)
+        const mirrorGeo = new THREE.BoxGeometry(0.3, 0.095, 0.04);
+        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.95, roughness: 0.05 });
         const mirror = new THREE.Mesh(mirrorGeo, mirrorMat);
-        mirror.position.set(0, 1.25, -0.25);
+        mirror.position.set(0, 1.26, -0.25);
         this.cockpitGroup.add(mirror);
+
+        const visorGeo = new THREE.BoxGeometry(0.45, 0.12, 0.03);
+        const visorMat = new THREE.MeshStandardMaterial({ color: 0x222430, roughness: 0.9 });
+        const visorL = new THREE.Mesh(visorGeo, visorMat);
+        visorL.position.set(-0.4, 1.28, -0.32);
+        visorL.rotation.x = 0.2;
+        const visorR = new THREE.Mesh(visorGeo, visorMat);
+        visorR.position.set(0.4, 1.28, -0.32);
+        visorR.rotation.x = 0.2;
+        this.cockpitGroup.add(visorL);
+        this.cockpitGroup.add(visorR);
 
         this.playerCarGroup.add(this.cockpitGroup);
 
