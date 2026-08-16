@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Radin Racer 3D - بازی رانندگی سه‌بعدی رادین ریسر</title>
+    <meta name="description" content="بازی آنلاین رانندگی سه‌بعدی رادین ریسر با رندرینگ WebGL، تویوتا سوپرا سه‌بعدی، تعقیب پلیس و تیونینگ.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#00f0ff">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <!-- Three.js 3D WebGL Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg error:', err));
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Main 3D Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Top Left Controls -->
+        <button id="pause-btn" title="توقف بازی">⏸️</button>
+        <button id="settings-btn" title="تنظیمات گرافیک و بازی">⚙️</button>
+
+        <!-- HUD Header overlay -->
+        <div id="hud">
+            <div class="hud-group">
+                <div class="hud-card">
+                    <span class="hud-title">امتیاز:</span>
+                    <span id="hud-score" class="hud-value score-value">۰</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-title">سکه‌ها:</span>
+                    <span id="hud-coins" class="hud-value" style="color:var(--accent);">🪙 ۰</span>
+                </div>
+                <div id="hud-timer-card" class="hud-card hidden">
+                    <span class="hud-title">زمان:</span>
+                    <span id="hud-timer" class="hud-value timer-value">۳۰s</span>
+                </div>
+            </div>
+
+            <div class="hud-group">
+                <div class="hud-card">
+                    <span class="hud-title">سرعت:</span>
+                    <span id="hud-speed" class="hud-value">۰ km/h</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-title">مسافت:</span>
+                    <span id="hud-distance" class="hud-value">۰ m</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Powerups Badges -->
+        <div id="powerup-bar"></div>
+
+        <!-- Neon Speedometer Dial Widget -->
+        <div id="speedometer-box">
+            <svg id="speedo-dial" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.1)" stroke-width="6" fill="none" />
+                <circle id="speedo-arc" cx="50" cy="50" r="42" stroke="#00f0ff" stroke-width="6" fill="none"
+                        stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(135 50 50)" />
+                <line id="speedo-needle" x1="50" y1="50" x2="50" y2="18" stroke="#ff007f" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            <div class="speedo-readout">
+                <span id="speedo-kmh">۰</span>
+                <span class="speedo-unit">KM/H</span>
+            </div>
+            <div id="speedo-gear" class="gear-badge">D1</div>
+        </div>
+
+        <!-- Touch / On-screen Button Controls -->
+        <div id="touch-controls">
+            <div class="lane-btns">
+                <button id="btn-left" class="control-btn">◀</button>
+                <button id="btn-right" class="control-btn">▶</button>
+            </div>
+            <div class="pedal-btns">
+                <button id="btn-brake" class="control-btn brake-btn">
+                    <span>🛑</span>
+                    <span>ترمز</span>
+                </button>
+                <button id="btn-gas" class="control-btn gas-btn">
+                    <span>🟢</span>
+                    <span>گاز</span>
+                </button>
+                <button id="btn-nitro" class="control-btn nitro-btn">
+                    <span>⚡</span>
+                    <span>نیترو</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- START MENU SCREEN -->
+        <div id="menu-screen" class="overlay-screen">
+            <div class="modal-card">
+                <h1 class="game-title">RADIN RACER 3D</h1>
+                <p class="subtitle">بازی رانندگی سه بعدی واقعی رادین ریسر</p>
+
+                <!-- Game Mode Selector -->
+                <div class="mode-selector">
+                    <div class="mode-btn active" data-mode="ARCADE">
+                        <span class="mode-icon">🏎️</span>
+                        <span class="mode-title">آرکید بی‌انتها</span>
+                    </div>
+                    <div class="mode-btn" data-mode="TIME_ATTACK">
+                        <span class="mode-icon">⏱️</span>
+                        <span class="mode-title">رکورد زمانی</span>
+                    </div>
+                    <div class="mode-btn" data-mode="ZEN">
+                        <span class="mode-icon">🧘</span>
+                        <span class="mode-title">حالت زِن</span>
+                    </div>
+                </div>
+                
+                <div class="controls-hint">
+                    <span>🎮 جابجایی لاین: <span class="key-cap">◀</span> <span class="key-cap">▶</span> یا <span class="key-cap">A</span> <span class="key-cap">D</span></span>
+                    <span>نیترو: <span class="key-cap">Space</span></span>
+                </div>
+
+                <button id="btn-start" class="btn-primary">🚀 شروع بازی سه‌بعدی</button>
+                <button id="btn-garage" class="btn-secondary">🏎️ گاراژ و تیونینگ</button>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settings-screen" class="overlay-screen hidden">
+            <div class="modal-card">
+                <h2 style="color:var(--secondary);">⚙️ تنظیمات گرافیک سه‌بعدی و فریم‌ریت</h2>
+
+                <div class="settings-group">
+                    <div class="setting-row">
+                        <span class="setting-label">کیفیت گرافیک سه‌بعدی:</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn" data-gfx="LOW">پایین</button>
+                            <button class="seg-btn" data-gfx="MEDIUM">متوسط</button>
+                            <button class="seg-btn active" data-gfx="ULTRA">Ultra 3D</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="setting-label">نرخ فریم (Target FPS):</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn" data-fps="30">30</button>
+                            <button class="seg-btn active" data-fps="60">60</button>
+                            <button class="seg-btn" data-fps="120">120</button>
+                            <button class="seg-btn" data-fps="MAX">حداکثر</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="setting-label">آهنگ پس‌زمینه (Jukebox):</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn active" data-track="0">تراک ۱</button>
+                            <button class="seg-btn" data-track="1">تراک ۲</button>
+                            <button class="seg-btn" data-track="2">تراک ۳</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="setting-label">افکت صوتی:</span>
+                        <button id="btn-sound-toggle-mod" class="btn-secondary" style="padding:4px 12px; font-size:0.8rem;">🔊 روشن</button>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="setting-label">لرزش دوربین سه‌بعدی:</span>
+                        <button id="btn-shake-toggle" class="btn-secondary" style="padding:4px 12px; font-size:0.8rem;">فعال</button>
+                    </div>
+                </div>
+
+                <button id="btn-close-settings" class="btn-primary">ذخیره و تایید</button>
+            </div>
+        </div>
+
+        <!-- GARAGE & TUNING MODAL -->
+        <div id="garage-screen" class="overlay-screen hidden">
+            <div class="modal-card" style="max-width:580px;">
+                <h2 style="color:var(--secondary);">🏎️ گاراژ و تیونینگ سه‌بعدی</h2>
+                <p class="subtitle">ماشین خود را انتخاب کنید و رنگ زیرنئون (Underglow) آن را تغییر دهید</p>
+
+                <!-- Car Selection -->
+                <div id="garage-cars-list" class="garage-cars"></div>
+
+                <!-- Underglow Tuning Section -->
+                <div class="tuning-box">
+                    <span style="font-weight:700; color:var(--secondary); font-size:0.9rem;">💡 رنگ نور نئون زیر ماشین (Underglow):</span>
+                    <div class="color-swatches">
+                        <div class="color-swatch active" data-underglow="#00f0ff" style="background:#00f0ff;"></div>
+                        <div class="color-swatch" data-underglow="#ff007f" style="background:#ff007f;"></div>
+                        <div class="color-swatch" data-underglow="#00ff66" style="background:#00ff66;"></div>
+                        <div class="color-swatch" data-underglow="#ffe600" style="background:#ffe600;"></div>
+                        <div class="color-swatch" data-underglow="#aa00ff" style="background:#aa00ff;"></div>
+                    </div>
+                </div>
+
+                <button id="btn-close-garage" class="btn-primary">بازگشت به منو</button>
+            </div>
+        </div>
+
+        <!-- PAUSE MODAL -->
+        <div id="pause-screen" class="overlay-screen hidden">
+            <div class="modal-card">
+                <h2 style="color:var(--secondary);">⏸️ توقف بازی</h2>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <button id="btn-resume" class="btn-primary">ادامه بازی</button>
+                    <button id="btn-open-settings-pause" class="btn-secondary">⚙️ تنظیمات گرافیک</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME OVER MODAL -->
+        <div id="gameover-screen" class="overlay-screen hidden">
+            <div class="modal-card">
+                <h2 style="color:var(--primary);">💥 پایان بازی!</h2>
+                <p id="gameover-reason" class="subtitle">تصادف شدید در جاده سه‌بعدی</p>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">امتیاز نهایی</span>
+                        <span id="final-score" class="stat-val" style="color:var(--accent);">۰</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">سکه‌های دریافتی</span>
+                        <span id="final-coins" class="stat-val" style="color:var(--secondary);">۰</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">مسافت طی‌شده</span>
+                        <span id="final-dist" class="stat-val">۰ m</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">رکورد کل</span>
+                        <span id="final-highscore" class="stat-val">۰</span>
+                    </div>
+                </div>
+
+                <button id="btn-restart" class="btn-primary">🔄 تلاش مجدد</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="audio.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

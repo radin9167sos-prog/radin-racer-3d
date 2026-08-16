@@ -1,0 +1,20 @@
+# Android & Gradle Build files
+android_project/.gradle/
+android_project/build/
+android_project/app/build/
+android_project/.idea/
+android_project/*.iml
+android_project/app/*.iml
+
+# System & OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+
+# Extracted temporary directories
+NeonRacer_AndroidStudio_Project_Extracted/
+NeonRacer_Android_Package_Extracted/

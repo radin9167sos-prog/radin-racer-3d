@@ -1,0 +1,15 @@
+<resources>
+    <style name="Theme.NeonRacer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#00f0ff</item>
+        <item name="colorPrimaryVariant">#0055ff</item>
+        <item name="colorOnPrimary">#000000</item>
+        <item name="android:statusBarColor">#090a15</item>
+    </style>
+
+    <style name="Theme.NeonRacer.Fullscreen" parent="Theme.NeonRacer">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+</resources>
