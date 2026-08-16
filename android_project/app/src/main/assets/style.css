@@ -611,7 +611,7 @@ body, html {
 }
 
 /* Top Buttons */
-#pause-btn, #settings-btn, #camera-btn {
+#pause-btn, #settings-btn, #camera-btn, #radio-btn {
     pointer-events: auto;
     position: absolute;
     top: 20px;
@@ -633,8 +633,9 @@ body, html {
 #pause-btn { left: 20px; width: 44px; }
 #settings-btn { left: 74px; width: 44px; }
 #camera-btn { left: 128px; padding: 0 14px; font-size: 0.82rem; font-weight: 700; gap: 5px; }
+#radio-btn { left: 245px; padding: 0 14px; font-size: 0.82rem; font-weight: 700; gap: 5px; border-color: #ffaa00; }
 
-#pause-btn:hover, #settings-btn:hover, #camera-btn:hover {
+#pause-btn:hover, #settings-btn:hover, #camera-btn:hover, #radio-btn:hover {
     transform: scale(1.08);
     border-color: var(--secondary);
     box-shadow: 0 0 15px var(--secondary);

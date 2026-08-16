@@ -804,6 +804,7 @@ class Game3D {
 
             if (e.code === 'KeyP' || e.code === 'Escape') this.togglePause();
             if (e.code === 'KeyC') this.toggleCameraMode();
+            if (e.code === 'KeyR') this.cycleRadioStation();
 
             if (this.state === 'PLAYING' && !this.player.isSpinning) {
                 if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.moveLane(-1);
@@ -815,6 +816,7 @@ class Game3D {
         window.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
 
         document.getElementById('camera-btn').addEventListener('click', () => this.toggleCameraMode());
+        document.getElementById('radio-btn').addEventListener('click', () => this.cycleRadioStation());
         document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(-1); });
         document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(1); });
         document.getElementById('btn-nitro').addEventListener('click', (e) => { e.preventDefault(); this.activateNitro(); });
@@ -1040,6 +1042,14 @@ class Game3D {
         };
 
         this.addFloatingText(names[this.cameraMode], this.canvas.width / 2, 160, '#00f0ff');
+        audioMgr.playCoin();
+    }
+
+    cycleRadioStation() {
+        const stationName = audioMgr.nextRadioStation();
+        const radioBtn = document.getElementById('radio-btn');
+        if (radioBtn) radioBtn.innerText = stationName;
+        this.addFloatingText('🎵 رادیو: ' + stationName, this.canvas.width / 2, 160, '#ffaa00');
         audioMgr.playCoin();
     }
 

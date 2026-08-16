@@ -220,22 +220,24 @@ class SoundManager {
         } catch (e) {}
     }
 
-    // Synthwave Jukebox BGM Generator
+    // Synthwave Jukebox BGM Generator with 4 Iranian Car Radio Stations
     startMusicJukebox() {
         if (!this.ctx || this.isMusicPlaying) return;
         this.isMusicPlaying = true;
         let step = 0;
 
-        const tracks = [
-            [110, 110, 146.83, 110, 130.81, 110, 164.81, 130.81], // Midnight Iran Drive
-            [98, 98, 123.47, 98, 146.83, 123.47, 110, 98],        // Shooti Overdrive
-            [130.81, 164.81, 196, 164.81, 146.83, 174.61, 220, 196] // Persian Speedway
+        this.radioStations = [
+            { name: '📻 رادیو شوتی ⚡', pattern: [110, 110, 146.83, 110, 130.81, 110, 164.81, 130.81] },
+            { name: '📻 پرشیا سانست 🌅', pattern: [98, 98, 123.47, 98, 146.83, 123.47, 110, 98] },
+            { name: '📻 رادیو اتوبان 🏎️', pattern: [130.81, 164.81, 196, 164.81, 146.83, 174.61, 220, 196] },
+            { name: '📻 کلاسیک جوانان 🎵', pattern: [164.81, 196, 220, 196, 164.81, 146.83, 130.81, 146.83] }
         ];
 
         this.bgmTimer = setInterval(() => {
             if (this.isMuted || this.musicVolume <= 0 || !this.ctx) return;
 
-            const pattern = tracks[this.currentTrack] || tracks[0];
+            const st = this.radioStations[this.currentTrack] || this.radioStations[0];
+            const pattern = st.pattern;
             const freq = pattern[step % pattern.length];
 
             const now = this.ctx.currentTime;
@@ -260,7 +262,17 @@ class SoundManager {
     }
 
     switchTrack(trackIdx) {
-        this.currentTrack = trackIdx;
+        this.currentTrack = trackIdx % 4;
+        return this.getCurrentRadioName();
+    }
+
+    nextRadioStation() {
+        this.currentTrack = (this.currentTrack + 1) % 4;
+        return this.getCurrentRadioName();
+    }
+
+    getCurrentRadioName() {
+        return (this.radioStations && this.radioStations[this.currentTrack]) ? this.radioStations[this.currentTrack].name : '📻 رادیو شوتی ⚡';
     }
 }
 
