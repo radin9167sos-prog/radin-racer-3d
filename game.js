@@ -559,29 +559,79 @@ class Game3D {
             });
 
         } else {
-            // PEUGEOT PARS ELX
-            const bodyGeo = new THREE.BoxGeometry(1.8, 0.52, 4.0);
+            // ==========================================
+            // ULTRA-DETAILED PEUGEOT PARS ELX 3D MODEL
+            // ==========================================
+            // Main Body Lower Frame
+            const bodyGeo = new THREE.BoxGeometry(1.82, 0.48, 4.05);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
-            bodyMesh.position.y = 0.45;
+            bodyMesh.position.y = 0.44;
             this.playerCarGroup.add(bodyMesh);
 
-            const cabinGeo = new THREE.BoxGeometry(1.46, 0.52, 2.0);
+            // Sloped Aerodynamic Front Bonnet / Hood (کاپوت شیب‌دار پارس)
+            const bonnetGeo = new THREE.BoxGeometry(1.78, 0.12, 1.25);
+            bonnetGeo.rotateX(0.06);
+            const bonnetMesh = new THREE.Mesh(bonnetGeo, carMat);
+            bonnetMesh.position.set(0, 0.62, -1.35);
+            this.playerCarGroup.add(bonnetMesh);
+
+            // Cabin Glass Roof Frame
+            const cabinGeo = new THREE.BoxGeometry(1.48, 0.52, 2.05);
             const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
             cabinMesh.position.set(0, 0.9, -0.1);
             this.playerCarGroup.add(cabinMesh);
 
-            const roofGeo = new THREE.BoxGeometry(1.38, 0.08, 1.3);
+            const roofGeo = new THREE.BoxGeometry(1.38, 0.08, 1.35);
             const roofMesh = new THREE.Mesh(roofGeo, carMat);
             roofMesh.position.set(0, 1.16, -0.1);
             this.playerCarGroup.add(roofMesh);
 
+            // Black Side Door Rubber Moldings (زه مشکی بغل درها)
+            const sideMoldingGeo = new THREE.BoxGeometry(1.86, 0.08, 2.8);
+            const sideMolding = new THREE.Mesh(sideMoldingGeo, darkTrimMat);
+            sideMolding.position.set(0, 0.42, -0.1);
+            this.playerCarGroup.add(sideMolding);
+
+            // Peugeot Pars Crystal Headlights with Amber Signal Bulbs (چراغ‌های کریستالی جلو)
+            const headGeo = new THREE.BoxGeometry(0.38, 0.16, 0.08);
+            const crystalHeadMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9, roughness: 0.1 });
+            [-0.62, 0.62].forEach(x => {
+                const hl = new THREE.Mesh(headGeo, crystalHeadMat);
+                hl.position.set(x, 0.52, -2.01);
+                this.playerCarGroup.add(hl);
+            });
+
+            // Center Peugeot Chrome Lion Grille Emblem (آرم شیر پژو)
+            const grilleBadgeGeo = new THREE.BoxGeometry(0.18, 0.12, 0.08);
+            const grilleBadge = new THREE.Mesh(grilleBadgeGeo, chromeMat);
+            grilleBadge.position.set(0, 0.52, -2.02);
+            this.playerCarGroup.add(grilleBadge);
+
+            // ELX Smoked Taillights (چراغ‌های دودی عقب ELX)
             const tailGeo = new THREE.BoxGeometry(0.48, 0.22, 0.08);
             [-0.58, 0.58].forEach(x => {
                 const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
-                tl.position.set(x, 0.54, 2.01);
+                tl.position.set(x, 0.54, 2.03);
                 this.playerCarGroup.add(tl);
                 this.taillights.push(tl);
             });
+
+            // Iranian License Plate Holder (پلاک ایران ۶۶)
+            const plateGeo = new THREE.BoxGeometry(0.45, 0.14, 0.06);
+            const plateMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const plate = new THREE.Mesh(plateGeo, plateMat);
+            plate.position.set(0, 0.42, 2.04);
+            this.playerCarGroup.add(plate);
+
+            // Dual Chrome Sport Exhaust Tips (اگزوز اسپرت)
+            const exhaustGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.3, 12);
+            exhaustGeo.rotateX(Math.PI / 2);
+            const exhaustL = new THREE.Mesh(exhaustGeo, chromeMat);
+            exhaustL.position.set(-0.55, 0.26, 2.05);
+            const exhaustR = new THREE.Mesh(exhaustGeo, chromeMat);
+            exhaustR.position.set(-0.43, 0.26, 2.05);
+            this.playerCarGroup.add(exhaustL);
+            this.playerCarGroup.add(exhaustR);
         }
 
         // ==========================================

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v11-style1-garage-showcase';
+const CACHE_NAME = 'iranian-highway-v12-photoreal-car-body';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
