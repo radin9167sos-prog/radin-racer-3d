@@ -646,7 +646,7 @@ class Game3D {
             this.rainSystem.visible = (this.weather === 'RAIN');
         }
 
-        // Speed & Throttle/Brake Physics Logic (Gentle & Controlled Acceleration)
+        // Speed & Throttle/Brake Physics Logic (Natural, Responsive Car Physics)
         let targetSpeed = this.baseSpeed;
 
         const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
@@ -654,32 +654,32 @@ class Game3D {
 
         if (this.player.isNitroActive) {
             targetSpeed = 32.0;
-            this.speed = targetSpeed;
+            this.speed += (targetSpeed - this.speed) * dt * 5.0; // Instant torque punch
             this.player.nitroTime--;
             this.player.nitroGauge = Math.max(0, (this.player.nitroTime / 180) * 100);
 
-            this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, 70, 0.08);
+            this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, 72, 0.1);
             this.camera.updateProjectionMatrix();
 
             if (this.player.nitroTime <= 0) this.player.isNitroActive = false;
         } else {
-            this.baseSpeed = Math.min(18, this.baseSpeed + dt * 0.05);
+            this.baseSpeed = Math.min(16.0, this.baseSpeed + dt * 0.03);
 
-            let accelRate = 0.15;
+            let accelRate = 1.8;
             if (isGasPressed) {
-                targetSpeed = 23.0; // Gentle max speed
-                accelRate = 0.22; // Very slow, gradual, smooth acceleration curve
+                targetSpeed = 24.0; // ~230 km/h top speed
+                accelRate = 2.4;    // Smooth, realistic high-torque acceleration
             } else if (isBrakePressed) {
-                targetSpeed = 4.0; // Gentle braking
-                accelRate = 1.0; 
+                targetSpeed = 4.5;  // ~45 km/h low braking speed
+                accelRate = 4.5;    // Responsive braking
             } else {
                 targetSpeed = this.baseSpeed;
-                accelRate = 0.15; 
+                accelRate = 1.8;    // Natural coasting deceleration
             }
 
             this.speed += (targetSpeed - this.speed) * dt * accelRate;
 
-            const targetFov = 60 + (this.speed / 30) * 8;
+            const targetFov = 58 + (this.speed / 30) * 12;
             this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, 0.08);
             this.camera.updateProjectionMatrix();
 
@@ -695,15 +695,15 @@ class Game3D {
             this.taillights.forEach(l => l.material.color.setHex(glowColor));
         }
 
-        audioMgr.updateEnginePitch(this.speed / this.maxSpeed);
+        audioMgr.updateEnginePitch(this.speed / 32.0);
 
-        this.distance += (this.speed * dt * 2);
+        this.distance += (this.speed * dt * 2.5);
         const scoreMultiplier = (this.player.selectedCar === 1) ? 1.2 : 1.0;
         this.score += (this.speed * dt * 10) * scoreMultiplier;
 
-        // 3D Road Line Animations
+        // 3D Road Line Animations (Uniform 10.0 Z Speed Factor)
         this.laneLinesGroup.children.forEach(line => {
-            line.position.z += this.speed * dt * 12;
+            line.position.z += this.speed * dt * 10.0;
             if (line.position.z > 15) line.position.z -= 410;
         });
 
@@ -729,8 +729,10 @@ class Game3D {
 
         this.shieldMesh.visible = this.player.hasShield;
 
-        // 3D Camera Chase Position
+        // 3D Camera Chase Position & Dynamic Pitch on Acceleration/Braking
         this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.1);
+        const pitchTarget = isGasPressed ? -0.03 : (isBrakePressed ? 0.04 : 0.0);
+        this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
 
         // Spawn 3D Obstacles
         const now = performance.now();
@@ -749,10 +751,10 @@ class Game3D {
             this.lastHazardTime = now;
         }
 
-        // Update 3D Traffic Obstacles
+        // Update 3D Traffic Obstacles (Uniform 10.0 Z Speed Factor)
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
-            obs.z += (this.speed - obs.speed) * dt * 8;
+            obs.z += (this.speed - obs.speed) * dt * 10.0;
             obs.mesh.position.z = obs.z;
 
             // Police Lights Blinking
@@ -792,10 +794,10 @@ class Game3D {
             }
         }
 
-        // Update 3D Collectibles
+        // Update 3D Collectibles (Uniform 10.0 Z Speed Factor)
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
             const item = this.collectibles[i];
-            item.z += this.speed * dt * 8;
+            item.z += this.speed * dt * 10.0;
             item.mesh.position.z = item.z;
             item.mesh.rotation.y += dt * 3; // 3D Coin Rotation
 
@@ -830,10 +832,10 @@ class Game3D {
             }
         }
 
-        // Update 3D Hazards (Oil)
+        // Update 3D Hazards (Oil - Uniform 10.0 Z Speed Factor)
         for (let i = this.hazards.length - 1; i >= 0; i--) {
             const h = this.hazards[i];
-            h.z += this.speed * dt * 8;
+            h.z += this.speed * dt * 10.0;
             h.mesh.position.z = h.z;
 
             if (Math.abs(h.z - this.player.z) < 2.0 && Math.abs(h.x - this.player.x) < 1.5) {
