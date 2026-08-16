@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Vazirmatn:wght@400;600;800&display=swap');
 
 :root {
-    --primary: #ff007f;
-    --secondary: #00f0ff;
-    --accent: #ffe600;
-    --success: #00ff66;
-    --dark-bg: #090a15;
-    --card-bg: rgba(18, 20, 42, 0.88);
-    --neon-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
-    --pink-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+    --primary: #ff4500;
+    --secondary: #00bcd4;
+    --accent: #ffb700;
+    --success: #2e7d32;
+    --dark-bg: #121520;
+    --card-bg: rgba(18, 22, 34, 0.92);
+    --neon-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+    --pink-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
 }
 
 * {

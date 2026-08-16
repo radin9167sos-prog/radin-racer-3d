@@ -117,51 +117,51 @@ class Game3D {
     }
 
     // ==========================================
-    // THREE.JS 3D ENGINE INITIALIZATION (Iranian Highway Environment)
+    // THREE.JS 3D ENGINE INITIALIZATION (Photorealistic Environment)
     // ==========================================
     initThreeJS() {
-        // 1. Scene & Atmospheric Sky Fog
+        // 1. Scene & Natural Atmospheric Sky Fog (Realistic Daylight/Dusk Horizon)
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x080a18);
-        this.scene.fog = new THREE.FogExp2(0x080a18, 0.005);
+        this.scene.background = new THREE.Color(0x7090b4);
+        this.scene.fog = new THREE.FogExp2(0x7090b4, 0.0035);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 1.08, 0.1);
         this.camera.lookAt(0, 0.98, -40);
 
-        // 3. WebGL Renderer
+        // 3. WebGL Renderer with Realistic Shading
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: false,
+            antialias: true,
             powerPreference: "high-performance",
             precision: "mediump"
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(1.0);
 
-        // 4. Realistic Lighting & Moonlight
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
-        this.scene.add(ambientLight);
+        // 4. Natural Daylight Sunlight & Sky Hemisphere Lighting
+        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x443322, 0.65);
+        this.scene.add(hemiLight);
 
-        const moonLight = new THREE.DirectionalLight(0xaaddee, 0.85);
-        moonLight.position.set(20, 50, -30);
-        this.scene.add(moonLight);
+        const sunLight = new THREE.DirectionalLight(0xfffaeb, 1.25);
+        sunLight.position.set(50, 80, -40);
+        this.scene.add(sunLight);
 
-        // 5. Realistic 5-Lane Highway Asphalt Road
+        // 5. Realistic 5-Lane Highway Charcoal Asphalt Road
         const roadGeo = new THREE.PlaneGeometry(24, 600);
         const roadMat = new THREE.MeshStandardMaterial({
-            color: 0x141624,
-            roughness: 0.85,
-            metalness: 0.15
+            color: 0x2a2c36,
+            roughness: 0.8,
+            metalness: 0.1
         });
         this.roadMesh = new THREE.Mesh(roadGeo, roadMat);
         this.roadMesh.rotation.x = -Math.PI / 2;
         this.roadMesh.position.z = -200;
         this.scene.add(this.roadMesh);
 
-        // Realistic Road Shoulders & Terrain
-        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x060c0d, roughness: 0.95 });
+        // Realistic Roadside Soil Terrain (Khaki / Soil Ground)
+        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x444034, roughness: 0.95 });
         const leftTerrainGeo = new THREE.PlaneGeometry(160, 600);
         const leftTerrain = new THREE.Mesh(leftTerrainGeo, terrainMat);
         leftTerrain.rotation.x = -Math.PI / 2;
@@ -174,9 +174,9 @@ class Game3D {
         rightTerrain.position.set(92, -0.05, -200);
         this.scene.add(rightTerrain);
 
-        // Solid White Outer Shoulder Lines
+        // Solid Highway Yellow Shoulder Lines
         const edgeLineGeo = new THREE.BoxGeometry(0.25, 0.04, 600);
-        const edgeLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const edgeLineMat = new THREE.MeshBasicMaterial({ color: 0xe6b800 });
         
         const leftEdge = new THREE.Mesh(edgeLineGeo, edgeLineMat);
         leftEdge.position.set(-10.8, 0.02, -200);
@@ -186,8 +186,8 @@ class Game3D {
         rightEdge.position.set(10.8, 0.02, -200);
         this.scene.add(rightEdge);
 
-        // Realistic Metallic W-Beam Highway Guardrails
-        const guardrailMat = new THREE.MeshStandardMaterial({ color: 0x778899, metalness: 0.85, roughness: 0.25 });
+        // Realistic W-Beam Galvanized Steel Guardrails
+        const guardrailMat = new THREE.MeshStandardMaterial({ color: 0x9fb1c2, metalness: 0.85, roughness: 0.25 });
         const railGeo = new THREE.BoxGeometry(0.2, 0.45, 600);
 
         const leftRail = new THREE.Mesh(railGeo, guardrailMat);
@@ -197,6 +197,18 @@ class Game3D {
         const rightRail = new THREE.Mesh(railGeo, guardrailMat);
         rightRail.position.set(11.4, 0.5, -200);
         this.scene.add(rightRail);
+
+        // Concrete Jersey Barriers (مانع نیوجرسی بتنی)
+        const jerseyMat = new THREE.MeshStandardMaterial({ color: 0x80858e, roughness: 0.9 });
+        const jerseyGeo = new THREE.BoxGeometry(0.4, 0.6, 600);
+
+        const leftJersey = new THREE.Mesh(jerseyGeo, jerseyMat);
+        leftJersey.position.set(-12.0, 0.3, -200);
+        this.scene.add(leftJersey);
+
+        const rightJersey = new THREE.Mesh(jerseyGeo, jerseyMat);
+        rightJersey.position.set(12.0, 0.3, -200);
+        this.scene.add(rightJersey);
 
         // Support Posts along Guardrails
         const postGeo = new THREE.BoxGeometry(0.25, 0.8, 0.25);
@@ -210,7 +222,7 @@ class Game3D {
             this.scene.add(postR);
         }
 
-        // Realistic White Dashed Lane Divider Lines (4 Lines separating 5 Lanes)
+        // Realistic White Dashed Highway Lane Lines
         this.laneLinesGroup = new THREE.Group();
         const lineDividerPosX = [-5.4, -1.8, 1.8, 5.4];
 

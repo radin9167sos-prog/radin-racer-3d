@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=3.0.0">
+    <link rel="stylesheet" href="style.css?v=4.0.0">
     <!-- Three.js 3D WebGL Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
@@ -20,7 +20,7 @@
                 for (let r of regs) r.update();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=3.0.0', { updateViaCache: 'none' });
+                navigator.serviceWorker.register('./sw.js?v=4.0.0', { updateViaCache: 'none' });
             });
         }
     </script>
@@ -265,7 +265,7 @@
         </div>
     </div>
 
-    <script src="audio.js?v=3.0.0"></script>
-    <script src="game.js?v=3.0.0"></script>
+    <script src="audio.js?v=4.0.0"></script>
+    <script src="game.js?v=4.0.0"></script>
 </body>
 </html>

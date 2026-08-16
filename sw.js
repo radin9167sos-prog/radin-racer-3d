@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v3-master';
+const CACHE_NAME = 'iranian-highway-v4-daylight-photoreal';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
@@ -15,7 +15,7 @@ self.addEventListener('activate', (e) => {
     self.clients.claim();
 });
 
-// Network First Strategy to ensure users ALWAYS get the fresh update from GitHub Pages
+// Always Fetch Fresh from Server (Network First)
 self.addEventListener('fetch', (e) => {
     e.respondWith(
         fetch(e.request).then((response) => {
