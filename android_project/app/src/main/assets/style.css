@@ -610,33 +610,45 @@ body, html {
     color: var(--secondary);
 }
 
-/* Top Buttons */
-#pause-btn, #settings-btn, #camera-btn, #radio-btn {
+/* Top Responsive Controls Bar */
+#top-controls-bar {
     pointer-events: auto;
     position: absolute;
-    top: 20px;
+    top: 14px;
+    left: 14px;
     z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 28px);
+    flex-wrap: wrap;
+}
+
+#pause-btn, #settings-btn, #camera-btn, #radio-btn {
+    pointer-events: auto;
     background: var(--card-bg);
     border: 1px solid rgba(0, 240, 255, 0.4);
-    height: 44px;
+    height: 40px;
     border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     transition: all 0.2s ease;
     color: #ffffff;
+    padding: 0 12px;
+    font-weight: 700;
 }
 
-#pause-btn { left: 20px; width: 44px; }
-#settings-btn { left: 74px; width: 44px; }
-#camera-btn { left: 128px; padding: 0 14px; font-size: 0.82rem; font-weight: 700; gap: 5px; }
-#radio-btn { left: 245px; padding: 0 14px; font-size: 0.82rem; font-weight: 700; gap: 5px; border-color: #ffaa00; }
+#pause-btn { min-width: 40px; padding: 0; }
+#settings-btn { min-width: 40px; padding: 0; }
+#camera-btn { gap: 5px; }
+#radio-btn { gap: 5px; border-color: #ffaa00; font-size: 0.8rem; }
 
 #pause-btn:hover, #settings-btn:hover, #camera-btn:hover, #radio-btn:hover {
-    transform: scale(1.08);
+    transform: scale(1.05);
     border-color: var(--secondary);
     box-shadow: 0 0 15px var(--secondary);
 }
@@ -804,4 +816,66 @@ body, html {
 .menu-btn-row {
     display: flex;
     gap: 10px;
+}
+
+/* Mobile Responsive Layout Styles */
+@media (max-width: 768px) {
+    .garage-menu-overlay {
+        padding: 10px;
+    }
+
+    .menu-top-bar {
+        padding: 8px 14px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .menu-brand {
+        font-size: 1.1rem;
+    }
+
+    .driver-stats-pill {
+        font-size: 0.88rem;
+        gap: 8px;
+    }
+
+    .garage-showcase-card {
+        width: 100%;
+        max-width: 100%;
+        transform: none;
+        padding: 16px;
+        margin-bottom: 0;
+        max-height: 75vh;
+        overflow-y: auto;
+    }
+
+    .mode-selector {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .mode-btn {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+
+    #hud {
+        top: 60px;
+        left: 10px;
+        right: 10px;
+        transform: none;
+        width: calc(100% - 20px);
+    }
+
+    .hud-card {
+        padding: 6px 10px;
+    }
+
+    .hud-title {
+        font-size: 0.72rem;
+    }
+
+    .hud-value {
+        font-size: 1.1rem;
+    }
 }

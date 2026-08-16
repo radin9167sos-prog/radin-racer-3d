@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v12-photoreal-car-body';
+const CACHE_NAME = 'iranian-highway-v13-mobile-responsive-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

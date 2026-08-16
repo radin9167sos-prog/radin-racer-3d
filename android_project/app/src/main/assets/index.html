@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=12.0.0">
+    <link rel="stylesheet" href="style.css?v=13.0.0">
     <!-- Three.js 3D WebGL Engine & PeerJS WebRTC -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -21,7 +21,7 @@
                 for (let r of regs) r.update();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=12.0.0', { updateViaCache: 'none' });
+                navigator.serviceWorker.register('./sw.js?v=13.0.0', { updateViaCache: 'none' });
             });
         }
     </script>
@@ -31,11 +31,13 @@
         <!-- Main 3D Canvas -->
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Top Controls Header -->
-        <button id="pause-btn" title="توقف بازی">⏸️</button>
-        <button id="settings-btn" title="تنظیمات گرافیک و بازی">⚙️</button>
-        <button id="camera-btn" title="تغییر نمای دوربین (داخل کابین / بیرون)">🎥 نمای دوربین</button>
-        <button id="radio-btn" title="تغییر ایستگاه رادیوی خودرو (کلید R)">📻 رادیو شوتی ⚡</button>
+        <!-- Top Controls Bar -->
+        <div id="top-controls-bar">
+            <button id="pause-btn" title="توقف بازی">⏸️</button>
+            <button id="settings-btn" title="تنظیمات گرافیک و بازی">⚙️</button>
+            <button id="camera-btn" title="تغییر نمای دوربین">🎥 دوربین</button>
+            <button id="radio-btn" title="تغییر ایستگاه رادیوی خودرو">📻 رادیو شوتی ⚡</button>
+        </div>
 
         <!-- HUD Header Overlay -->
         <div id="hud">
@@ -332,7 +334,7 @@
         </div>
     </div>
 
-    <script src="audio.js?v=12.0.0"></script>
-    <script src="game.js?v=12.0.0"></script>
+    <script src="audio.js?v=13.0.0"></script>
+    <script src="game.js?v=13.0.0"></script>
 </body>
 </html>
