@@ -114,17 +114,17 @@ class Game3D {
     // THREE.JS 3D ENGINE INITIALIZATION
     // ==========================================
     initThreeJS() {
-        // 1. Scene
+        // 1. Scene & Atmospheric Midnight Fog
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x060714);
-        this.scene.fog = new THREE.FogExp2(0x060714, 0.008);
+        this.scene.background = new THREE.Color(0x080a18);
+        this.scene.fog = new THREE.FogExp2(0x080a18, 0.005);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 4.2, 9);
         this.camera.lookAt(0, 1.2, -40);
 
-        // 3. WebGL Renderer with High-Performance Settings
+        // 3. WebGL Renderer
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: false,
@@ -132,64 +132,226 @@ class Game3D {
             precision: "mediump"
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(1.0); // 1.0 DPR for rock-solid 60 FPS performance
+        this.renderer.setPixelRatio(1.0);
 
-        // 4. 3D Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        // 4. Realistic Lighting & Moonlight
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
         this.scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0x00f0ff, 0.8);
-        dirLight.position.set(10, 30, 20);
-        this.scene.add(dirLight);
+        const moonLight = new THREE.DirectionalLight(0xaaddee, 0.85);
+        moonLight.position.set(20, 50, -30);
+        this.scene.add(moonLight);
 
-        // 5. 3D Infinite 5-Lane Road Plane
-        const roadGeo = new THREE.PlaneGeometry(22, 600);
-        const roadMat = new THREE.MeshBasicMaterial({ color: 0x0c0e20 });
+        // 5. Realistic 5-Lane Highway Asphalt Road
+        const roadGeo = new THREE.PlaneGeometry(24, 600);
+        const roadMat = new THREE.MeshStandardMaterial({
+            color: 0x141624,
+            roughness: 0.85,
+            metalness: 0.15
+        });
         this.roadMesh = new THREE.Mesh(roadGeo, roadMat);
         this.roadMesh.rotation.x = -Math.PI / 2;
         this.roadMesh.position.z = -200;
         this.scene.add(this.roadMesh);
 
-        // 3D Neon Borders (Left & Right for 5-Lane Highway)
-        const borderGeo = new THREE.BoxGeometry(0.3, 0.2, 600);
-        const borderMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+        // Realistic Road Shoulders & Side Terrain (Grass / Ground)
+        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x060c0d, roughness: 0.95 });
+        const leftTerrainGeo = new THREE.PlaneGeometry(160, 600);
+        const leftTerrain = new THREE.Mesh(leftTerrainGeo, terrainMat);
+        leftTerrain.rotation.x = -Math.PI / 2;
+        leftTerrain.position.set(-92, -0.05, -200);
+        this.scene.add(leftTerrain);
+
+        const rightTerrainGeo = new THREE.PlaneGeometry(160, 600);
+        const rightTerrain = new THREE.Mesh(rightTerrainGeo, terrainMat);
+        rightTerrain.rotation.x = -Math.PI / 2;
+        rightTerrain.position.set(92, -0.05, -200);
+        this.scene.add(rightTerrain);
+
+        // Solid White Outer Shoulder Lines
+        const edgeLineGeo = new THREE.BoxGeometry(0.25, 0.04, 600);
+        const edgeLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         
-        this.leftBorder = new THREE.Mesh(borderGeo, borderMat);
-        this.leftBorder.position.set(-11.0, 0.1, -200);
-        this.scene.add(this.leftBorder);
+        const leftEdge = new THREE.Mesh(edgeLineGeo, edgeLineMat);
+        leftEdge.position.set(-10.8, 0.02, -200);
+        this.scene.add(leftEdge);
 
-        this.rightBorder = new THREE.Mesh(borderGeo, borderMat);
-        this.rightBorder.position.set(11.0, 0.1, -200);
-        this.scene.add(this.rightBorder);
+        const rightEdge = new THREE.Mesh(edgeLineGeo, edgeLineMat);
+        rightEdge.position.set(10.8, 0.02, -200);
+        this.scene.add(rightEdge);
 
-        // 3D Dashed Lane Divider Lines (4 Lines separating 5 Lanes)
+        // Realistic Metallic W-Beam Highway Guardrails
+        const guardrailMat = new THREE.MeshStandardMaterial({ color: 0x778899, metalness: 0.85, roughness: 0.25 });
+        const railGeo = new THREE.BoxGeometry(0.2, 0.45, 600);
+
+        const leftRail = new THREE.Mesh(railGeo, guardrailMat);
+        leftRail.position.set(-11.4, 0.5, -200);
+        this.scene.add(leftRail);
+
+        const rightRail = new THREE.Mesh(railGeo, guardrailMat);
+        rightRail.position.set(11.4, 0.5, -200);
+        this.scene.add(rightRail);
+
+        // Support Posts along Guardrails
+        const postGeo = new THREE.BoxGeometry(0.25, 0.8, 0.25);
+        for (let z = 10; z > -450; z -= 15) {
+            const postL = new THREE.Mesh(postGeo, guardrailMat);
+            postL.position.set(-11.4, 0.4, z);
+            this.scene.add(postL);
+
+            const postR = new THREE.Mesh(postGeo, guardrailMat);
+            postR.position.set(11.4, 0.4, z);
+            this.scene.add(postR);
+        }
+
+        // Realistic White Dashed Lane Divider Lines (4 Lines separating 5 Lanes)
         this.laneLinesGroup = new THREE.Group();
         const lineDividerPosX = [-5.4, -1.8, 1.8, 5.4];
 
         for (let z = 10; z > -400; z -= 12) {
-            const lineGeo = new THREE.BoxGeometry(0.15, 0.05, 5);
-            const lineMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
+            const lineGeo = new THREE.BoxGeometry(0.18, 0.04, 4.5);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             
             lineDividerPosX.forEach(posX => {
                 const divider = new THREE.Mesh(lineGeo, lineMat);
-                divider.position.set(posX, 0.05, z);
+                divider.position.set(posX, 0.03, z);
                 this.laneLinesGroup.add(divider);
             });
         }
         this.scene.add(this.laneLinesGroup);
 
-        // 3D Sun in Horizon
-        const sunGeo = new THREE.SphereGeometry(18, 32, 32);
-        const sunMat = new THREE.MeshBasicMaterial({ color: 0xff007f });
-        this.sunMesh = new THREE.Mesh(sunGeo, sunMat);
-        this.sunMesh.position.set(0, 10, -280);
-        this.scene.add(this.sunMesh);
+        // 3D Street Lamp Poles with Warm Amber Downlights
+        this.streetLightsGroup = new THREE.Group();
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x222533, metalness: 0.7, roughness: 0.3 });
+        const lampLightMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
+
+        for (let z = 20; z > -420; z -= 35) {
+            [-12.5, 12.5].forEach(xPos => {
+                const poleGroup = new THREE.Group();
+                
+                // Vertical Shaft
+                const shaftGeo = new THREE.CylinderGeometry(0.12, 0.18, 7.0, 10);
+                const shaft = new THREE.Mesh(shaftGeo, poleMat);
+                shaft.position.y = 3.5;
+                poleGroup.add(shaft);
+
+                // Curved Top Arm
+                const armGeo = new THREE.BoxGeometry(1.8, 0.1, 0.1);
+                const arm = new THREE.Mesh(armGeo, poleMat);
+                const armDir = xPos < 0 ? 1 : -1;
+                arm.position.set(armDir * 0.8, 6.8, 0);
+                poleGroup.add(arm);
+
+                // Lamp Light Fixture Box
+                const headGeo = new THREE.BoxGeometry(0.6, 0.15, 0.3);
+                const head = new THREE.Mesh(headGeo, lampLightMat);
+                head.position.set(armDir * 1.5, 6.7, 0);
+                poleGroup.add(head);
+
+                poleGroup.position.set(xPos, 0, z);
+                this.streetLightsGroup.add(poleGroup);
+            });
+        }
+        this.scene.add(this.streetLightsGroup);
+
+        // 3D Roadside Trees & Vegetation
+        this.roadsideTreesGroup = new THREE.Group();
+        const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 3.5, 8);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
+        const foliageGeo = new THREE.ConeGeometry(2.2, 5.0, 8);
+        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x0a2e18, roughness: 0.8 });
+
+        for (let z = 10; z > -420; z -= 24) {
+            [-17.0, 17.0].forEach(xPos => {
+                const treeGroup = new THREE.Group();
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 1.75;
+                const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+                foliage.position.y = 5.2;
+
+                treeGroup.add(trunk);
+                treeGroup.add(foliage);
+                treeGroup.position.set(xPos + (Math.random() - 0.5) * 3, 0, z);
+                this.roadsideTreesGroup.add(treeGroup);
+            });
+        }
+        this.scene.add(this.roadsideTreesGroup);
+
+        // 3D Overhead Highway Directional Gantries
+        this.highwayGantriesGroup = new THREE.Group();
+        const gantryMat = new THREE.MeshStandardMaterial({ color: 0x333748, metalness: 0.8, roughness: 0.2 });
+        const gantrySignMat = new THREE.MeshStandardMaterial({ color: 0x006633, metalness: 0.3, roughness: 0.5 });
+
+        [-120, -320].forEach(zPos => {
+            const gantry = new THREE.Group();
+            
+            // Left & Right Support Towers
+            const towerGeo = new THREE.BoxGeometry(0.5, 9.0, 0.5);
+            const towerL = new THREE.Mesh(towerGeo, gantryMat);
+            towerL.position.set(-12.8, 4.5, 0);
+            const towerR = new THREE.Mesh(towerGeo, gantryMat);
+            towerR.position.set(12.8, 4.5, 0);
+            gantry.add(towerL);
+            gantry.add(towerR);
+
+            // Overhead Crossbar Beam
+            const beamGeo = new THREE.BoxGeometry(26.0, 0.6, 0.6);
+            const beam = new THREE.Mesh(beamGeo, gantryMat);
+            beam.position.set(0, 8.8, 0);
+            gantry.add(beam);
+
+            // Green Highway Destination Signs
+            const signGeo = new THREE.BoxGeometry(7.0, 2.2, 0.1);
+            const signL = new THREE.Mesh(signGeo, gantrySignMat);
+            signL.position.set(-4.5, 7.5, 0.3);
+            const signR = new THREE.Mesh(signGeo, gantrySignMat);
+            signR.position.set(4.5, 7.5, 0.3);
+            gantry.add(signL);
+            gantry.add(signR);
+
+            gantry.position.z = zPos;
+            this.highwayGantriesGroup.add(gantry);
+        });
+        this.scene.add(this.highwayGantriesGroup);
+
+        // 3D City Horizon Skyscrapers & Buildings
+        this.buildCitySkyline();
 
         // 6. Build Player 3D Car
         this.buildPlayer3DCar();
 
         // 7. 3D Rain Particle System
         this.init3DRain();
+    }
+
+    buildCitySkyline() {
+        this.citySkylineGroup = new THREE.Group();
+        const bldgMat = new THREE.MeshStandardMaterial({ color: 0x0c0e1e, roughness: 0.6, metalness: 0.4 });
+        const windowColors = [0xffaa22, 0x00f0ff, 0xff0055, 0xffffff];
+
+        for (let i = 0; i < 35; i++) {
+            const width = 12 + Math.random() * 18;
+            const height = 35 + Math.random() * 80;
+            const depth = 15 + Math.random() * 20;
+
+            const bldgGeo = new THREE.BoxGeometry(width, height, depth);
+            const building = new THREE.Mesh(bldgGeo, bldgMat);
+
+            const sideSign = (i % 2 === 0) ? 1 : -1;
+            const posX = sideSign * (35 + Math.random() * 120);
+            const posZ = -260 - Math.random() * 140;
+
+            building.position.set(posX, height / 2 - 5, posZ);
+
+            // Add Glowing Window Panels onto Buildings
+            const winMat = new THREE.MeshBasicMaterial({ color: windowColors[i % windowColors.length] });
+            const winGeo = new THREE.BoxGeometry(width * 0.7, height * 0.6, depth + 0.2);
+            const winMesh = new THREE.Mesh(winGeo, winMat);
+            building.add(winMesh);
+
+            this.citySkylineGroup.add(building);
+        }
+        this.scene.add(this.citySkylineGroup);
     }
 
     buildPlayer3DCar() {
@@ -706,6 +868,30 @@ class Game3D {
             line.position.z += this.speed * dt * 10.0;
             if (line.position.z > 15) line.position.z -= 410;
         });
+
+        // 3D Street Light Poles Animation
+        if (this.streetLightsGroup) {
+            this.streetLightsGroup.children.forEach(pole => {
+                pole.position.z += this.speed * dt * 10.0;
+                if (pole.position.z > 20) pole.position.z -= 440;
+            });
+        }
+
+        // 3D Roadside Trees Animation
+        if (this.roadsideTreesGroup) {
+            this.roadsideTreesGroup.children.forEach(tree => {
+                tree.position.z += this.speed * dt * 10.0;
+                if (tree.position.z > 20) tree.position.z -= 440;
+            });
+        }
+
+        // 3D Overhead Highway Gantries Animation
+        if (this.highwayGantriesGroup) {
+            this.highwayGantriesGroup.children.forEach(gantry => {
+                gantry.position.z += this.speed * dt * 10.0;
+                if (gantry.position.z > 20) gantry.position.z -= 400;
+            });
+        }
 
         // Smooth 3D Player Lane Lerping
         const targetX = this.laneX[this.targetLane];
