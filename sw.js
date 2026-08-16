@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v4-daylight-photoreal';
+const CACHE_NAME = 'iranian-highway-v6-online-menu';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

@@ -836,6 +836,23 @@ class Game3D {
         document.getElementById('btn-start').addEventListener('click', () => { audioMgr.init(); this.startGame(); });
         document.getElementById('btn-restart').addEventListener('click', () => { this.startGame(); });
 
+        // Game Mode Selector Click Handlers
+        document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const mode = e.currentTarget.dataset.mode;
+                document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+
+                if (mode === 'ONLINE') {
+                    this.uiMenu.classList.add('hidden');
+                    this.uiMultiplayer.classList.remove('hidden');
+                    this.initHostRoom();
+                } else {
+                    this.gameMode = mode;
+                }
+            });
+        });
+
         // Online Multiplayer Button Handlers
         document.getElementById('btn-multiplayer').addEventListener('click', () => {
             this.uiMenu.classList.add('hidden');
