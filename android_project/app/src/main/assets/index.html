@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radin Racer 3D - بازی رانندگی سه‌بعدی رادین ریسر</title>
-    <meta name="description" content="بازی آنلاین رانندگی سه‌بعدی رادین ریسر با رندرینگ WebGL، تویوتا سوپرا سه‌بعدی، تعقیب پلیس و تیونینگ.">
+    <title>سلطان جاده ۳بعدی - بازی رانندگی ایرانی</title>
+    <meta name="description" content="بازی رانندگی واقعی سه‌بعدی ایرانی با نمای داخل کابین پژو پارس، سیستم شوتی، زانتیا، پیکان جوانان و آزادراه ایرانی.">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,12 +26,12 @@
         <!-- Main 3D Canvas -->
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Top Left Controls -->
+        <!-- Top Controls Header -->
         <button id="pause-btn" title="توقف بازی">⏸️</button>
         <button id="settings-btn" title="تنظیمات گرافیک و بازی">⚙️</button>
         <button id="camera-btn" title="تغییر نمای دوربین (داخل کابین / بیرون)">🎥 نمای دوربین</button>
 
-        <!-- HUD Header overlay -->
+        <!-- HUD Header Overlay -->
         <div id="hud">
             <div class="hud-group">
                 <div class="hud-card">
@@ -63,7 +63,7 @@
         <!-- Active Powerups Badges -->
         <div id="powerup-bar"></div>
 
-        <!-- Neon Speedometer Dial Widget -->
+        <!-- Speedometer Gauge Widget -->
         <div id="speedometer-box">
             <svg id="speedo-dial" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.1)" stroke-width="6" fill="none" />
@@ -78,7 +78,7 @@
             <div id="speedo-gear" class="gear-badge">D1</div>
         </div>
 
-        <!-- Touch / On-screen Button Controls -->
+        <!-- On-Screen Controls for Mobile & Touch -->
         <div id="touch-controls">
             <div class="lane-btns">
                 <button id="btn-left" class="control-btn">◀</button>
@@ -103,8 +103,8 @@
         <!-- START MENU SCREEN -->
         <div id="menu-screen" class="overlay-screen">
             <div class="modal-card">
-                <h1 class="game-title">RADIN RACER 3D</h1>
-                <p class="subtitle">بازی رانندگی سه بعدی واقعی رادین ریسر</p>
+                <h1 class="game-title">سلطان جاده ۳بعدی</h1>
+                <p class="subtitle">بازی رانندگی واقعی ایرانی با نمای داخل کابین و آزادراه</p>
 
                 <!-- Game Mode Selector -->
                 <div class="mode-selector">
@@ -124,18 +124,19 @@
                 
                 <div class="controls-hint">
                     <span>🎮 جابجایی لاین: <span class="key-cap">◀</span> <span class="key-cap">▶</span> یا <span class="key-cap">A</span> <span class="key-cap">D</span></span>
+                    <span>تغییر دوربین: <span class="key-cap">C</span></span>
                     <span>نیترو: <span class="key-cap">Space</span></span>
                 </div>
 
-                <button id="btn-start" class="btn-primary">🚀 شروع بازی سه‌بعدی</button>
-                <button id="btn-garage" class="btn-secondary">🏎️ گاراژ و تیونینگ</button>
+                <button id="btn-start" class="btn-primary">🚀 شروع رانندگی سه‌بعدی</button>
+                <button id="btn-garage" class="btn-secondary">🏎️ گاراژ و تیونینگ ایرانی</button>
             </div>
         </div>
 
         <!-- SETTINGS MODAL -->
         <div id="settings-screen" class="overlay-screen hidden">
             <div class="modal-card">
-                <h2 style="color:var(--secondary);">⚙️ تنظیمات گرافیک سه‌بعدی و فریم‌ریت</h2>
+                <h2 style="color:var(--secondary);">⚙️ تنظیمات گرافیک سه‌بعدی و بازی</h2>
 
                 <div class="settings-group">
                     <div class="setting-row">
@@ -150,38 +151,27 @@
                     <div class="setting-row">
                         <span class="setting-label">نرخ فریم (Target FPS):</span>
                         <div class="segmented-control">
-                            <button class="seg-btn" data-fps="30">30</button>
-                            <button class="seg-btn active" data-fps="60">60</button>
-                            <button class="seg-btn" data-fps="120">120</button>
-                            <button class="seg-btn" data-fps="MAX">حداکثر</button>
+                            <button class="seg-btn" data-fps="30">30 FPS</button>
+                            <button class="seg-btn active" data-fps="60">60 FPS</button>
+                            <button class="seg-btn" data-fps="120">120 FPS</button>
                         </div>
                     </div>
 
                     <div class="setting-row">
-                        <span class="setting-label">آهنگ پس‌زمینه (Jukebox):</span>
+                        <span class="setting-label">موزیک زمینه:</span>
                         <div class="segmented-control">
-                            <button class="seg-btn active" data-track="0">تراک ۱</button>
-                            <button class="seg-btn" data-track="1">تراک ۲</button>
-                            <button class="seg-btn" data-track="2">تراک ۳</button>
+                            <button class="seg-btn active" data-track="0">Midnight Drive</button>
+                            <button class="seg-btn" data-track="1">Shooti Overdrive</button>
+                            <button class="seg-btn" data-track="2">Persian Speedway</button>
                         </div>
-                    </div>
-
-                    <div class="setting-row">
-                        <span class="setting-label">افکت صوتی:</span>
-                        <button id="btn-sound-toggle-mod" class="btn-secondary" style="padding:4px 12px; font-size:0.8rem;">🔊 روشن</button>
-                    </div>
-
-                    <div class="setting-row">
-                        <span class="setting-label">لرزش دوربین سه‌بعدی:</span>
-                        <button id="btn-shake-toggle" class="btn-secondary" style="padding:4px 12px; font-size:0.8rem;">فعال</button>
                     </div>
                 </div>
 
-                <button id="btn-close-settings" class="btn-primary">ذخیره و تایید</button>
+                <button id="btn-close-settings" class="btn-primary">ذخیره و بازگشت</button>
             </div>
         </div>
 
-        <!-- GARAGE & TUNING MODAL (Iranian Tuning & Garage) -->
+        <!-- GARAGE & TUNING MODAL -->
         <div id="garage-screen" class="overlay-screen hidden">
             <div class="modal-card" style="max-width:640px;">
                 <h2 style="color:var(--secondary);">🏎️ گاراژ و تیونینگ خودروهای ایرانی</h2>
@@ -194,11 +184,11 @@
                 <div class="tuning-grid">
                     <!-- Shooti Stance Selector -->
                     <div class="tuning-box">
-                        <span class="tuning-title">⚖️ وضعیت ارتفاع خودرو:</span>
+                        <span class="tuning-title">⚖️ وضعیت ارتفاع تعلیق:</span>
                         <div class="segmented-control">
-                            <button class="seg-btn stance-btn active" data-stance="NORMAL">معمولی</button>
-                            <button class="seg-btn stance-btn" data-stance="SHOOTI">🚀 شوتی (عقب بالا)</button>
+                            <button class="seg-btn stance-btn active" data-stance="SHOOTI">🚀 شوتی (عقب بالا)</button>
                             <button class="seg-btn stance-btn" data-stance="LOW">👇 کف‌خواب اسپرت</button>
+                            <button class="seg-btn stance-btn" data-stance="NORMAL">معمولی کارخانه</button>
                         </div>
                     </div>
 
@@ -206,10 +196,10 @@
                     <div class="tuning-box">
                         <span class="tuning-title">🏷️ برچسب شیشه عقب:</span>
                         <div class="segmented-control">
-                            <button class="seg-btn sticker-btn active" data-sticker="NONE">بدون برچسب</button>
-                            <button class="seg-btn sticker-btn" data-sticker="SOLTAN">👑 سلطان</button>
+                            <button class="seg-btn sticker-btn active" data-sticker="SOLTAN">👑 سلطان</button>
                             <button class="seg-btn sticker-btn" data-sticker="SHOOTI">⚡ عشق شوتی</button>
                             <button class="seg-btn sticker-btn" data-sticker="SALAR">💎 سالار</button>
+                            <button class="seg-btn sticker-btn" data-sticker="NONE">بدون برچسب</button>
                         </div>
                     </div>
 
@@ -235,7 +225,7 @@
             <div class="modal-card">
                 <h2 style="color:var(--secondary);">⏸️ توقف بازی</h2>
                 <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button id="btn-resume" class="btn-primary">ادامه بازی</button>
+                    <button id="btn-resume" class="btn-primary">ادامه رانندگی</button>
                     <button id="btn-open-settings-pause" class="btn-secondary">⚙️ تنظیمات گرافیک</button>
                 </div>
             </div>
@@ -244,8 +234,8 @@
         <!-- GAME OVER MODAL -->
         <div id="gameover-screen" class="overlay-screen hidden">
             <div class="modal-card">
-                <h2 style="color:var(--primary);">💥 پایان بازی!</h2>
-                <p id="gameover-reason" class="subtitle">تصادف شدید در جاده سه‌بعدی</p>
+                <h2 style="color:var(--primary);">💥 پایان رانندگی!</h2>
+                <p id="gameover-reason" class="subtitle">تصادف شدید در آزادراه</p>
 
                 <div class="stats-grid">
                     <div class="stat-item">
@@ -266,7 +256,7 @@
                     </div>
                 </div>
 
-                <button id="btn-restart" class="btn-primary">🔄 تلاش مجدد</button>
+                <button id="btn-restart" class="btn-primary">🔄 شروع مجدد</button>
             </div>
         </div>
     </div>

@@ -1,6 +1,6 @@
 /**
- * 3-Lane Neon Highway Racer - Full 3D WebGL Engine (Three.js)
- * Real 3D Chase Camera, 3D Car Meshes, 3D Road Environment, 3D Lighting, 3D Collectibles, & Police Sirens.
+ * سلطان جاده ۳بعدی (Iranian Highway Legend 3D)
+ * Real 3D Iranian Car Physics Engine & First-Person Peugeot Pars Cockpit
  */
 
 class Game3D {
@@ -14,20 +14,19 @@ class Game3D {
         this.gfxQuality = localStorage.getItem('neon_gfx') || 'ULTRA'; // LOW, MEDIUM, ULTRA
         this.fpsTarget = localStorage.getItem('neon_fps') || '60'; // 30, 60, 120, MAX
         this.screenShakeEnabled = localStorage.getItem('neon_shake') !== 'false';
+        this.cameraMode = localStorage.getItem('neon_cammode') || 'COCKPIT'; // COCKPIT, CHASE, HOOD
         
         // Game Stats
         this.score = 0;
         this.coins = parseInt(localStorage.getItem('neon_coins') || '0');
         this.highScore = parseInt(localStorage.getItem('neon_highscore') || '0');
         this.distance = 0;
-        this.speed = 10;
-        this.baseSpeed = 10;
-        this.maxSpeed = 30;
+        this.speed = 11;
+        this.baseSpeed = 11;
+        this.maxSpeed = 32;
         this.timeRemaining = 30;
 
-        this.cameraMode = localStorage.getItem('neon_cammode') || 'COCKPIT'; // COCKPIT, CHASE, HOOD
-
-        // 5-Lane 3D World Coordinates (X-axis: Far Left, Inner Left, Center, Inner Right, Far Right)
+        // 5-Lane 3D Highway Coordinates (X-axis: Far Left, Inner Left, Center, Inner Right, Far Right)
         this.laneX = [-7.2, -3.6, 0.0, 3.6, 7.2];
         this.currentLane = 2; // Center Lane (Lane 2)
         this.targetLane = 2;
@@ -43,8 +42,8 @@ class Game3D {
             spinTime: 0,
             selectedCar: parseInt(localStorage.getItem('neon_car') || '0'),
             underglowColor: localStorage.getItem('neon_underglow') || '#00f0ff',
-            stance: localStorage.getItem('neon_stance') || 'SHOOTI', // NORMAL, SHOOTI, LOW
-            sticker: localStorage.getItem('neon_sticker') || 'SOLTAN', // NONE, SOLTAN, SHOOTI, SALAR
+            stance: localStorage.getItem('neon_stance') || 'SHOOTI', // SHOOTI, LOW, NORMAL
+            sticker: localStorage.getItem('neon_sticker') || 'SOLTAN', // SOLTAN, SHOOTI, SALAR, NONE
             hasShield: false,
             hasMagnet: false,
             magnetTime: 0,
@@ -56,11 +55,12 @@ class Game3D {
         // Iconic Iranian & JDM Car Garage Fleet
         this.carGarage = [
             { id: 0, name: 'پژو پارس ELX (شوتی سلطان)', color: 0xffffff, secondary: 0x111111, price: 0, stat: 'سلطان جاده - شتاب شوتی', modelType: 'PARS' },
-            { id: 1, name: 'پیکان جوانان (گوجه‌ای کلکسیونی)', color: 0xcc0000, secondary: 0xdddddd, price: 150, stat: 'کلاسیک نوستالژیک ایرانی', modelType: 'PEYKAN' },
-            { id: 2, name: 'پراید ۱۱۱ (اسپرت کف‌خواب)', color: 0x0088ff, secondary: 0x111111, price: 250, stat: 'چابک و فرماندهی سریع', modelType: 'PRIDE' },
-            { id: 3, name: 'پژو ۲۰۶ تیپ ۵ (GT اسپرت)', color: 0xcccccc, secondary: 0xff0055, price: 400, stat: 'شتاب توربو و باله عقب GT', modelType: 'P206' },
-            { id: 4, name: 'سمند سورن توربو (مشکی سالار)', color: 0x11121c, secondary: 0x00f0ff, price: 600, stat: 'ملی توربو - بدنه مقاوم', modelType: 'SOREN' },
-            { id: 5, name: 'تویوتا سوپرا (JDM King)', color: 0xff5500, secondary: 0x222222, price: 800, stat: 'افسانه‌ای JDM 2JZ', modelType: 'SUPRA' }
+            { id: 1, name: 'زانتیا ۲۰۰۰ (تنظیم هیدرولیک)', color: 0x2233aa, secondary: 0x111111, price: 120, stat: 'شتاب فوق‌العاده زانتیا', modelType: 'XANTIA' },
+            { id: 2, name: 'پیکان جوانان (گوجه‌ای نوستالژیک)', color: 0xcc0000, secondary: 0xdddddd, price: 200, stat: 'کلاسیک محبوب ایرانی', modelType: 'PEYKAN' },
+            { id: 3, name: 'پراید ۱۱۱ (اسپرت کف‌خواب)', color: 0x0088ff, secondary: 0x111111, price: 300, stat: 'فرمان‌دهی بسیار سریع', modelType: 'PRIDE' },
+            { id: 4, name: 'پژو ۲۰۶ تیپ ۵ (GT اسپرت)', color: 0xcccccc, secondary: 0xff0055, price: 450, stat: 'شتاب توربو و باله عقب GT', modelType: 'P206' },
+            { id: 5, name: 'سمند سورن توربو (مشکی سالار)', color: 0x11121c, secondary: 0x00f0ff, price: 600, stat: 'ملی توربو - بدنه مقاوم', modelType: 'SOREN' },
+            { id: 6, name: 'تویوتا سوپرا (JDM King)', color: 0xff5500, secondary: 0x222222, price: 800, stat: 'افسانه‌ای JDM 2JZ', modelType: 'SUPRA' }
         ];
 
         this.unlockedCars = JSON.parse(localStorage.getItem('neon_unlocked_cars') || '[0]');
@@ -97,7 +97,7 @@ class Game3D {
         if (this.fpsTarget === '30') return 1000 / 30;
         if (this.fpsTarget === '60') return 1000 / 60;
         if (this.fpsTarget === '120') return 1000 / 120;
-        return 0; // MAX / Uncapped
+        return 0;
     }
 
     initDOM() {
@@ -117,18 +117,18 @@ class Game3D {
     }
 
     // ==========================================
-    // THREE.JS 3D ENGINE INITIALIZATION
+    // THREE.JS 3D ENGINE INITIALIZATION (Iranian Highway Environment)
     // ==========================================
     initThreeJS() {
-        // 1. Scene & Atmospheric Midnight Fog
+        // 1. Scene & Atmospheric Sky Fog
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x080a18);
         this.scene.fog = new THREE.FogExp2(0x080a18, 0.005);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 4.2, 9);
-        this.camera.lookAt(0, 1.2, -40);
+        this.camera.position.set(0, 1.08, 0.1);
+        this.camera.lookAt(0, 0.98, -40);
 
         // 3. WebGL Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -160,7 +160,7 @@ class Game3D {
         this.roadMesh.position.z = -200;
         this.scene.add(this.roadMesh);
 
-        // Realistic Road Shoulders & Side Terrain (Grass / Ground)
+        // Realistic Road Shoulders & Terrain
         const terrainMat = new THREE.MeshStandardMaterial({ color: 0x060c0d, roughness: 0.95 });
         const leftTerrainGeo = new THREE.PlaneGeometry(160, 600);
         const leftTerrain = new THREE.Mesh(leftTerrainGeo, terrainMat);
@@ -234,21 +234,17 @@ class Game3D {
         for (let z = 20; z > -420; z -= 35) {
             [-12.5, 12.5].forEach(xPos => {
                 const poleGroup = new THREE.Group();
-                
-                // Vertical Shaft
                 const shaftGeo = new THREE.CylinderGeometry(0.12, 0.18, 7.0, 10);
                 const shaft = new THREE.Mesh(shaftGeo, poleMat);
                 shaft.position.y = 3.5;
                 poleGroup.add(shaft);
 
-                // Curved Top Arm
                 const armGeo = new THREE.BoxGeometry(1.8, 0.1, 0.1);
                 const arm = new THREE.Mesh(armGeo, poleMat);
                 const armDir = xPos < 0 ? 1 : -1;
                 arm.position.set(armDir * 0.8, 6.8, 0);
                 poleGroup.add(arm);
 
-                // Lamp Light Fixture Box
                 const headGeo = new THREE.BoxGeometry(0.6, 0.15, 0.3);
                 const head = new THREE.Mesh(headGeo, lampLightMat);
                 head.position.set(armDir * 1.5, 6.7, 0);
@@ -260,7 +256,7 @@ class Game3D {
         }
         this.scene.add(this.streetLightsGroup);
 
-        // 3D Roadside Trees & Vegetation
+        // 3D Roadside Trees
         this.roadsideTreesGroup = new THREE.Group();
         const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 3.5, 8);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
@@ -283,7 +279,7 @@ class Game3D {
         }
         this.scene.add(this.roadsideTreesGroup);
 
-        // 3D Overhead Highway Directional Gantries
+        // 3D Overhead Iranian Highway Directional Gantries
         this.highwayGantriesGroup = new THREE.Group();
         const gantryMat = new THREE.MeshStandardMaterial({ color: 0x333748, metalness: 0.8, roughness: 0.2 });
         const gantrySignMat = new THREE.MeshStandardMaterial({ color: 0x006633, metalness: 0.3, roughness: 0.5 });
@@ -291,7 +287,6 @@ class Game3D {
         [-120, -320].forEach(zPos => {
             const gantry = new THREE.Group();
             
-            // Left & Right Support Towers
             const towerGeo = new THREE.BoxGeometry(0.5, 9.0, 0.5);
             const towerL = new THREE.Mesh(towerGeo, gantryMat);
             towerL.position.set(-12.8, 4.5, 0);
@@ -300,13 +295,11 @@ class Game3D {
             gantry.add(towerL);
             gantry.add(towerR);
 
-            // Overhead Crossbar Beam
             const beamGeo = new THREE.BoxGeometry(26.0, 0.6, 0.6);
             const beam = new THREE.Mesh(beamGeo, gantryMat);
             beam.position.set(0, 8.8, 0);
             gantry.add(beam);
 
-            // Green Highway Destination Signs
             const signGeo = new THREE.BoxGeometry(7.0, 2.2, 0.1);
             const signL = new THREE.Mesh(signGeo, gantrySignMat);
             signL.position.set(-4.5, 7.5, 0.3);
@@ -320,13 +313,13 @@ class Game3D {
         });
         this.scene.add(this.highwayGantriesGroup);
 
-        // 3D City Horizon Skyscrapers & Buildings
+        // 3D City Horizon Skyscrapers
         this.buildCitySkyline();
 
-        // 6. Build Player 3D Car
+        // Build Player 3D Car & First-Person Cockpit Interior
         this.buildPlayer3DCar();
 
-        // 7. 3D Rain Particle System
+        // 3D Rain Particle System
         this.init3DRain();
     }
 
@@ -349,7 +342,6 @@ class Game3D {
 
             building.position.set(posX, height / 2 - 5, posZ);
 
-            // Add Glowing Window Panels onto Buildings
             const winMat = new THREE.MeshBasicMaterial({ color: windowColors[i % windowColors.length] });
             const winGeo = new THREE.BoxGeometry(width * 0.7, height * 0.6, depth + 0.2);
             const winMesh = new THREE.Mesh(winGeo, winMat);
@@ -381,9 +373,6 @@ class Game3D {
         const modelType = carData.modelType || 'PARS';
 
         if (modelType === 'PEYKAN') {
-            // ==========================================
-            // 1. PEYKAN JAVANAN CLASSIC (پیکان جوانان گوجه‌ای)
-            // ==========================================
             const bodyGeo = new THREE.BoxGeometry(1.75, 0.55, 3.8);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
             bodyMesh.position.y = 0.45;
@@ -399,7 +388,6 @@ class Game3D {
             roofMesh.position.set(0, 1.16, -0.1);
             this.playerCarGroup.add(roofMesh);
 
-            // Classic Chrome Front Bumper & Dual Round Headlights
             const bumperGeo = new THREE.BoxGeometry(1.8, 0.14, 0.2);
             const bumperFront = new THREE.Mesh(bumperGeo, chromeMat);
             bumperFront.position.set(0, 0.32, -1.92);
@@ -418,7 +406,6 @@ class Game3D {
                 this.playerCarGroup.add(hl);
             });
 
-            // Classic Peykan Vertical Taillights
             const tailGeo = new THREE.BoxGeometry(0.22, 0.25, 0.08);
             [-0.6, 0.6].forEach(x => {
                 const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
@@ -428,9 +415,6 @@ class Game3D {
             });
 
         } else if (modelType === 'PRIDE') {
-            // ==========================================
-            // 2. PRIDE 111 SPORT HATCHBACK (پراید ۱۱۱ اسپرت)
-            // ==========================================
             const bodyGeo = new THREE.BoxGeometry(1.68, 0.5, 3.4);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
             bodyMesh.position.y = 0.42;
@@ -446,7 +430,6 @@ class Game3D {
             roofMesh.position.set(0, 1.15, -0.1);
             this.playerCarGroup.add(roofMesh);
 
-            // Hatchback Rear Taillights
             const tailGeo = new THREE.BoxGeometry(0.35, 0.2, 0.08);
             [-0.55, 0.55].forEach(x => {
                 const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
@@ -456,9 +439,6 @@ class Game3D {
             });
 
         } else if (modelType === 'P206') {
-            // ==========================================
-            // 3. PEUGEOT 206 GT SPORT (پژو ۲۰۶ اسپرت)
-            // ==========================================
             const bodyGeo = new THREE.BoxGeometry(1.72, 0.52, 3.5);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
             bodyMesh.position.y = 0.44;
@@ -469,13 +449,11 @@ class Game3D {
             cabinMesh.position.set(0, 0.9, -0.15);
             this.playerCarGroup.add(cabinMesh);
 
-            // Peugeot GT Rear Wing Spoiler
             const wingGeo = new THREE.BoxGeometry(1.5, 0.08, 0.35);
             const wing = new THREE.Mesh(wingGeo, carMat);
             wing.position.set(0, 1.22, 1.55);
             this.playerCarGroup.add(wing);
 
-            // 206 Curved Headlights & Taillights
             const tailGeo = new THREE.BoxGeometry(0.32, 0.22, 0.08);
             [-0.58, 0.58].forEach(x => {
                 const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
@@ -485,9 +463,6 @@ class Game3D {
             });
 
         } else if (modelType === 'SOREN') {
-            // ==========================================
-            // 4. SAMAND SOREN TURBO (سمند سورن توربو)
-            // ==========================================
             const bodyGeo = new THREE.BoxGeometry(1.82, 0.54, 4.0);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
             bodyMesh.position.y = 0.46;
@@ -506,10 +481,27 @@ class Game3D {
                 this.taillights.push(tl);
             });
 
+        } else if (modelType === 'XANTIA') {
+            // XANTIA 2000 Sleek Liftback Body
+            const bodyGeo = new THREE.BoxGeometry(1.84, 0.5, 4.1);
+            const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
+            bodyMesh.position.y = 0.44;
+            this.playerCarGroup.add(bodyMesh);
+
+            const cabinGeo = new THREE.BoxGeometry(1.46, 0.52, 2.1);
+            const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+            cabinMesh.position.set(0, 0.9, -0.05);
+            this.playerCarGroup.add(cabinMesh);
+
+            const tailGeo = new THREE.BoxGeometry(0.46, 0.22, 0.08);
+            [-0.6, 0.6].forEach(x => {
+                const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
+                tl.position.set(x, 0.52, 2.05);
+                this.playerCarGroup.add(tl);
+                this.taillights.push(tl);
+            });
+
         } else if (modelType === 'SUPRA') {
-            // ==========================================
-            // 5. TOYOTA SUPRA MK4 JDM (تویوتا سوپرا)
-            // ==========================================
             const bodyGeo = new THREE.BoxGeometry(1.9, 0.5, 3.9);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
             bodyMesh.position.y = 0.45;
@@ -543,9 +535,7 @@ class Game3D {
             });
 
         } else {
-            // ==========================================
-            // 6. PEUGEOT PARS ELX (پژو پارس شوتی)
-            // ==========================================
+            // PEUGEOT PARS ELX
             const bodyGeo = new THREE.BoxGeometry(1.8, 0.52, 4.0);
             const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
             bodyMesh.position.y = 0.45;
@@ -561,7 +551,6 @@ class Game3D {
             roofMesh.position.set(0, 1.16, -0.1);
             this.playerCarGroup.add(roofMesh);
 
-            // ELX Smoked Taillights
             const tailGeo = new THREE.BoxGeometry(0.48, 0.22, 0.08);
             [-0.58, 0.58].forEach(x => {
                 const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
@@ -751,7 +740,7 @@ class Game3D {
         document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(1); });
         document.getElementById('btn-nitro').addEventListener('click', (e) => { e.preventDefault(); this.activateNitro(); });
 
-        // Gas & Brake Touch/Mouse Press & Hold Handlers
+        // Gas & Brake Touch/Mouse Handlers
         const btnGas = document.getElementById('btn-gas');
         const btnBrake = document.getElementById('btn-brake');
 
@@ -886,7 +875,7 @@ class Game3D {
     moveLane(direction) {
         if (this.state !== 'PLAYING' || this.player.isSpinning) return;
         const newLane = this.targetLane + direction;
-        if (newLane >= 0 && newLane <= 4) { // 5 Lanes (0, 1, 2, 3, 4)
+        if (newLane >= 0 && newLane <= 4) {
             this.targetLane = newLane;
             audioMgr.playLaneSwitch();
         }
@@ -979,7 +968,7 @@ class Game3D {
         }
     }
 
-    gameOver(reason = 'تصادف شدید در جاده سه‌بعدی') {
+    gameOver(reason = 'تصادف شدید در آزادراه') {
         if (this.gameMode === 'ZEN') return;
 
         this.state = 'GAMEOVER';
@@ -1020,13 +1009,12 @@ class Game3D {
     }
 
     update(dt) {
-        // Auto Anti-Lag Performance Monitor
+        // Auto Performance Monitor
         if (dt > 0.036) {
             this.lagFrames = (this.lagFrames || 0) + 1;
             if (this.lagFrames > 35) {
                 this.renderer.setPixelRatio(1.0);
                 if (this.rainSystem) this.rainSystem.visible = false;
-                this.addFloatingText('⚡ سیستم ضد-لگ هوشمند فعال شد (60 FPS)', this.canvas.width / 2, 160, '#ffea00');
                 this.lagFrames = 0;
             }
         } else {
@@ -1042,7 +1030,7 @@ class Game3D {
             }
         }
 
-        // Weather Transition
+        // Weather Cycle
         this.weatherTimer += dt;
         if (this.weatherTimer > 25) {
             this.weatherTimer = 0;
@@ -1051,7 +1039,7 @@ class Game3D {
             this.rainSystem.visible = (this.weather === 'RAIN');
         }
 
-        // Speed & Throttle/Brake Physics Logic (Natural, Responsive Car Physics)
+        // Speed & Throttle Physics Logic
         let targetSpeed = this.baseSpeed;
 
         const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
@@ -1059,7 +1047,7 @@ class Game3D {
 
         if (this.player.isNitroActive) {
             targetSpeed = 32.0;
-            this.speed += (targetSpeed - this.speed) * dt * 5.0; // Instant torque punch
+            this.speed += (targetSpeed - this.speed) * dt * 5.0;
             this.player.nitroTime--;
             this.player.nitroGauge = Math.max(0, (this.player.nitroTime / 180) * 100);
 
@@ -1072,14 +1060,14 @@ class Game3D {
 
             let accelRate = 1.8;
             if (isGasPressed) {
-                targetSpeed = 24.0; // ~230 km/h top speed
-                accelRate = 2.4;    // Smooth, realistic high-torque acceleration
+                targetSpeed = 24.0;
+                accelRate = 2.4;
             } else if (isBrakePressed) {
-                targetSpeed = 4.5;  // ~45 km/h low braking speed
-                accelRate = 4.5;    // Responsive braking
+                targetSpeed = 4.5;
+                accelRate = 4.5;
             } else {
                 targetSpeed = this.baseSpeed;
-                accelRate = 1.8;    // Natural coasting deceleration
+                accelRate = 1.8;
             }
 
             this.speed += (targetSpeed - this.speed) * dt * accelRate;
@@ -1089,12 +1077,12 @@ class Game3D {
             this.camera.updateProjectionMatrix();
 
             if (this.player.nitroGauge < 100) {
-                const rechargeRate = (this.player.selectedCar === 2) ? 0.25 : 0.12;
+                const rechargeRate = (this.player.selectedCar === 4) ? 0.25 : 0.12;
                 this.player.nitroGauge = Math.min(100, this.player.nitroGauge + rechargeRate);
             }
         }
 
-        // Taillight Brake Light Glow
+        // Taillight Glow
         if (this.taillights) {
             const glowColor = isBrakePressed ? 0xff0000 : 0x990022;
             this.taillights.forEach(l => l.material.color.setHex(glowColor));
@@ -1106,13 +1094,13 @@ class Game3D {
         const scoreMultiplier = (this.player.selectedCar === 1) ? 1.2 : 1.0;
         this.score += (this.speed * dt * 10) * scoreMultiplier;
 
-        // 3D Road Line Animations (Uniform 10.0 Z Speed Factor)
+        // 3D Road Line Animations
         this.laneLinesGroup.children.forEach(line => {
             line.position.z += this.speed * dt * 10.0;
             if (line.position.z > 15) line.position.z -= 410;
         });
 
-        // 3D Street Light Poles Animation
+        // Scenery Animations
         if (this.streetLightsGroup) {
             this.streetLightsGroup.children.forEach(pole => {
                 pole.position.z += this.speed * dt * 10.0;
@@ -1120,7 +1108,6 @@ class Game3D {
             });
         }
 
-        // 3D Roadside Trees Animation
         if (this.roadsideTreesGroup) {
             this.roadsideTreesGroup.children.forEach(tree => {
                 tree.position.z += this.speed * dt * 10.0;
@@ -1128,7 +1115,6 @@ class Game3D {
             });
         }
 
-        // 3D Overhead Highway Gantries Animation
         if (this.highwayGantriesGroup) {
             this.highwayGantriesGroup.children.forEach(gantry => {
                 gantry.position.z += this.speed * dt * 10.0;
@@ -1136,11 +1122,11 @@ class Game3D {
             });
         }
 
-        // Smooth 3D Player Lane Lerping
+        // Smooth Player Lane Lerping
         const targetX = this.laneX[this.targetLane];
         const diffX = targetX - this.player.x;
         this.player.x += diffX * 0.18;
-        this.player.tilt = -diffX * 0.05; // 3D Car Roll / Tilt
+        this.player.tilt = -diffX * 0.05;
 
         if (this.player.isSpinning) {
             this.player.spinAngle += dt * 15;
@@ -1151,42 +1137,38 @@ class Game3D {
             }
         }
 
-        // Update 3D Car Group Position & Rotation
+        // Update Car Position
         this.playerCarGroup.position.x = this.player.x;
         this.playerCarGroup.rotation.y = this.player.spinAngle;
         this.playerCarGroup.rotation.z = this.player.tilt;
 
         this.shieldMesh.visible = this.player.hasShield;
 
-        // 3D Camera Modes & Dynamic Steering Wheel Rotation
+        // Camera Modes & Dynamic Steering Wheel Rotation
         const pitchTarget = isGasPressed ? -0.03 : (isBrakePressed ? 0.04 : 0.0);
 
         if (this.cameraMode === 'COCKPIT') {
-            // First-Person Cockpit View (Behind Peugeot Pars Steering Wheel)
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x - 0.35, 0.2);
             this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 1.08, 0.2);
             this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 0.1, 0.2);
             this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
 
-            // Dynamic Peugeot Steering Wheel Rotation when turning!
             if (this.steeringWheel) {
                 this.steeringWheel.rotation.z = -diffX * 0.85;
             }
         } else if (this.cameraMode === 'HOOD') {
-            // Hood Bumper View
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x, 0.2);
             this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.75, 0.2);
             this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -1.2, 0.2);
             this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
         } else {
-            // 3rd-Person Chase View
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.1);
             this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.1, 0.1);
             this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 5.2, 0.1);
             this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
         }
 
-        // Spawn 3D Obstacles
+        // Spawn Obstacles
         const now = performance.now();
         if (now - this.lastSpawnTime > Math.max(700, 2200 - (this.distance * 0.3))) {
             this.spawn3DObstacle();
@@ -1203,13 +1185,12 @@ class Game3D {
             this.lastHazardTime = now;
         }
 
-        // Update 3D Traffic Obstacles (Uniform 10.0 Z Speed Factor)
+        // Update Traffic Obstacles
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
             obs.z += (this.speed - obs.speed) * dt * 10.0;
             obs.mesh.position.z = obs.z;
 
-            // Police Lights Blinking
             if (obs.type === 'police') {
                 obs.sirenTimer = (obs.sirenTimer || 0) + dt;
                 if (obs.sirenTimer > 0.4) {
@@ -1218,13 +1199,12 @@ class Game3D {
                 }
             }
 
-            // 3D Collision Detection with Player
             if (Math.abs(obs.z - this.player.z) < 2.8 && Math.abs(obs.x - this.player.x) < 1.6) {
                 if (this.player.isNitroActive) {
                     this.scene.remove(obs.mesh);
                     this.obstacles.splice(i, 1);
                     this.score += 300;
-                    this.addFloatingText('انفجار نیترو! +۳۰۰', this.canvas.width / 2, 160, '#ffea00');
+                    this.addFloatingText('انفجار شوتی! +۳۰۰ ⚡', this.canvas.width / 2, 160, '#ffea00');
                     audioMgr.playCrash();
                     continue;
                 } else if (this.player.hasShield) {
@@ -1235,7 +1215,7 @@ class Game3D {
                     this.addFloatingText('سپر تخریب شد!', this.canvas.width / 2, 160, '#00f0ff');
                     continue;
                 } else {
-                    this.gameOver('تصادف شدید در جاده سه‌بعدی');
+                    this.gameOver('تصادف شدید در آزادراه');
                     return;
                 }
             }
@@ -1246,12 +1226,12 @@ class Game3D {
             }
         }
 
-        // Update 3D Collectibles (Uniform 10.0 Z Speed Factor)
+        // Update Collectibles
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
             const item = this.collectibles[i];
             item.z += this.speed * dt * 10.0;
             item.mesh.position.z = item.z;
-            item.mesh.rotation.y += dt * 3; // 3D Coin Rotation
+            item.mesh.rotation.y += dt * 3;
 
             if (Math.abs(item.z - this.player.z) < 2.5 && Math.abs(item.x - this.player.x) < 1.8) {
                 if (item.type === 'coin') {
@@ -1284,7 +1264,7 @@ class Game3D {
             }
         }
 
-        // Update 3D Hazards (Oil - Uniform 10.0 Z Speed Factor)
+        // Update Hazards
         for (let i = this.hazards.length - 1; i >= 0; i--) {
             const h = this.hazards[i];
             h.z += this.speed * dt * 10.0;
@@ -1317,7 +1297,7 @@ class Game3D {
     }
 
     spawn3DObstacle() {
-        const lane = Math.floor(Math.random() * 5); // 5 Lanes (0 to 4)
+        const lane = Math.floor(Math.random() * 5);
         const types = [
             { type: 'sedan', color: 0xe60000, speed: 2, scaleZ: 3.6 },
             { type: 'sports', color: 0xffaa00, speed: 4, scaleZ: 3.8 },
@@ -1329,7 +1309,6 @@ class Game3D {
         const meshGroup = new THREE.Group();
 
         if (selected.type === 'truck') {
-            // 3D Heavy Truck Construction
             const cabGeo = new THREE.BoxGeometry(2.0, 1.4, 2.2);
             const cabMat = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.6, roughness: 0.3 });
             const cabMesh = new THREE.Mesh(cabGeo, cabMat);
@@ -1342,7 +1321,6 @@ class Game3D {
             trailerMesh.position.set(0, 1.2, -1.2);
             meshGroup.add(trailerMesh);
 
-            // Truck Wheels (6 Wheels)
             const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.35, 12);
             const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
             wheelGeo.rotateZ(Math.PI / 2);
@@ -1353,21 +1331,18 @@ class Game3D {
                 meshGroup.add(w);
             });
         } else {
-            // 3D Passenger / Police / Sports Car Construction
             const bodyGeo = new THREE.BoxGeometry(1.8, 0.7, selected.scaleZ);
             const bodyMat = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.5, roughness: 0.3 });
             const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
             bodyMesh.position.y = 0.5;
             meshGroup.add(bodyMesh);
 
-            // Windshield / Cabin
             const glassGeo = new THREE.BoxGeometry(1.4, 0.5, 1.8);
             const glassMat = new THREE.MeshStandardMaterial({ color: 0x050710, metalness: 0.9, roughness: 0.1 });
             const glassMesh = new THREE.Mesh(glassGeo, glassMat);
             glassMesh.position.set(0, 0.9, 0.1);
             meshGroup.add(glassMesh);
 
-            // 4 Wheels
             const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 12);
             const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
             wheelGeo.rotateZ(Math.PI / 2);
@@ -1378,7 +1353,6 @@ class Game3D {
                 meshGroup.add(w);
             });
 
-            // Glowing Red Taillights (Facing Towards Player)
             const tailGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
             const tailMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
             const tailL = new THREE.Mesh(tailGeo, tailMat);
@@ -1388,90 +1362,75 @@ class Game3D {
             meshGroup.add(tailL);
             meshGroup.add(tailR);
 
-            // 3D Police Siren Lights
             if (selected.type === 'police') {
-                const sirenGeo = new THREE.BoxGeometry(0.8, 0.15, 0.2);
-                const sirenMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
-                const siren = new THREE.Mesh(sirenGeo, sirenMat);
-                siren.position.set(0, 1.2, 0);
-                meshGroup.add(siren);
-
-                const policeLight = new THREE.PointLight(0x0088ff, 2.0, 8);
-                policeLight.position.set(0, 1.5, 0);
-                meshGroup.add(policeLight);
+                const sirenGeo = new THREE.BoxGeometry(0.6, 0.18, 0.3);
+                const sirenMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const sirenMesh = new THREE.Mesh(sirenGeo, sirenMat);
+                sirenMesh.position.set(0, 1.25, 0);
+                meshGroup.add(sirenMesh);
             }
         }
 
-        const spawnZ = -140; // Visible spawn depth
-        meshGroup.position.set(this.laneX[lane], 0, spawnZ);
+        meshGroup.position.set(this.laneX[lane], 0, -220);
         this.scene.add(meshGroup);
 
         this.obstacles.push({
-            x: this.laneX[lane],
-            z: spawnZ,
-            lane: lane,
-            speed: selected.speed,
             type: selected.type,
+            x: this.laneX[lane],
+            z: -220,
+            speed: selected.speed,
             mesh: meshGroup
         });
     }
 
     spawn3DCollectible() {
-        const lane = Math.floor(Math.random() * 5); // 5 Lanes
+        const lane = Math.floor(Math.random() * 5);
         const rand = Math.random();
+
         let type = 'coin';
-        
-        if (this.gameMode === 'TIME_ATTACK' && rand < 0.35) type = 'time';
-        else if (rand < 0.65) type = 'coin';
-        else if (rand < 0.82) type = 'gem';
-        else type = 'shield';
+        let color = 0xffea00;
+        let geo = new THREE.CylinderGeometry(0.5, 0.5, 0.12, 16);
 
-        const meshGroup = new THREE.Group();
-
-        if (type === 'coin') {
-            const coinGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.15, 16);
-            const coinMat = new THREE.MeshStandardMaterial({ color: 0xffe600, metalness: 0.8, roughness: 0.2 });
-            const coin = new THREE.Mesh(coinGeo, coinMat);
-            coin.rotation.x = Math.PI / 2;
-            coin.position.y = 0.8;
-            meshGroup.add(coin);
-        } else if (type === 'gem') {
-            const gemGeo = new THREE.OctahedronGeometry(0.7);
-            const gemMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, metalness: 0.9, roughness: 0.1 });
-            const gem = new THREE.Mesh(gemGeo, gemMat);
-            gem.position.y = 0.8;
-            meshGroup.add(gem);
-        } else {
-            const shieldGeo = new THREE.SphereGeometry(0.7, 16, 16);
-            const shieldMat = new THREE.MeshBasicMaterial({ color: 0x00ff66, wireframe: true });
-            const shield = new THREE.Mesh(shieldGeo, shieldMat);
-            shield.position.y = 0.8;
-            meshGroup.add(shield);
+        if (rand > 0.85) {
+            type = 'shield';
+            color = 0x00ff66;
+            geo = new THREE.IcosahedronGeometry(0.6, 1);
+        } else if (rand > 0.7) {
+            type = 'gem';
+            color = 0x00f0ff;
+            geo = new THREE.OctahedronGeometry(0.6);
+        } else if (rand > 0.55 && this.gameMode === 'TIME_ATTACK') {
+            type = 'time';
+            color = 0xff007f;
+            geo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
         }
 
-        meshGroup.position.set(this.laneX[lane], 0, -180);
-        this.scene.add(meshGroup);
+        geo.rotateX(Math.PI / 2);
+        const mat = new THREE.MeshStandardMaterial({ color: color, metalness: 0.8, roughness: 0.2 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(this.laneX[lane], 0.8, -220);
+        this.scene.add(mesh);
 
         this.collectibles.push({
-            x: this.laneX[lane],
-            z: -180,
             type: type,
-            mesh: meshGroup
+            x: this.laneX[lane],
+            z: -220,
+            mesh: mesh
         });
     }
 
     spawn3DHazard() {
-        const lane = Math.floor(Math.random() * 5); // 5 Lanes
-        const oilGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.02, 16);
-        const oilMat = new THREE.MeshBasicMaterial({ color: 0x050a12 });
+        const lane = Math.floor(Math.random() * 5);
+        const oilGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.04, 16);
+        const oilMat = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.1, metalness: 0.9 });
         const oilMesh = new THREE.Mesh(oilGeo, oilMat);
-        oilMesh.position.set(this.laneX[lane], 0.02, -180);
+        oilMesh.position.set(this.laneX[lane], 0.02, -220);
         this.scene.add(oilMesh);
 
         this.hazards.push({
-            x: this.laneX[lane],
-            z: -180,
             type: 'oil',
+            x: this.laneX[lane],
+            z: -220,
             mesh: oilMesh
         });
     }
@@ -1488,7 +1447,6 @@ class Game3D {
         this.hudDistance.innerText = Math.floor(this.distance) + ' m';
         if (this.gameMode === 'TIME_ATTACK') this.hudTimer.innerText = Math.ceil(this.timeRemaining) + 's';
 
-        // Speedometer Gauge Animation
         const needle = document.getElementById('speedo-needle');
         const arc = document.getElementById('speedo-arc');
         const kmhVal = document.getElementById('speedo-kmh');
@@ -1501,7 +1459,6 @@ class Game3D {
             arc.style.strokeDashoffset = (264 - (clampSpeed / 300) * 264).toString();
             kmhVal.innerText = clampSpeed.toLocaleString('fa-IR');
 
-            // Gear Indicator
             let gear = 'D1';
             if (this.player.isNitroActive) gear = '⚡ NITRO';
             else if (clampSpeed < 45) gear = 'D1';
@@ -1565,7 +1522,6 @@ class Game3D {
             garageContainer.appendChild(card);
         });
 
-        // Sync Iranian Tuning UI Active States
         document.querySelectorAll('.stance-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.stance === this.player.stance);
         });
@@ -1574,15 +1530,11 @@ class Game3D {
         });
     }
 
-    // ==========================================
-    // THREE.JS RENDER LOOP
-    // ==========================================
     render() {
         this.renderer.render(this.scene, this.camera);
     }
 }
 
-// Instantiate Game on DOM Loaded
 window.addEventListener('DOMContentLoaded', () => {
     window.game = new Game3D();
 });

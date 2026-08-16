@@ -1,4 +1,4 @@
-// Web Audio API Synthesizer for 3-Lane Neon Game v2.0
+// Web Audio API Synthesizer for Iranian Highway Racing 3D (سلطان جاده ۳بعدی)
 class SoundManager {
     constructor() {
         this.ctx = null;
@@ -10,10 +10,9 @@ class SoundManager {
         this.engineOsc = null;
         this.engineGain = null;
         
-        // Jukebox Music BGM variables
         this.bgmTimer = null;
         this.isMusicPlaying = false;
-        this.beatValue = 0; // Audio-reactive pulse value (0.0 to 1.0)
+        this.beatValue = 0;
     }
 
     init() {
@@ -27,7 +26,7 @@ class SoundManager {
         }
     }
 
-    // Engine Sound
+    // Engine Sound Synthesis
     startEngineSound() {
         if (!this.ctx || this.isMuted) return;
         try {
@@ -39,7 +38,7 @@ class SoundManager {
 
             const filter = this.ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(220, this.ctx.currentTime);
+            filter.frequency.setValueAtTime(240, this.ctx.currentTime);
 
             this.engineGain.gain.setValueAtTime(0.04 * this.sfxVolume, this.ctx.currentTime);
 
@@ -55,11 +54,170 @@ class SoundManager {
 
     updateEnginePitch(speedRatio) {
         if (!this.engineOsc || !this.ctx || this.isMuted) return;
-        const targetFreq = 50 + speedRatio * 90;
-        this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+        const targetFreq = 50 + Math.min(1.0, speedRatio) * 110;
+        this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.08);
         if (this.engineGain) {
             this.engineGain.gain.setValueAtTime(0.04 * this.sfxVolume, this.ctx.currentTime);
         }
+    }
+
+    playBackfire() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const now = this.ctx.currentTime;
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(30, now + 0.08);
+
+            gain.gain.setValueAtTime(0.12 * this.sfxVolume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } catch (e) {}
+    }
+
+    playLaneSwitch() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const now = this.ctx.currentTime;
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(540, now + 0.06);
+
+            gain.gain.setValueAtTime(0.05 * this.sfxVolume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.06);
+        } catch (e) {}
+    }
+
+    playNitro() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const bufferSize = this.ctx.sampleRate * 0.4;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+            filter.Q.setValueAtTime(3, this.ctx.currentTime);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.15 * this.sfxVolume, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            noise.start();
+        } catch (e) {}
+    }
+
+    playCoin() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const now = this.ctx.currentTime;
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(987.77, now);
+            osc.frequency.setValueAtTime(1318.51, now + 0.08);
+
+            gain.gain.setValueAtTime(0.08 * this.sfxVolume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } catch (e) {}
+    }
+
+    playPowerup() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const now = this.ctx.currentTime;
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+
+            gain.gain.setValueAtTime(0.1 * this.sfxVolume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } catch (e) {}
+    }
+
+    playCrash() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const bufferSize = this.ctx.sampleRate * 0.5;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+            }
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.3 * this.sfxVolume, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
+
+            noise.connect(gain);
+            gain.connect(this.ctx.destination);
+            noise.start();
+        } catch (e) {}
+    }
+
+    playPoliceSiren() {
+        if (!this.ctx || this.isMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const now = this.ctx.currentTime;
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1000, now + 0.2);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.4);
+
+            gain.gain.setValueAtTime(0.05 * this.sfxVolume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } catch (e) {}
     }
 
     // Synthwave Jukebox BGM Generator
@@ -68,11 +226,10 @@ class SoundManager {
         this.isMusicPlaying = true;
         let step = 0;
 
-        // 3 Synthwave Bassline patterns
         const tracks = [
-            [110, 110, 146.83, 110, 130.81, 110, 164.81, 130.81], // Cyber Neon Drive
-            [98, 98, 123.47, 98, 146.83, 123.47, 110, 98],        // Midnight Cruise
-            [130.81, 164.81, 196, 164.81, 146.83, 174.61, 220, 196] // Retro Overdrive
+            [110, 110, 146.83, 110, 130.81, 110, 164.81, 130.81], // Midnight Iran Drive
+            [98, 98, 123.47, 98, 146.83, 123.47, 110, 98],        // Shooti Overdrive
+            [130.81, 164.81, 196, 164.81, 146.83, 174.61, 220, 196] // Persian Speedway
         ];
 
         this.bgmTimer = setInterval(() => {
@@ -88,7 +245,6 @@ class SoundManager {
             osc.type = step % 4 === 0 ? 'sawtooth' : 'triangle';
             osc.frequency.setValueAtTime(freq, now);
 
-            // Beat pulse for road line reactive glow
             this.beatValue = step % 4 === 0 ? 1.0 : 0.2;
 
             gain.gain.setValueAtTime(0.06 * this.musicVolume, now);
@@ -99,179 +255,13 @@ class SoundManager {
 
             osc.start(now);
             osc.stop(now + 0.18);
-
             step++;
-        }, 180); // ~133 BPM
+        }, 220);
     }
 
-    stopMusicJukebox() {
-        if (this.bgmTimer) clearInterval(this.bgmTimer);
-        this.isMusicPlaying = false;
-    }
-
-    switchTrack(trackIndex) {
-        this.currentTrack = trackIndex % 3;
-    }
-
-    // Sound FX
-    playLaneSwitch() {
-        if (!this.ctx || this.isMuted) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(250, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.08);
-
-        gain.gain.setValueAtTime(0.12 * this.sfxVolume, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.15);
-    }
-
-    playCoin() {
-        if (!this.ctx || this.isMuted) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(987.77, now);
-        osc.frequency.setValueAtTime(1318.51, now + 0.06);
-
-        gain.gain.setValueAtTime(0.15 * this.sfxVolume, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.2);
-    }
-
-    playPowerup() {
-        if (!this.ctx || this.isMuted) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-        osc.frequency.exponentialRampToValueAtTime(1760, now + 0.25);
-
-        gain.gain.setValueAtTime(0.2 * this.sfxVolume, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.3);
-    }
-
-    playNitro() {
-        if (!this.ctx || this.isMuted) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(400, now + 0.25);
-
-        gain.gain.setValueAtTime(0.25 * this.sfxVolume, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.4);
-    }
-
-    playNearMiss() {
-        if (!this.ctx || this.isMuted) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.setValueAtTime(659.25, now + 0.05);
-
-        gain.gain.setValueAtTime(0.1 * this.sfxVolume, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.15);
-    }
-
-    playPoliceSiren() {
-        if (!this.ctx || this.isMuted) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(700, now);
-        osc.frequency.linearRampToValueAtTime(1200, now + 0.2);
-        osc.frequency.linearRampToValueAtTime(700, now + 0.4);
-
-        gain.gain.setValueAtTime(0.1 * this.sfxVolume, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.4);
-    }
-
-    playCrash() {
-        if (!this.ctx || this.isMuted) return;
-        const now = this.ctx.currentTime;
-
-        const bufferSize = this.ctx.sampleRate * 0.4;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const noiseFilter = this.ctx.createBiquadFilter();
-        noiseFilter.type = 'lowpass';
-        noiseFilter.frequency.setValueAtTime(800, now);
-
-        const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.4 * this.sfxVolume, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-        noise.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.ctx.destination);
-
-        noise.start(now);
-        noise.stop(now + 0.4);
-    }
-
-    toggleMute() {
-        this.isMuted = !this.isMuted;
-        if (this.engineGain) {
-            this.engineGain.gain.value = this.isMuted ? 0 : 0.04 * this.sfxVolume;
-        }
-        return this.isMuted;
+    switchTrack(trackIdx) {
+        this.currentTrack = trackIdx;
     }
 }
 
-const audioMgr = new SoundManager();
+window.audioMgr = new SoundManager();
