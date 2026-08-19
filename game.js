@@ -865,30 +865,60 @@ class Game3D {
 
         window.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
 
+        // Resize & Orientation Listeners for Mobile Responsiveness
+        window.addEventListener('resize', () => this.onWindowResize());
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.onWindowResize(), 150);
+        });
+
+        // Global User Interaction Listener to Unlock AudioContext on Mobile Browsers
+        const unlockAudio = () => {
+            if (window.audioMgr) window.audioMgr.init();
+        };
+        window.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+        window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+        window.addEventListener('click', unlockAudio, { once: true, passive: true });
+
         document.getElementById('camera-btn').addEventListener('click', () => this.toggleCameraMode());
         document.getElementById('radio-btn').addEventListener('click', () => this.cycleRadioStation());
-        document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(-1); });
-        document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); this.moveLane(1); });
-        document.getElementById('btn-nitro').addEventListener('click', (e) => { e.preventDefault(); this.activateNitro(); });
 
-        // Gas & Brake Touch/Mouse Handlers
-        const btnGas = document.getElementById('btn-gas');
-        const btnBrake = document.getElementById('btn-brake');
+        // Multi-touch & Touch Control Helper
+        const bindTouchButton = (btnId, onPress, onRelease) => {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
 
-        const setGas = (val) => { this.isGasPressed = val; btnGas.classList.toggle('active', val); };
-        const setBrake = (val) => { this.isBrakePressed = val; btnBrake.classList.toggle('active', val); };
+            const handlePress = (e) => {
+                if (e.cancelable) e.preventDefault();
+                btn.classList.add('active');
+                if (onPress) onPress();
+            };
 
-        btnGas.addEventListener('mousedown', (e) => { e.preventDefault(); setGas(true); });
-        btnGas.addEventListener('mouseup', () => setGas(false));
-        btnGas.addEventListener('mouseleave', () => setGas(false));
-        btnGas.addEventListener('touchstart', (e) => { e.preventDefault(); setGas(true); }, { passive: false });
-        btnGas.addEventListener('touchend', () => setGas(false));
+            const handleRelease = (e) => {
+                btn.classList.remove('active');
+                if (onRelease) onRelease();
+            };
 
-        btnBrake.addEventListener('mousedown', (e) => { e.preventDefault(); setBrake(true); });
-        btnBrake.addEventListener('mouseup', () => setBrake(false));
-        btnBrake.addEventListener('mouseleave', () => setBrake(false));
-        btnBrake.addEventListener('touchstart', (e) => { e.preventDefault(); setBrake(true); }, { passive: false });
-        btnBrake.addEventListener('touchend', () => setBrake(false));
+            btn.addEventListener('touchstart', handlePress, { passive: false });
+            btn.addEventListener('touchend', handleRelease);
+            btn.addEventListener('touchcancel', handleRelease);
+            btn.addEventListener('mousedown', handlePress);
+            btn.addEventListener('mouseup', handleRelease);
+            btn.addEventListener('mouseleave', handleRelease);
+        };
+
+        bindTouchButton('btn-left', () => this.moveLane(-1), null);
+        bindTouchButton('btn-right', () => this.moveLane(1), null);
+        bindTouchButton('btn-nitro', () => this.activateNitro(), null);
+
+        bindTouchButton('btn-gas',
+            () => { this.isGasPressed = true; },
+            () => { this.isGasPressed = false; }
+        );
+
+        bindTouchButton('btn-brake',
+            () => { this.isBrakePressed = true; },
+            () => { this.isBrakePressed = false; }
+        );
 
         document.getElementById('pause-btn').addEventListener('click', () => this.togglePause());
         document.getElementById('settings-btn').addEventListener('click', () => {
@@ -1057,17 +1087,40 @@ class Game3D {
             });
         });
 
-        // Touch Swipe
+        // Touch Swipe Navigation (Filtered to ignore UI buttons)
         let touchStartX = 0;
-        window.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
-        window.addEventListener('touchend', (e) => {
-            if (this.state !== 'PLAYING') return;
-            const diffX = e.changedTouches[0].clientX - touchStartX;
-            if (Math.abs(diffX) > 40) {
-                if (diffX < 0) this.moveLane(-1);
-                else this.moveLane(1);
+        let touchStartY = 0;
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#touch-controls, .overlay-screen, button, input, .modal-card')) return;
+            if (e.changedTouches && e.changedTouches[0]) {
+                touchStartX = e.changedTouches[0].clientX;
+                touchStartY = e.changedTouches[0].clientY;
             }
         }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            if (this.state !== 'PLAYING') return;
+            if (e.target.closest('#touch-controls, .overlay-screen, button, input, .modal-card')) return;
+            if (e.changedTouches && e.changedTouches[0]) {
+                const diffX = e.changedTouches[0].clientX - touchStartX;
+                const diffY = e.changedTouches[0].clientY - touchStartY;
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+                    if (diffX < 0) this.moveLane(-1);
+                    else this.moveLane(1);
+                }
+            }
+        }, { passive: true });
+    }
+
+    onWindowResize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        if (this.camera && this.renderer) {
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(width, height);
+        }
+    }
     }
 
     moveLane(direction) {

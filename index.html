@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>سلطان جاده ۳بعدی - بازی رانندگی ایرانی</title>
     <meta name="description" content="بازی رانندگی واقعی سه‌بعدی ایرانی با نمای داخل کابین پژو پارس، سیستم شوتی، زانتیا، پیکان جوانان و آزادراه ایرانی.">
     <meta name="mobile-web-app-capable" content="yes">
@@ -11,9 +11,11 @@
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css?v=13.0.0">
-    <!-- Three.js 3D WebGL Engine & PeerJS WebRTC -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- Local Offline Three.js 3D WebGL Engine & PeerJS WebRTC (with CDN fallbacks) -->
+    <script src="three.min.js"></script>
+    <script>if (typeof THREE === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+    <script src="peer.min.js"></script>
+    <script>if (typeof Peer === 'undefined') document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');</script>
     <script>
         // Automatic Cache-Buster & Fresh Reload Handler
         if ('serviceWorker' in navigator) {

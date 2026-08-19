@@ -1,6 +1,20 @@
-const CACHE_NAME = 'iranian-highway-v13-mobile-responsive-fix';
+const CACHE_NAME = 'iranian-highway-v14-offline-mobile';
+
+const PRECACHE_ASSETS = [
+    './',
+    './index.html',
+    './style.css',
+    './game.js',
+    './audio.js',
+    './three.min.js',
+    './peer.min.js',
+    './manifest.json'
+];
 
 self.addEventListener('install', (e) => {
+    e.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
+    );
     self.skipWaiting();
 });
 

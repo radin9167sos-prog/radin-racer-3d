@@ -819,6 +819,13 @@ body, html {
 }
 
 /* Mobile Responsive Layout Styles */
+.control-btn, button, input {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 @media (max-width: 768px) {
     .garage-menu-overlay {
         padding: 10px;
@@ -835,15 +842,15 @@ body, html {
     }
 
     .driver-stats-pill {
-        font-size: 0.88rem;
-        gap: 8px;
+        font-size: 0.85rem;
+        gap: 6px;
     }
 
     .garage-showcase-card {
         width: 100%;
         max-width: 100%;
         transform: none;
-        padding: 16px;
+        padding: 14px;
         margin-bottom: 0;
         max-height: 75vh;
         overflow-y: auto;
@@ -855,27 +862,89 @@ body, html {
     }
 
     .mode-btn {
-        padding: 10px;
-        font-size: 0.85rem;
+        padding: 8px;
+        font-size: 0.8rem;
     }
 
     #hud {
         top: 60px;
         left: 10px;
         right: 10px;
-        transform: none;
         width: calc(100% - 20px);
+        padding: 0;
     }
 
     .hud-card {
-        padding: 6px 10px;
+        padding: 4px 8px;
     }
 
     .hud-title {
-        font-size: 0.72rem;
+        font-size: 0.7rem;
     }
 
     .hud-value {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
+    }
+
+    #speedometer-box {
+        bottom: 85px;
+        right: 15px;
+        width: 85px;
+        height: 85px;
+    }
+
+    #speedo-kmh {
+        font-size: 1.0rem;
+    }
+
+    #touch-controls {
+        bottom: 12px;
+        padding: 0 12px;
+    }
+
+    .control-btn {
+        width: 62px;
+        height: 62px;
+        font-size: 1.4rem;
+    }
+
+    .gas-btn, .brake-btn, .nitro-btn {
+        width: 58px;
+        height: 58px;
+        font-size: 0.72rem;
+    }
+}
+
+/* Mobile Landscape Specific Tuning */
+@media (max-height: 500px) and (orientation: landscape) {
+    #hud {
+        top: 8px;
+        left: auto;
+        right: 10px;
+        width: auto;
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    #top-controls-bar {
+        top: 8px;
+        left: 10px;
+    }
+
+    #speedometer-box {
+        bottom: 10px;
+        right: 210px;
+        width: 75px;
+        height: 75px;
+    }
+
+    #powerup-bar {
+        top: 55px;
+        right: 10px;
+    }
+
+    .garage-showcase-card {
+        max-height: 82vh;
+        padding: 12px;
     }
 }
