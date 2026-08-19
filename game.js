@@ -132,10 +132,10 @@ class Game3D {
     // THREE.JS 3D ENGINE INITIALIZATION (Photorealistic Environment)
     // ==========================================
     initThreeJS() {
-        // 1. Scene & Natural Atmospheric Sky Fog (Realistic Daylight/Dusk Horizon)
+        // 1. Scene & Deep Dusk Cyberpunk Horizon Fog
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x7090b4);
-        this.scene.fog = new THREE.FogExp2(0x7090b4, 0.0035);
+        this.scene.background = new THREE.Color(0x12172b);
+        this.scene.fog = new THREE.FogExp2(0x12172b, 0.0018);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1251,6 +1251,20 @@ class Game3D {
         this.hazards = [];
 
         this.buildPlayer3DCar();
+
+        // Instant camera position snap for driving start
+        if (this.camera) {
+            if (this.cameraMode === 'COCKPIT') {
+                this.camera.position.set(this.player.x - 0.35, 1.02, 0.12);
+                this.camera.lookAt(this.player.x - 0.35, 0.95, -40.0);
+            } else if (this.cameraMode === 'HOOD') {
+                this.camera.position.set(this.player.x, 0.82, -1.25);
+                this.camera.lookAt(this.player.x, 0.78, -40.0);
+            } else {
+                this.camera.position.set(this.player.x, 2.15, 5.4);
+                this.camera.lookAt(this.player.x, 0.95, -40.0);
+            }
+        }
 
         this.uiMenu.classList.add('hidden');
         this.uiPause.classList.add('hidden');
