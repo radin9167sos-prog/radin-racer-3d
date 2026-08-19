@@ -1446,6 +1446,71 @@ class Game3D {
         this.updateTopBarHUD();
     }
 
+    // ==========================================
+    // BRAND NEW 3D CAMERA CONTROLLER SYSTEM (100% CLEAN & STABLE)
+    // ==========================================
+    update3DCamera(dt) {
+        if (!this.camera) return;
+
+        const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
+        const isBrakePressed = this.isBrakePressed || this.keys['ArrowDown'] || this.keys['KeyS'];
+
+        // Pitch reaction on acceleration / braking
+        const targetPitchOffset = isGasPressed ? -0.12 : (isBrakePressed ? 0.18 : 0.0);
+        this.cameraPitchOffset = THREE.MathUtils.lerp(this.cameraPitchOffset || 0, targetPitchOffset, dt * 6.0);
+
+        // Target lane X offset for steering wheel calculation
+        const targetX = this.laneX[this.targetLane];
+        const diffX = targetX - this.player.x;
+
+        if (this.cameraMode === 'COCKPIT') {
+            if (this.cockpitGroup) this.cockpitGroup.visible = true;
+
+            // Driver seat position inside Peugeot Pars cockpit (facing straight down highway)
+            const targetCamX = this.player.x - 0.35;
+            const targetCamY = 1.05;
+            const targetCamZ = 0.12;
+
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 12.0);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, dt * 12.0);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, dt * 12.0);
+
+            // Look straight forward down the road
+            this.camera.lookAt(targetCamX, 0.98 + this.cameraPitchOffset, -40.0);
+
+            if (this.steeringWheel) {
+                this.steeringWheel.rotation.z = -diffX * 0.85;
+            }
+        } else if (this.cameraMode === 'HOOD') {
+            if (this.cockpitGroup) this.cockpitGroup.visible = false;
+
+            // Front bonnet camera view
+            const targetCamX = this.player.x;
+            const targetCamY = 0.82;
+            const targetCamZ = -1.25;
+
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 10.0);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, dt * 10.0);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, dt * 10.0);
+
+            this.camera.lookAt(targetCamX, 0.80 + this.cameraPitchOffset, -40.0);
+        } else {
+            // Default CHASE Mode (3rd-person follow camera centered directly behind car)
+            if (this.cockpitGroup) this.cockpitGroup.visible = false;
+
+            const targetCamX = this.player.x;
+            const targetCamY = 2.15;
+            const targetCamZ = 5.4;
+
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 8.0);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, dt * 8.0);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, dt * 8.0);
+
+            // Look forward down the highway
+            this.camera.lookAt(targetCamX, 0.95 + this.cameraPitchOffset, -40.0);
+        }
+    }
+
     updateTopBarHUD() {
         const menuCoins = document.getElementById('menu-coins');
         const menuHighscore = document.getElementById('menu-highscore');
@@ -1598,38 +1663,8 @@ class Game3D {
 
         this.shieldMesh.visible = this.player.hasShield;
 
-        // Dynamic 3D Camera Modes with Straight Forward Targeting (No Tilt / No Crookedness)
-        const pitchOffset = isGasPressed ? -0.15 : (isBrakePressed ? 0.2 : 0.0);
-
-        if (this.cameraMode === 'COCKPIT') {
-            if (this.cockpitGroup) this.cockpitGroup.visible = true;
-
-            // Driver Seat Eye Level (Behind Peugeot Steering Wheel looking straight down highway)
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x - 0.32, 0.25);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 1.02, 0.25);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 0.15, 0.25);
-            this.camera.lookAt(this.player.x - 0.32, 0.95 + pitchOffset, -35.0);
-
-            if (this.steeringWheel) {
-                this.steeringWheel.rotation.z = -diffX * 0.85;
-            }
-        } else if (this.cameraMode === 'HOOD') {
-            if (this.cockpitGroup) this.cockpitGroup.visible = false;
-
-            // Front Bonnet View centered looking straight down highway
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x, 0.2);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.82, 0.2);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -1.25, 0.2);
-            this.camera.lookAt(this.player.x, 0.78 + pitchOffset, -35.0);
-        } else {
-            // CHASE Mode (Straight 3rd Person View Centered Behind Car)
-            if (this.cockpitGroup) this.cockpitGroup.visible = false;
-
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x, 0.2);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.1, 0.2);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 5.2, 0.2);
-            this.camera.lookAt(this.player.x, 0.9 + pitchOffset, -35.0);
-        }
+        // Update 3D Camera System
+        this.update3DCamera(dt);
 
         // Spawn Obstacles
         const now = performance.now();
