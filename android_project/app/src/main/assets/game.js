@@ -2014,11 +2014,11 @@ class Game3D {
 
     updateHUD() {
         const speedKmh = Math.floor(this.speed * 9.5);
-        this.hudScore.innerText = Math.floor(this.score).toLocaleString('fa-IR');
-        this.hudCoins.innerText = this.coins.toLocaleString('fa-IR');
-        this.hudSpeed.innerText = speedKmh + ' km/h';
-        this.hudDistance.innerText = Math.floor(this.distance) + ' m';
-        if (this.gameMode === 'TIME_ATTACK') this.hudTimer.innerText = Math.ceil(this.timeRemaining) + 's';
+        if (this.hudScore) this.hudScore.innerText = Math.floor(this.score).toLocaleString('fa-IR');
+        if (this.hudCoins) this.hudCoins.innerText = this.coins.toLocaleString('fa-IR');
+        if (this.hudSpeed) this.hudSpeed.innerText = speedKmh + ' km/h';
+        if (this.hudDistance) this.hudDistance.innerText = Math.floor(this.distance) + ' m';
+        if (this.gameMode === 'TIME_ATTACK' && this.hudTimer) this.hudTimer.innerText = Math.ceil(this.timeRemaining) + 's';
 
         const needle = document.getElementById('speedo-needle');
         const arc = document.getElementById('speedo-arc');
@@ -2044,10 +2044,12 @@ class Game3D {
             if (gearBadge) gearBadge.innerText = gear;
         }
 
-        this.powerupBar.innerHTML = '';
-        if (this.gameMode === 'ZEN') this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00f0ff;">🧘 حالت زِن بی‌انتها</div>`;
-        if (this.player.hasShield) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00ff66;">🛡️ سپر فعال</div>`;
-        if (this.player.isNitroActive) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#ffea00;">⚡ نیترو فعال!</div>`;
+        if (this.powerupBar) {
+            this.powerupBar.innerHTML = '';
+            if (this.gameMode === 'ZEN') this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00f0ff;">🧘 حالت زِن بی‌انتها</div>`;
+            if (this.player.hasShield) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00ff66;">🛡️ سپر فعال</div>`;
+            if (this.player.isNitroActive) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#ffea00;">⚡ نیترو فعال!</div>`;
+        }
     }
 
     updateGarageUI() {
@@ -2108,6 +2110,14 @@ class Game3D {
     }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    window.game = new Game3D();
-});
+function bootGameEngine() {
+    if (!window.game) {
+        window.game = new Game3D();
+    }
+}
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(bootGameEngine, 1);
+} else {
+    window.addEventListener('DOMContentLoaded', bootGameEngine);
+}
