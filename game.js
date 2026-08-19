@@ -1121,7 +1121,6 @@ class Game3D {
             this.renderer.setSize(width, height);
         }
     }
-    }
 
     moveLane(direction) {
         if (this.state !== 'PLAYING' || this.player.isSpinning) return;
@@ -1599,17 +1598,21 @@ class Game3D {
 
         this.shieldMesh.visible = this.player.hasShield;
 
-        // Camera Modes & Dynamic Steering Wheel Rotation (Bug-Free Cockpit View)
-        const pitchTarget = isGasPressed ? -0.03 : (isBrakePressed ? 0.04 : 0.0);
+        // Camera Modes & Dynamic Steering Wheel Rotation (Bug-Free 3D Driving Camera)
+        const pitchTarget = isGasPressed ? -0.025 : (isBrakePressed ? 0.035 : 0.0);
+
+        // Ensure camera yaw and roll are locked to forward direction (prevent backwards/inverted view)
+        this.camera.rotation.y = 0;
+        this.camera.rotation.z = 0;
 
         if (this.cameraMode === 'COCKPIT') {
             if (this.cockpitGroup) this.cockpitGroup.visible = true;
 
-            // Driver Seat Eye Level Position (Behind Peugeot Steering Wheel & Dashboard)
+            // Driver Seat Eye Level Position (Behind Peugeot Steering Wheel & Dashboard facing forward)
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x - 0.35, 0.25);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.98, 0.25);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -0.22, 0.25);
-            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 1.02, 0.25);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 0.15, 0.25);
+            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget - 0.02, 0.1);
 
             if (this.steeringWheel) {
                 this.steeringWheel.rotation.z = -diffX * 0.85;
@@ -1617,17 +1620,19 @@ class Game3D {
         } else if (this.cameraMode === 'HOOD') {
             if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
+            // Front Bonnet View looking forward down highway
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x, 0.2);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.75, 0.2);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -1.2, 0.2);
-            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0.82, 0.2);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, -1.25, 0.2);
+            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget - 0.03, 0.1);
         } else {
+            // CHASE Mode (3rd Person Chase View from behind car facing forward)
             if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.1);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.1, 0.1);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 5.2, 0.1);
-            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget, 0.08);
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, this.player.x * 0.45, 0.15);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.2, 0.15);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 5.5, 0.15);
+            this.camera.rotation.x = THREE.MathUtils.lerp(this.camera.rotation.x, pitchTarget - 0.08, 0.1);
         }
 
         // Spawn Obstacles
