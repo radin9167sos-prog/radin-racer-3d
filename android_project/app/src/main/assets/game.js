@@ -146,6 +146,7 @@ class Game3D {
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: true,
+            preserveDrawingBuffer: true,
             powerPreference: "high-performance",
             precision: "mediump"
         });
@@ -881,6 +882,8 @@ class Game3D {
 
         document.getElementById('camera-btn').addEventListener('click', () => this.toggleCameraMode());
         document.getElementById('radio-btn').addEventListener('click', () => this.cycleRadioStation());
+        const btnScreenshot = document.getElementById('screenshot-btn');
+        if (btnScreenshot) btnScreenshot.addEventListener('click', () => this.takeScreenshot());
 
         // Multi-touch & Touch Control Helper
         const bindTouchButton = (btnId, onPress, onRelease) => {
@@ -1152,6 +1155,21 @@ class Game3D {
 
         this.addFloatingText(names[this.cameraMode], this.canvas.width / 2, 160, '#00f0ff');
         audioMgr.playCoin();
+    }
+
+    takeScreenshot() {
+        this.render();
+        try {
+            const dataURL = this.canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `Sultan_3D_Screenshot_${Date.now()}.png`;
+            link.href = dataURL;
+            link.click();
+            this.addFloatingText('📸 اسکرین‌شات با موفقیت ذخیره شد!', this.canvas.width / 2, 160, '#00f0ff');
+            audioMgr.playCoin();
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     cycleRadioStation() {
