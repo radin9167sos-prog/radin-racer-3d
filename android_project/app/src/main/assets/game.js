@@ -914,168 +914,88 @@ class Game3D {
         window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
         window.addEventListener('click', unlockAudio, { once: true, passive: true });
 
-        document.getElementById('camera-btn').addEventListener('click', () => this.toggleCameraMode());
-        document.getElementById('radio-btn').addEventListener('click', () => this.cycleRadioStation());
-        const btnScreenshot = document.getElementById('screenshot-btn');
-        if (btnScreenshot) btnScreenshot.addEventListener('click', () => this.takeScreenshot());
-
-        const btnMenuScreenshot = document.getElementById('btn-menu-screenshot');
-        if (btnMenuScreenshot) btnMenuScreenshot.addEventListener('click', () => this.takeScreenshot());
-
-        const btnGameOverScreenshot = document.getElementById('btn-gameover-screenshot');
-        if (btnGameOverScreenshot) btnGameOverScreenshot.addEventListener('click', () => this.takeScreenshot());
-
-        // Multi-touch & Touch Control Helper
-        const bindTouchButton = (btnId, onPress, onRelease) => {
-            const btn = document.getElementById(btnId);
-            if (!btn) return;
-
-            const handlePress = (e) => {
-                if (e.cancelable) e.preventDefault();
-                btn.classList.add('active');
-                if (onPress) onPress();
-            };
-
-            const handleRelease = (e) => {
-                btn.classList.remove('active');
-                if (onRelease) onRelease();
-            };
-
-            btn.addEventListener('touchstart', handlePress, { passive: false });
-            btn.addEventListener('touchend', handleRelease);
-            btn.addEventListener('touchcancel', handleRelease);
-            btn.addEventListener('mousedown', handlePress);
-            btn.addEventListener('mouseup', handleRelease);
-            btn.addEventListener('mouseleave', handleRelease);
+        const addClick = (id, fn) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', fn);
         };
 
-        bindTouchButton('btn-left', () => this.moveLane(-1), null);
-        bindTouchButton('btn-right', () => this.moveLane(1), null);
-        bindTouchButton('btn-nitro', () => this.activateNitro(), null);
+        addClick('camera-btn', () => this.toggleCameraMode());
+        addClick('radio-btn', () => this.cycleRadioStation());
+        addClick('screenshot-btn', () => this.takeScreenshot());
+        addClick('btn-menu-screenshot', () => this.takeScreenshot());
+        addClick('btn-gameover-screenshot', () => this.takeScreenshot());
+        addClick('pause-btn', () => this.togglePause());
 
-        bindTouchButton('btn-gas',
-            () => { this.isGasPressed = true; },
-            () => { this.isGasPressed = false; }
-        );
-
-        bindTouchButton('btn-brake',
-            () => { this.isBrakePressed = true; },
-            () => { this.isBrakePressed = false; }
-        );
-
-        document.getElementById('pause-btn').addEventListener('click', () => this.togglePause());
-        document.getElementById('settings-btn').addEventListener('click', () => {
+        addClick('settings-btn', () => {
             if (this.state === 'PLAYING') {
                 this.prevStateBeforeSettings = 'PLAYING';
                 this.state = 'PAUSED';
             }
-            this.uiSettings.classList.remove('hidden');
+            if (this.uiSettings) this.uiSettings.classList.remove('hidden');
         });
 
-        const btnMenuSettings = document.getElementById('btn-menu-settings');
-        if (btnMenuSettings) {
-            btnMenuSettings.addEventListener('click', () => {
-                this.uiSettings.classList.remove('hidden');
-            });
-        }
-
-        // Settings Selectors
-        document.querySelectorAll('.seg-btn[data-gfx]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.seg-btn[data-gfx]').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.gfxQuality = e.target.dataset.gfx;
-                localStorage.setItem('neon_gfx', this.gfxQuality);
-                this.renderer.setPixelRatio(this.gfxQuality === 'LOW' ? 1.0 : Math.min(window.devicePixelRatio || 1, 2));
-            });
+        addClick('btn-menu-settings', () => {
+            if (this.uiSettings) this.uiSettings.classList.remove('hidden');
         });
 
-        document.querySelectorAll('.seg-btn[data-fps]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.seg-btn[data-fps]').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.fpsTarget = e.target.dataset.fps;
-                localStorage.setItem('neon_fps', this.fpsTarget);
-                this.frameInterval = this.getFrameInterval();
-            });
-        });
-
-        document.querySelectorAll('.seg-btn[data-track]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.seg-btn[data-track]').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                audioMgr.switchTrack(parseInt(e.target.dataset.track));
-            });
-        });
-
-        document.getElementById('btn-close-settings').addEventListener('click', () => {
-            this.uiSettings.classList.add('hidden');
+        addClick('btn-close-settings', () => {
+            if (this.uiSettings) this.uiSettings.classList.add('hidden');
             if (this.prevStateBeforeSettings === 'PLAYING') {
                 this.state = 'PLAYING';
                 this.prevStateBeforeSettings = null;
             }
         });
 
-        document.getElementById('btn-open-settings-pause').addEventListener('click', () => {
-            this.uiSettings.classList.remove('hidden');
+        addClick('btn-open-settings-pause', () => {
+            if (this.uiSettings) this.uiSettings.classList.remove('hidden');
         });
 
-        document.getElementById('btn-start').addEventListener('click', () => { audioMgr.init(); this.startGame(); });
-        document.getElementById('btn-restart').addEventListener('click', () => { this.startGame(); });
+        addClick('btn-start', () => { audioMgr.init(); this.startGame(); });
+        addClick('btn-restart', () => { this.startGame(); });
+        addClick('btn-multiplayer', () => { this.openMultiplayerLobby(); });
 
-        // Game Mode Selector Click Handlers
-        document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const mode = e.currentTarget.dataset.mode;
-                document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-
-                if (mode === 'ONLINE') {
-                    this.openMultiplayerLobby();
-                } else {
-                    this.gameMode = mode;
-                }
-            });
-        });
-
-        // Online Multiplayer Button Handlers
-        document.getElementById('btn-multiplayer').addEventListener('click', () => {
-            this.openMultiplayerLobby();
-        });
-
-        document.getElementById('btn-close-multiplayer').addEventListener('click', () => {
-            this.uiMultiplayer.classList.add('hidden');
-            this.uiMenu.classList.remove('hidden');
+        addClick('btn-close-multiplayer', () => {
+            if (this.uiMultiplayer) this.uiMultiplayer.classList.add('hidden');
+            if (this.uiMenu) this.uiMenu.classList.remove('hidden');
             if (this.peer) {
                 this.peer.destroy();
                 this.peer = null;
             }
         });
 
-        document.getElementById('tab-create-room').addEventListener('click', (e) => {
-            document.getElementById('tab-create-room').classList.add('active');
-            document.getElementById('tab-join-room').classList.remove('active');
-            document.getElementById('create-room-box').classList.remove('hidden');
-            document.getElementById('join-room-box').classList.add('hidden');
+        addClick('tab-create-room', () => {
+            const tCreate = document.getElementById('tab-create-room');
+            const tJoin = document.getElementById('tab-join-room');
+            const cBox = document.getElementById('create-room-box');
+            const jBox = document.getElementById('join-room-box');
+            if (tCreate) tCreate.classList.add('active');
+            if (tJoin) tJoin.classList.remove('active');
+            if (cBox) cBox.classList.remove('hidden');
+            if (jBox) jBox.classList.add('hidden');
             this.initHostRoom();
         });
 
-        document.getElementById('tab-join-room').addEventListener('click', (e) => {
-            document.getElementById('tab-join-room').classList.add('active');
-            document.getElementById('tab-create-room').classList.remove('active');
-            document.getElementById('join-room-box').classList.remove('hidden');
-            document.getElementById('create-room-box').classList.add('hidden');
+        addClick('tab-join-room', () => {
+            const tCreate = document.getElementById('tab-create-room');
+            const tJoin = document.getElementById('tab-join-room');
+            const cBox = document.getElementById('create-room-box');
+            const jBox = document.getElementById('join-room-box');
+            if (tJoin) tJoin.classList.add('active');
+            if (tCreate) tCreate.classList.remove('active');
+            if (jBox) jBox.classList.remove('hidden');
+            if (cBox) cBox.classList.add('hidden');
         });
 
-        document.getElementById('btn-copy-code').addEventListener('click', () => {
+        addClick('btn-copy-code', () => {
             if (this.myRoomCode) {
                 navigator.clipboard.writeText(this.myRoomCode);
                 this.addFloatingText('📋 کد اتاق کپی شد!', this.canvas.width / 2, 160, '#00e676');
             }
         });
 
-        document.getElementById('btn-join-match').addEventListener('click', () => {
-            const inputCode = document.getElementById('join-code-input').value.trim();
+        addClick('btn-join-match', () => {
+            const inputEl = document.getElementById('join-code-input');
+            const inputCode = inputEl ? inputEl.value.trim() : '';
             if (inputCode.length >= 4) {
                 this.joinOnlineRoom(inputCode);
             } else {
@@ -1083,17 +1003,17 @@ class Game3D {
             }
         });
 
-        document.getElementById('btn-garage').addEventListener('click', () => {
-            this.uiMenu.classList.add('hidden');
-            this.uiGarage.classList.remove('hidden');
+        addClick('btn-garage', () => {
+            if (this.uiMenu) this.uiMenu.classList.add('hidden');
+            if (this.uiGarage) this.uiGarage.classList.remove('hidden');
         });
 
-        document.getElementById('btn-close-garage').addEventListener('click', () => {
-            this.uiGarage.classList.add('hidden');
-            this.uiMenu.classList.remove('hidden');
+        addClick('btn-close-garage', () => {
+            if (this.uiGarage) this.uiGarage.classList.add('hidden');
+            if (this.uiMenu) this.uiMenu.classList.remove('hidden');
         });
 
-        document.getElementById('btn-resume').addEventListener('click', () => { this.togglePause(); });
+        addClick('btn-resume', () => { this.togglePause(); });
 
         // Underglow Tuning Colors
         document.querySelectorAll('.color-swatch').forEach(swatch => {
@@ -1502,18 +1422,21 @@ class Game3D {
     }
 
     updateGarageOrbit(dt) {
-        if (!this.playerCarGroup) return;
+        if (!this.playerCarGroup) {
+            this.buildPlayer3DCar();
+            return;
+        }
 
         if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
-        this.menuOrbitAngle = (this.menuOrbitAngle || 0) + dt * 0.35;
+        this.menuOrbitAngle = (this.menuOrbitAngle || 0) + dt * 0.45;
 
-        const radius = 4.8;
-        const camX = Math.sin(this.menuOrbitAngle) * radius;
-        const camZ = Math.cos(this.menuOrbitAngle) * radius;
+        // Front-Quarter Showcase Orbit (Car is ALWAYS 100% visible in garage)
+        const camX = Math.sin(this.menuOrbitAngle) * 3.8;
+        const camZ = 3.8 + Math.cos(this.menuOrbitAngle) * 1.8;
 
-        this.camera.position.set(this.player.x + camX, 1.25, camZ);
-        this.camera.lookAt(this.player.x, 0.55, 0);
+        this.camera.position.set(this.player.x + camX, 1.35, camZ);
+        this.camera.lookAt(this.player.x, 0.55, 0.2);
 
         this.updateTopBarHUD();
     }
