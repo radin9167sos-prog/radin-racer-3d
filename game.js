@@ -92,6 +92,7 @@ class Game3D {
 
         this.initDOM();
         this.initThreeJS();
+        this.buildPlayer3DCar();
         this.setupEvents();
         this.updateGarageUI();
         this.updateHUD();
