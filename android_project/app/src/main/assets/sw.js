@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v14-offline-mobile';
+const CACHE_NAME = 'iranian-highway-v15-hd-force-update';
 
 const PRECACHE_ASSETS = [
     './',

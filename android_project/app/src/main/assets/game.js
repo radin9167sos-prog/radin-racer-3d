@@ -828,11 +828,22 @@ class Game3D {
         this.underglowLight.position.set(0, 0.1, 0);
         this.playerCarGroup.add(this.underglowLight);
 
-        // 3D Shield Globe Mesh
-        const shieldGeo = new THREE.SphereGeometry(2.5, 16, 16);
-        const shieldMat = new THREE.MeshBasicMaterial({ color: 0x00ff66, wireframe: true, transparent: true, opacity: 0.5 });
+        // 3D HD Glowing Futuristic Energy Shield Bubble
+        const shieldGeo = new THREE.SphereGeometry(2.3, 32, 32);
+        const shieldMat = new THREE.MeshPhysicalMaterial({
+            color: 0x00ff88,
+            emissive: 0x00ff66,
+            emissiveIntensity: 0.8,
+            roughness: 0.05,
+            metalness: 0.1,
+            transmission: 0.85,
+            transparent: true,
+            opacity: 0.45,
+            wireframe: false,
+            side: THREE.DoubleSide
+        });
         this.shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
-        this.shieldMesh.position.y = 0.6;
+        this.shieldMesh.position.set(0, 0.7, 0);
         this.shieldMesh.visible = false;
         this.playerCarGroup.add(this.shieldMesh);
 
