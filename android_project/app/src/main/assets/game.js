@@ -133,40 +133,32 @@ class Game3D {
     // THREE.JS 3D ENGINE INITIALIZATION (Photorealistic Environment)
     // ==========================================
     initThreeJS() {
-        // 1. Scene & Deep Dusk Cyberpunk Horizon Fog
+        // 1. Scene & Natural Clean Daylight Horizon Fog
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x12172b);
-        this.scene.fog = new THREE.FogExp2(0x12172b, 0.0018);
+        this.scene.background = new THREE.Color(0x87ceeb);
+        this.scene.fog = new THREE.FogExp2(0x87ceeb, 0.0025);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 1.08, 0.1);
         this.camera.lookAt(0, 0.98, -40);
 
-        // 3. WebGL Renderer with High-Performance HD Settings & Tone Mapping
-        try {
-            this.renderer = new THREE.WebGLRenderer({
-                canvas: this.canvas,
-                antialias: true,
-                preserveDrawingBuffer: true,
-                powerPreference: "high-performance"
-            });
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
-            if (THREE.ACESFilmicToneMapping) {
-                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.renderer.toneMappingExposure = 1.1;
-            }
-        } catch (e) {
-            console.error("WebGL Renderer init error:", e);
-        }
+        // 3. Standard Ultra-Smooth WebGL Renderer
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            antialias: true,
+            preserveDrawingBuffer: true,
+            powerPreference: "high-performance"
+        });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(1.0);
 
         // 4. Natural Daylight Sunlight & Sky Hemisphere Lighting
-        const hemiLight = new THREE.HemisphereLight(0xa0c8f0, 0x443322, 0.75);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.85);
         this.scene.add(hemiLight);
 
-        const sunLight = new THREE.DirectionalLight(0xfffaeb, 1.35);
-        sunLight.position.set(40, 70, -30);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.25);
+        sunLight.position.set(30, 60, -20);
         this.scene.add(sunLight);
 
         // 5. Realistic 5-Lane Highway Charcoal Asphalt Road
@@ -392,20 +384,16 @@ class Game3D {
         const carData = this.carGarage[this.player.selectedCar] || this.carGarage[0];
         this.playerCarGroup = new THREE.Group();
 
-        const carMat = new THREE.MeshPhysicalMaterial({
+        const carMat = new THREE.MeshPhongMaterial({
             color: carData.color,
-            metalness: 0.55,
-            roughness: 0.15,
-            clearcoat: 1.0,
-            clearcoatRoughness: 0.08,
-            reflectivity: 0.95
+            shininess: 90,
+            specular: 0x666666
         });
-        const darkTrimMat = new THREE.MeshStandardMaterial({ color: 0x11121c, roughness: 0.8 });
-        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.98, roughness: 0.05 });
-        const glassMat = new THREE.MeshStandardMaterial({
+        const darkTrimMat = new THREE.MeshBasicMaterial({ color: 0x11121c });
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.95, roughness: 0.1 });
+        const glassMat = new THREE.MeshPhongMaterial({
             color: 0x080915,
-            metalness: 0.85,
-            roughness: 0.1,
+            shininess: 100,
             transparent: true,
             opacity: 0.88
         });
