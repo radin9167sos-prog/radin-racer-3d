@@ -142,34 +142,30 @@ class Game3D {
         this.camera.position.set(0, 1.08, 0.1);
         this.camera.lookAt(0, 0.98, -40);
 
-        // 3. WebGL Renderer with Ultra HD Realistic Shading & Tone Mapping
-        this.renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            antialias: true,
-            preserveDrawingBuffer: true,
-            powerPreference: "high-performance",
-            precision: "highp"
-        });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        if (THREE.ACESFilmicToneMapping) {
-            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            this.renderer.toneMappingExposure = 1.15;
+        // 3. WebGL Renderer with High-Performance HD Settings & Tone Mapping
+        try {
+            this.renderer = new THREE.WebGLRenderer({
+                canvas: this.canvas,
+                antialias: true,
+                preserveDrawingBuffer: true,
+                powerPreference: "high-performance"
+            });
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
+            if (THREE.ACESFilmicToneMapping) {
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.1;
+            }
+        } catch (e) {
+            console.error("WebGL Renderer init error:", e);
         }
 
         // 4. Natural Daylight Sunlight & Sky Hemisphere Lighting
         const hemiLight = new THREE.HemisphereLight(0xa0c8f0, 0x443322, 0.75);
         this.scene.add(hemiLight);
 
-        const sunLight = new THREE.DirectionalLight(0xfffaeb, 1.45);
+        const sunLight = new THREE.DirectionalLight(0xfffaeb, 1.35);
         sunLight.position.set(40, 70, -30);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 150;
         this.scene.add(sunLight);
 
         // 5. Realistic 5-Lane Highway Charcoal Asphalt Road
@@ -405,13 +401,12 @@ class Game3D {
         });
         const darkTrimMat = new THREE.MeshStandardMaterial({ color: 0x11121c, roughness: 0.8 });
         const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.98, roughness: 0.05 });
-        const glassMat = new THREE.MeshPhysicalMaterial({
+        const glassMat = new THREE.MeshStandardMaterial({
             color: 0x080915,
-            metalness: 0.9,
-            roughness: 0.05,
-            transmission: 0.3,
+            metalness: 0.85,
+            roughness: 0.1,
             transparent: true,
-            opacity: 0.92
+            opacity: 0.88
         });
 
         // Dynamic Neon Underglow Light
@@ -830,15 +825,14 @@ class Game3D {
 
         // 3D HD Glowing Futuristic Energy Shield Bubble
         const shieldGeo = new THREE.SphereGeometry(2.3, 32, 32);
-        const shieldMat = new THREE.MeshPhysicalMaterial({
+        const shieldMat = new THREE.MeshStandardMaterial({
             color: 0x00ff88,
             emissive: 0x00ff66,
-            emissiveIntensity: 0.8,
-            roughness: 0.05,
-            metalness: 0.1,
-            transmission: 0.85,
+            emissiveIntensity: 0.6,
+            roughness: 0.1,
+            metalness: 0.2,
             transparent: true,
-            opacity: 0.45,
+            opacity: 0.4,
             wireframe: false,
             side: THREE.DoubleSide
         });

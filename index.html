@@ -10,20 +10,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=15.0.0">
+    <link rel="stylesheet" href="style.css?v=16.0.0">
     <!-- Local Offline Three.js 3D WebGL Engine & PeerJS WebRTC (with CDN fallbacks) -->
     <script src="three.min.js"></script>
     <script>if (typeof THREE === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
     <script src="peer.min.js"></script>
     <script>if (typeof Peer === 'undefined') document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');</script>
     <script>
-        // Force Clear Old Caches & Service Workers to display fresh HD version
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => {
-                for (let r of regs) r.unregister();
-            });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=15.0.0', { updateViaCache: 'none' });
+                navigator.serviceWorker.register('./sw.js?v=16.0.0', { updateViaCache: 'none' }).catch(() => {});
             });
         }
     </script>
@@ -337,7 +333,7 @@
         </div>
     </div>
 
-    <script src="audio.js?v=15.0.0"></script>
-    <script src="game.js?v=15.0.0"></script>
+    <script src="audio.js?v=16.0.0"></script>
+    <script src="game.js?v=16.0.0"></script>
 </body>
 </html>
