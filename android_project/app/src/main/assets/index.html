@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=45.0.0">
+    <link rel="stylesheet" href="style.css?v=50.0.0">
     <!-- Local & CDN Three.js and PeerJS -->
     <script src="three.min.js"></script>
     <script>if (typeof THREE === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
@@ -19,7 +19,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=45.0.0', { updateViaCache: 'none' }).catch(() => {});
+                navigator.serviceWorker.register('./sw.js?v=50.0.0', { updateViaCache: 'none' }).catch(() => {});
             });
         }
     </script>
@@ -168,7 +168,7 @@
         </div>
     </div>
 
-    <script src="audio.js?v=45.0.0"></script>
-    <script src="game.js?v=45.0.0"></script>
+    <script src="audio.js?v=50.0.0"></script>
+    <script src="game.js?v=50.0.0"></script>
 </body>
 </html>
