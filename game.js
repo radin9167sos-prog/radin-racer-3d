@@ -79,8 +79,8 @@ class Game3D {
 
     initThreeJS() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x7090b4);
-        this.scene.fog = new THREE.FogExp2(0x7090b4, 0.0025);
+        this.scene.background = new THREE.Color(0x608abf);
+        this.scene.fog = new THREE.FogExp2(0x608abf, 0.0022);
 
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 1.35, 3.8);
@@ -93,38 +93,52 @@ class Game3D {
             powerPreference: "high-performance"
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(1.0);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.85);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
         this.scene.add(hemiLight);
 
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.25);
+        const sunLight = new THREE.DirectionalLight(0xfffaed, 1.4);
         sunLight.position.set(30, 60, -20);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 150;
+        sunLight.shadow.camera.left = -25;
+        sunLight.shadow.camera.right = 25;
+        sunLight.shadow.camera.top = 25;
+        sunLight.shadow.camera.bottom = -25;
         this.scene.add(sunLight);
 
         // Asphalt Highway Road
         const roadGeo = new THREE.PlaneGeometry(24, 600);
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x262833, roughness: 0.7, metalness: 0.1 });
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x22242d, roughness: 0.6, metalness: 0.2 });
         this.roadMesh = new THREE.Mesh(roadGeo, roadMat);
         this.roadMesh.rotation.x = -Math.PI / 2;
         this.roadMesh.position.z = -200;
+        this.roadMesh.receiveShadow = true;
         this.scene.add(this.roadMesh);
 
         // Soil Terrain
-        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x444034, roughness: 0.95 });
+        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x3d392e, roughness: 0.95 });
         const leftTerrain = new THREE.Mesh(new THREE.PlaneGeometry(160, 600), terrainMat);
         leftTerrain.rotation.x = -Math.PI / 2;
         leftTerrain.position.set(-92, -0.05, -200);
+        leftTerrain.receiveShadow = true;
         this.scene.add(leftTerrain);
 
         const rightTerrain = new THREE.Mesh(new THREE.PlaneGeometry(160, 600), terrainMat);
         rightTerrain.rotation.x = -Math.PI / 2;
         rightTerrain.position.set(92, -0.05, -200);
+        rightTerrain.receiveShadow = true;
         this.scene.add(rightTerrain);
 
         // Yellow Shoulder Lines
-        const edgeLineGeo = new THREE.BoxGeometry(0.25, 0.04, 600);
-        const edgeLineMat = new THREE.MeshBasicMaterial({ color: 0xe6b800 });
+        const edgeLineGeo = new THREE.BoxGeometry(0.28, 0.04, 600);
+        const edgeLineMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
         const leftEdge = new THREE.Mesh(edgeLineGeo, edgeLineMat);
         leftEdge.position.set(-10.8, 0.02, -200);
         this.scene.add(leftEdge);
@@ -133,23 +147,25 @@ class Game3D {
         rightEdge.position.set(10.8, 0.02, -200);
         this.scene.add(rightEdge);
 
-        // Steel Guardrails
-        const guardrailMat = new THREE.MeshStandardMaterial({ color: 0x9fb1c2, metalness: 0.85, roughness: 0.25 });
-        const railGeo = new THREE.BoxGeometry(0.2, 0.45, 600);
+        // Steel Guardrails with Posts
+        const guardrailMat = new THREE.MeshStandardMaterial({ color: 0xb5c4d4, metalness: 0.9, roughness: 0.2 });
+        const railGeo = new THREE.BoxGeometry(0.22, 0.48, 600);
 
         const leftRail = new THREE.Mesh(railGeo, guardrailMat);
-        leftRail.position.set(-11.4, 0.5, -200);
+        leftRail.position.set(-11.4, 0.52, -200);
+        leftRail.castShadow = true;
         this.scene.add(leftRail);
 
         const rightRail = new THREE.Mesh(railGeo, guardrailMat);
-        rightRail.position.set(11.4, 0.5, -200);
+        rightRail.position.set(11.4, 0.52, -200);
+        rightRail.castShadow = true;
         this.scene.add(rightRail);
 
         // Dashed Lane Dividers
         this.laneLinesGroup = new THREE.Group();
         const lineDividerPosX = [-5.4, -1.8, 1.8, 5.4];
         for (let z = 10; z > -400; z -= 12) {
-            const lineGeo = new THREE.BoxGeometry(0.18, 0.04, 4.5);
+            const lineGeo = new THREE.BoxGeometry(0.2, 0.04, 4.8);
             const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             lineDividerPosX.forEach(posX => {
                 const divider = new THREE.Mesh(lineGeo, lineMat);
@@ -161,14 +177,15 @@ class Game3D {
 
         // Street Lights
         this.streetLightsGroup = new THREE.Group();
-        const poleMat = new THREE.MeshStandardMaterial({ color: 0x222533, metalness: 0.7, roughness: 0.3 });
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x222533, metalness: 0.8, roughness: 0.2 });
         const lampLightMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
 
         for (let z = 20; z > -420; z -= 35) {
             [-12.5, 12.5].forEach(xPos => {
                 const poleGroup = new THREE.Group();
-                const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 7.0, 10), poleMat);
+                const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 7.0, 12), poleMat);
                 shaft.position.y = 3.5;
+                shaft.castShadow = true;
                 poleGroup.add(shaft);
 
                 const armDir = xPos < 0 ? 1 : -1;
@@ -186,23 +203,31 @@ class Game3D {
         }
         this.scene.add(this.streetLightsGroup);
 
-        // Roadside Trees
+        // High-Detail Roadside Pine Trees
         this.roadsideTreesGroup = new THREE.Group();
-        const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 3.5, 8);
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
-        const foliageGeo = new THREE.ConeGeometry(2.2, 5.0, 8);
-        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x0a2e18, roughness: 0.8 });
+        const trunkGeo = new THREE.CylinderGeometry(0.32, 0.48, 3.8, 10);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3b2213, roughness: 0.9 });
+        const foliageGeo1 = new THREE.ConeGeometry(2.4, 3.5, 10);
+        const foliageGeo2 = new THREE.ConeGeometry(1.8, 3.0, 10);
+        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x0c331a, roughness: 0.7 });
 
-        for (let z = 10; z > -420; z -= 24) {
+        for (let z = 10; z > -420; z -= 22) {
             [-18, 18].forEach(xPos => {
                 const tree = new THREE.Group();
                 const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-                trunk.position.y = 1.75;
+                trunk.position.y = 1.9;
+                trunk.castShadow = true;
                 tree.add(trunk);
 
-                const foliage = new THREE.Mesh(foliageGeo, foliageMat);
-                foliage.position.y = 5.0;
-                tree.add(foliage);
+                const fol1 = new THREE.Mesh(foliageGeo1, foliageMat);
+                fol1.position.y = 4.2;
+                fol1.castShadow = true;
+                tree.add(fol1);
+
+                const fol2 = new THREE.Mesh(foliageGeo2, foliageMat);
+                fol2.position.y = 5.8;
+                fol2.castShadow = true;
+                tree.add(fol2);
 
                 tree.position.set(xPos + (Math.random() - 0.5) * 2, 0, z);
                 this.roadsideTreesGroup.add(tree);
@@ -212,13 +237,14 @@ class Game3D {
 
         // City Skyline
         this.citySkylineGroup = new THREE.Group();
-        const buildingMat = new THREE.MeshStandardMaterial({ color: 0x1a1d28, roughness: 0.7 });
-        for (let z = 0; z > -420; z -= 40) {
+        const buildingMat = new THREE.MeshStandardMaterial({ color: 0x181b26, roughness: 0.7 });
+        for (let z = 0; z > -420; z -= 38) {
             [-45, 45].forEach(xPos => {
-                const height = 15 + Math.random() * 25;
+                const height = 16 + Math.random() * 26;
                 const width = 10 + Math.random() * 8;
                 const building = new THREE.Mesh(new THREE.BoxGeometry(width, height, width), buildingMat);
                 building.position.set(xPos, height / 2, z);
+                building.castShadow = true;
                 this.citySkylineGroup.add(building);
             });
         }
@@ -230,18 +256,21 @@ class Game3D {
 
         this.playerCarGroup = new THREE.Group();
 
-        const carMat = new THREE.MeshPhongMaterial({
+        // HD Photorealistic Glossy Metallic Body Paint
+        const carMat = new THREE.MeshStandardMaterial({
             color: 0xffffff,
-            shininess: 90,
-            specular: 0x666666
+            metalness: 0.65,
+            roughness: 0.15,
+            envMapIntensity: 1.2
         });
-        const darkTrimMat = new THREE.MeshBasicMaterial({ color: 0x11121c });
-        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.95, roughness: 0.1 });
-        const glassMat = new THREE.MeshPhongMaterial({
-            color: 0x080915,
-            shininess: 100,
+        const darkTrimMat = new THREE.MeshStandardMaterial({ color: 0x11121c, roughness: 0.8 });
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 0.98, roughness: 0.05 });
+        const glassMat = new THREE.MeshStandardMaterial({
+            color: 0x060812,
+            metalness: 0.85,
+            roughness: 0.1,
             transparent: true,
-            opacity: 0.88
+            opacity: 0.85
         });
 
         // Dynamic Neon Underglow Light
@@ -254,90 +283,106 @@ class Game3D {
         this.brakeLightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
         // ==========================================
-        // ULTRA-DETAILED PEUGEOT PARS ELX 3D MODEL
+        // PHOTOREALISTIC PEUGEOT PARS ELX HD MODEL
         // ==========================================
-        // Main Body Frame
-        const bodyGeo = new THREE.BoxGeometry(1.82, 0.48, 4.05);
+        // 1. Lower Main Body Chassis
+        const bodyGeo = new THREE.BoxGeometry(1.84, 0.46, 4.08);
         const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
         bodyMesh.position.y = 0.44;
+        bodyMesh.castShadow = true;
         this.playerCarGroup.add(bodyMesh);
 
-        // Sloped Hood / Bonnet (کاپوت شیب‌دار پارس)
-        const bonnetGeo = new THREE.BoxGeometry(1.78, 0.12, 1.25);
-        bonnetGeo.rotateX(0.06);
+        // 2. Sloped Bonnet / Hood with Chamfered Side Ridges
+        const bonnetGeo = new THREE.BoxGeometry(1.80, 0.12, 1.32);
+        bonnetGeo.rotateX(0.065);
         const bonnetMesh = new THREE.Mesh(bonnetGeo, carMat);
         bonnetMesh.position.set(0, 0.62, -1.35);
+        bonnetMesh.castShadow = true;
         this.playerCarGroup.add(bonnetMesh);
 
-        // Cabin Glass & Roof Frame
-        const cabinGeo = new THREE.BoxGeometry(1.48, 0.52, 2.05);
-        const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
-        cabinMesh.position.set(0, 0.9, -0.1);
-        this.playerCarGroup.add(cabinMesh);
+        // 3. Peugeot Pars Front Grille & Lion Badge
+        const grilleGeo = new THREE.BoxGeometry(1.1, 0.15, 0.06);
+        const grilleMesh = new THREE.Mesh(grilleGeo, darkTrimMat);
+        grilleMesh.position.set(0, 0.52, -2.02);
+        this.playerCarGroup.add(grilleMesh);
 
-        const roofGeo = new THREE.BoxGeometry(1.38, 0.08, 1.35);
-        const roofMesh = new THREE.Mesh(roofGeo, carMat);
-        roofMesh.position.set(0, 1.16, -0.1);
-        this.playerCarGroup.add(roofMesh);
+        const badgeGeo = new THREE.BoxGeometry(0.18, 0.12, 0.08);
+        const badgeMesh = new THREE.Mesh(badgeGeo, chromeMat);
+        badgeMesh.position.set(0, 0.53, -2.03);
+        this.playerCarGroup.add(badgeMesh);
 
-        // Side Door Protective Rubber Moldings (زه مشکی بغل درها)
-        const sideMoldingGeo = new THREE.BoxGeometry(1.86, 0.08, 2.8);
-        const sideMolding = new THREE.Mesh(sideMoldingGeo, darkTrimMat);
-        sideMolding.position.set(0, 0.42, -0.1);
-        this.playerCarGroup.add(sideMolding);
-
-        // Crystal Headlights (چراغ‌های کریستالی جلو)
-        const headGeo = new THREE.BoxGeometry(0.38, 0.16, 0.08);
-        const crystalHeadMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9, roughness: 0.1 });
-        [-0.62, 0.62].forEach(x => {
+        // 4. Slanted Slanted Crystal Headlights (چراغ کریستالی)
+        const headGeo = new THREE.BoxGeometry(0.42, 0.16, 0.08);
+        const crystalHeadMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.95, roughness: 0.05 });
+        [-0.64, 0.64].forEach(x => {
             const hl = new THREE.Mesh(headGeo, crystalHeadMat);
-            hl.position.set(x, 0.52, -2.01);
+            hl.position.set(x, 0.53, -2.02);
+            hl.rotation.y = x > 0 ? -0.08 : 0.08;
             this.playerCarGroup.add(hl);
         });
 
-        // Center Peugeot Chrome Lion Emblem Badge (آرم شیر پژو)
-        const grilleBadgeGeo = new THREE.BoxGeometry(0.18, 0.12, 0.08);
-        const grilleBadge = new THREE.Mesh(grilleBadgeGeo, chromeMat);
-        grilleBadge.position.set(0, 0.52, -2.02);
-        this.playerCarGroup.add(grilleBadge);
+        // 5. Aerodynamic Cabin Glass Roof & Pillar Frames
+        const cabinGeo = new THREE.BoxGeometry(1.52, 0.54, 2.12);
+        const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
+        cabinMesh.position.set(0, 0.91, -0.08);
+        cabinMesh.castShadow = true;
+        this.playerCarGroup.add(cabinMesh);
 
-        // ELX Smoked Taillights (چراغ‌های دودی عقب ELX)
-        const tailGeo = new THREE.BoxGeometry(0.48, 0.22, 0.08);
+        const roofGeo = new THREE.BoxGeometry(1.42, 0.08, 1.40);
+        const roofMesh = new THREE.Mesh(roofGeo, carMat);
+        roofMesh.position.set(0, 1.18, -0.08);
+        roofMesh.castShadow = true;
+        this.playerCarGroup.add(roofMesh);
+
+        // 6. Black Side Protective Door Moldings (زه بغل درهای پژو پارس)
+        const sideMoldingGeo = new THREE.BoxGeometry(1.88, 0.085, 2.85);
+        const sideMolding = new THREE.Mesh(sideMoldingGeo, darkTrimMat);
+        sideMolding.position.set(0, 0.42, -0.08);
+        this.playerCarGroup.add(sideMolding);
+
+        // 7. ELX Smoked Taillights Assembly (چراغ‌های دودی عقب ELX)
+        const tailGeo = new THREE.BoxGeometry(0.52, 0.24, 0.08);
         [-0.58, 0.58].forEach(x => {
             const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
-            tl.position.set(x, 0.54, 2.03);
+            tl.position.set(x, 0.55, 2.03);
             this.playerCarGroup.add(tl);
             this.taillights.push(tl);
         });
 
-        // Iranian License Plate (پلاک ایران ۶۶)
-        const plateGeo = new THREE.BoxGeometry(0.45, 0.14, 0.06);
+        // 8. Rear Trunk Lip Spoiler (باله عقب پژو پارس)
+        const spoilerGeo = new THREE.BoxGeometry(1.72, 0.06, 0.28);
+        const spoilerMesh = new THREE.Mesh(spoilerGeo, carMat);
+        spoilerMesh.position.set(0, 0.72, 1.95);
+        spoilerMesh.castShadow = true;
+        this.playerCarGroup.add(spoilerMesh);
+
+        // 9. Iranian License Plate Holder (پلاک ایران ۶۶)
+        const plateGeo = new THREE.BoxGeometry(0.48, 0.15, 0.06);
         const plateMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const plate = new THREE.Mesh(plateGeo, plateMat);
-        plate.position.set(0, 0.42, 2.04);
+        plate.position.set(0, 0.42, 2.05);
         this.playerCarGroup.add(plate);
 
-        // Dual Chrome Exhaust Pipes (اگزوز دوبل شوتی)
-        const exhaustGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.35, 12);
+        // 10. Dual Chrome Exhaust Tips (اگزوز دوبل شوتی)
+        const exhaustGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.38, 16);
         exhaustGeo.rotateX(Math.PI / 2);
         const exhaustL = new THREE.Mesh(exhaustGeo, chromeMat);
         exhaustL.position.set(-0.35, 0.28, 2.08);
         const exhaustR = new THREE.Mesh(exhaustGeo, chromeMat);
-        exhaustR.position.set(-0.22, 0.28, 2.08);
+        exhaustR.position.set(-0.20, 0.28, 2.08);
         this.playerCarGroup.add(exhaustL);
         this.playerCarGroup.add(exhaustR);
 
-        // Interior Cockpit Group
+        // 11. Interior Cockpit Group
         this.cockpitGroup = new THREE.Group();
 
-        // Dashboard Console Frame & Walnut Wood Trim
-        const dashGeo = new THREE.BoxGeometry(1.48, 0.48, 0.72);
+        const dashGeo = new THREE.BoxGeometry(1.50, 0.48, 0.74);
         const dashMat = new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.85, metalness: 0.1 });
         const dashboard = new THREE.Mesh(dashGeo, dashMat);
         dashboard.position.set(0, 0.85, -0.45);
         this.cockpitGroup.add(dashboard);
 
-        const woodTrimGeo = new THREE.BoxGeometry(1.46, 0.08, 0.73);
+        const woodTrimGeo = new THREE.BoxGeometry(1.48, 0.08, 0.75);
         const woodTrimMat = new THREE.MeshStandardMaterial({ color: 0x663311, roughness: 0.4, metalness: 0.2 });
         const woodTrim = new THREE.Mesh(woodTrimGeo, woodTrimMat);
         woodTrim.position.set(0, 0.74, -0.45);
@@ -378,56 +423,33 @@ class Game3D {
 
         this.playerCarGroup.add(this.cockpitGroup);
 
-        // Sport Alloy Wheels
-        const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.35, 20);
+        // 12. HD 5-Spoke Alloy Sport Wheels & Tires
+        const tireGeo = new THREE.CylinderGeometry(0.40, 0.40, 0.36, 32);
         const tireMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.8 });
-        const rimGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.36, 12);
-        const rimMat = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, metalness: 0.95, roughness: 0.08 });
+        const rimGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.37, 16);
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0xd8d8d8, metalness: 0.95, roughness: 0.08 });
+        const brakeDiscMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.9, roughness: 0.2 });
 
-        wheelGeo.rotateZ(Math.PI / 2);
+        tireGeo.rotateZ(Math.PI / 2);
         rimGeo.rotateZ(Math.PI / 2);
 
-        [[-0.95, 0.38, 1.2], [0.95, 0.38, 1.2], [-0.95, 0.38, -1.2], [0.95, 0.38, -1.2]].forEach(pos => {
-            const tire = new THREE.Mesh(wheelGeo, tireMat);
+        [[-0.95, 0.40, 1.25], [0.95, 0.40, 1.25], [-0.95, 0.40, -1.25], [0.95, 0.40, -1.25]].forEach(pos => {
+            const tire = new THREE.Mesh(tireGeo, tireMat);
             const rim = new THREE.Mesh(rimGeo, rimMat);
+            const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.30, 16), brakeDiscMat);
+            disc.rotation.z = Math.PI / 2;
+
             tire.position.set(pos[0], pos[1], pos[2]);
             rim.position.set(pos[0], pos[1], pos[2]);
+            disc.position.set(pos[0], pos[1], pos[2]);
+
+            tire.castShadow = true;
             this.playerCarGroup.add(tire);
             this.playerCarGroup.add(rim);
+            this.playerCarGroup.add(disc);
         });
 
-        // Iranian Rear Window Sticker
-        if (this.player.sticker && this.player.sticker !== 'NONE') {
-            const stickerBadgeGeo = new THREE.BoxGeometry(0.85, 0.18, 0.05);
-            let stickerColor = 0xffea00;
-            if (this.player.sticker === 'SHOOTI') stickerColor = 0xff0055;
-            if (this.player.sticker === 'SALAR') stickerColor = 0x00f0ff;
-
-            const stickerMat = new THREE.MeshBasicMaterial({ color: stickerColor });
-            const stickerMesh = new THREE.Mesh(stickerBadgeGeo, stickerMat);
-            stickerMesh.position.set(0, 0.92, 0.85);
-            stickerMesh.rotation.x = -0.3;
-            this.playerCarGroup.add(stickerMesh);
-        }
-
-        // 3D Shield Energy Bubble
-        const shieldGeo = new THREE.SphereGeometry(2.3, 32, 32);
-        const shieldMat = new THREE.MeshStandardMaterial({
-            color: 0x00ff88,
-            emissive: 0x00ff66,
-            emissiveIntensity: 0.6,
-            roughness: 0.1,
-            metalness: 0.2,
-            transparent: true,
-            opacity: 0.4,
-            side: THREE.DoubleSide
-        });
-        this.shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
-        this.shieldMesh.position.set(0, 0.7, 0);
-        this.shieldMesh.visible = false;
-        this.playerCarGroup.add(this.shieldMesh);
-
-        // Stance Setup (SHOOTI vs LOW vs NORMAL)
+        // 13. Stance Setup (SHOOTI vs LOW vs NORMAL)
         if (this.player.stance === 'SHOOTI') {
             this.playerCarGroup.rotation.x = -0.06;
             this.playerCarGroup.position.y = 0.22;
