@@ -1,7 +1,8 @@
 /*
  * ===================================================================
- * PEUGEOT PARS ELX 3D RACER (پژو پارس سه‌بعدی HD - سلطان جاده)
- * Photorealistic PBR Automobile Visual Engine & Vehicle Dynamics
+ * PEUGEOT PARS ELX 3D RACER SIMULATOR (پژو پارس سه‌بعدی HD - سلطان جاده)
+ * ACESFilmic Tone Mapping, Procedural Asphalt, Day/Sunset/Night Cycles,
+ * RPM & Gear Physics, Weight Transfer, 4-Wheel Suspension & Tire Slip
  * ===================================================================
  */
 
@@ -10,14 +11,19 @@ class Game3D {
         this.canvas = document.getElementById('gameCanvas');
         this.state = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER
         this.cameraMode = localStorage.getItem('neon_cammode') || 'CHASE'; // CHASE, COCKPIT, HOOD
+        this.timeOfDay = localStorage.getItem('neon_timeofday') || 'DAY'; // DAY, SUNSET, NIGHT
 
-        // Stats
+        // Racing Telemetry & Physics Stats
         this.score = 0;
         this.coins = parseInt(localStorage.getItem('neon_coins') || '0');
         this.highScore = parseInt(localStorage.getItem('neon_highscore') || '0');
         this.distance = 0;
-        this.speed = 12;
-        this.baseSpeed = 12;
+        this.speed = 12.0;
+        this.baseSpeed = 12.0;
+        this.maxSpeed = 34.0;
+        this.currentGear = 1;
+        this.currentRPM = 1000;
+        this.cameraShake = 0;
 
         // 5 Highway Lanes (X: -7.2, -3.6, 0.0, 3.6, 7.2)
         this.laneX = [-7.2, -3.6, 0.0, 3.6, 7.2];
@@ -30,6 +36,7 @@ class Game3D {
             y: 0,
             z: 0,
             tilt: 0,
+            pitch: 0,
             spinAngle: 0,
             isSpinning: false,
             spinTime: 0,
@@ -53,8 +60,11 @@ class Game3D {
         this.collectibles = [];
         this.floatingTexts = [];
         this.exhaustParticles = [];
+        this.tireSmokeParticles = [];
         this.wheels = [];
         this.frontWheels = [];
+        this.buildingWindows = [];
+        this.streetLampSpotlights = [];
         this.lastSpawnTime = 0;
         this.lastCollectibleTime = 0;
         this.keys = {};
@@ -77,6 +87,7 @@ class Game3D {
         this.hudCoins = document.getElementById('hud-coins');
         this.hudSpeed = document.getElementById('hud-speed');
         this.hudDistance = document.getElementById('hud-distance');
+        this.hudGearRPM = document.getElementById('hud-gear-rpm');
         this.powerupBar = document.getElementById('powerup-bar');
     }
 
@@ -96,7 +107,6 @@ class Game3D {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 512, 256);
 
-        // Add soft specular reflections & cloud hints
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.fillRect(100, 40, 220, 30);
         ctx.fillRect(320, 70, 160, 20);
@@ -106,10 +116,45 @@ class Game3D {
         return texture;
     }
 
+    // Procedural Asphalt Texture Generator with Tire Marks & Micro-Grain Detail
+    createAsphaltTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Base dark asphalt
+        ctx.fillStyle = '#22242b';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Asphalt micro-grain noise
+        const imgData = ctx.getImageData(0, 0, 512, 512);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const noise = (Math.random() - 0.5) * 22;
+            data[i] = Math.min(255, Math.max(0, data[i] + noise));
+            data[i+1] = Math.min(255, Math.max(0, data[i+1] + noise));
+            data[i+2] = Math.min(255, Math.max(0, data[i+2] + noise));
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        // Procedural Tire Skid Marks
+        ctx.strokeStyle = 'rgba(10, 10, 15, 0.45)';
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.moveTo(140, 0); ctx.bezierCurveTo(145, 150, 135, 350, 140, 512);
+        ctx.moveTo(370, 0); ctx.bezierCurveTo(365, 180, 375, 320, 370, 512);
+        ctx.stroke();
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 40);
+        return texture;
+    }
+
     initThreeJS() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x608abf);
-        this.scene.fog = new THREE.FogExp2(0x608abf, 0.0022);
 
         this.envMap = this.createEnvMapTexture();
         this.scene.environment = this.envMap;
@@ -126,28 +171,39 @@ class Game3D {
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
+
+        // Cinematic ACESFilmic Tone Mapping & Soft Shadow Maps
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.05;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.95);
-        this.scene.add(hemiLight);
+        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.95);
+        this.scene.add(this.hemiLight);
 
-        const sunLight = new THREE.DirectionalLight(0xfffaed, 1.45);
-        sunLight.position.set(30, 60, -20);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 150;
-        sunLight.shadow.camera.left = -25;
-        sunLight.shadow.camera.right = 25;
-        sunLight.shadow.camera.top = 25;
-        sunLight.shadow.camera.bottom = -25;
-        this.scene.add(sunLight);
+        this.sunLight = new THREE.DirectionalLight(0xfffaed, 1.45);
+        this.sunLight.position.set(30, 60, -20);
+        this.sunLight.castShadow = true;
+        this.sunLight.shadow.mapSize.width = 2048;
+        this.sunLight.shadow.mapSize.height = 2048;
+        this.sunLight.shadow.camera.near = 0.5;
+        this.sunLight.shadow.camera.far = 150;
+        this.sunLight.shadow.camera.left = -25;
+        this.sunLight.shadow.camera.right = 25;
+        this.sunLight.shadow.camera.top = 25;
+        this.sunLight.shadow.camera.bottom = -25;
+        this.scene.add(this.sunLight);
 
-        // Asphalt Highway Road
+        // Asphalt Highway Road with Procedural Detail Texture
         const roadGeo = new THREE.PlaneGeometry(24, 600);
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x22242d, roughness: 0.6, metalness: 0.2 });
+        const asphaltTex = this.createAsphaltTexture();
+        const roadMat = new THREE.MeshStandardMaterial({
+            map: asphaltTex,
+            bumpMap: asphaltTex,
+            bumpScale: 0.04,
+            roughness: 0.68,
+            metalness: 0.15
+        });
         this.roadMesh = new THREE.Mesh(roadGeo, roadMat);
         this.roadMesh.rotation.x = -Math.PI / 2;
         this.roadMesh.position.z = -200;
@@ -207,7 +263,7 @@ class Game3D {
         }
         this.scene.add(this.laneLinesGroup);
 
-        // Street Lights
+        // Street Lights & Active Night Spotlights
         this.streetLightsGroup = new THREE.Group();
         const poleMat = new THREE.MeshStandardMaterial({ color: 0x222533, metalness: 0.8, roughness: 0.2 });
         const lampLightMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
@@ -229,19 +285,27 @@ class Game3D {
                 head.position.set(armDir * 1.5, 6.7, 0);
                 poleGroup.add(head);
 
+                const spot = new THREE.SpotLight(0xffaa33, 0.0, 30, Math.PI / 4, 0.5, 1);
+                spot.position.set(armDir * 1.5, 6.5, 0);
+                spot.target.position.set(armDir * 1.5, 0, 0);
+                poleGroup.add(spot);
+                poleGroup.add(spot.target);
+                this.streetLampSpotlights.push(spot);
+
                 poleGroup.position.set(xPos, 0, z);
                 this.streetLightsGroup.add(poleGroup);
             });
         }
         this.scene.add(this.streetLightsGroup);
 
-        // High-Detail Roadside Pine Trees
+        // Scenery Variety: Roadside Pine & Broadleaf Trees
         this.roadsideTreesGroup = new THREE.Group();
         const trunkGeo = new THREE.CylinderGeometry(0.32, 0.48, 3.8, 10);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3b2213, roughness: 0.9 });
         const foliageGeo1 = new THREE.ConeGeometry(2.4, 3.5, 10);
         const foliageGeo2 = new THREE.ConeGeometry(1.8, 3.0, 10);
-        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x0c331a, roughness: 0.7 });
+        const foliageMat1 = new THREE.MeshStandardMaterial({ color: 0x0c331a, roughness: 0.7 });
+        const foliageMat2 = new THREE.MeshStandardMaterial({ color: 0x1e4620, roughness: 0.7 });
 
         for (let z = 10; z > -420; z -= 22) {
             [-18, 18].forEach(xPos => {
@@ -251,12 +315,13 @@ class Game3D {
                 trunk.castShadow = true;
                 tree.add(trunk);
 
-                const fol1 = new THREE.Mesh(foliageGeo1, foliageMat);
+                const fMat = Math.random() > 0.5 ? foliageMat1 : foliageMat2;
+                const fol1 = new THREE.Mesh(foliageGeo1, fMat);
                 fol1.position.y = 4.2;
                 fol1.castShadow = true;
                 tree.add(fol1);
 
-                const fol2 = new THREE.Mesh(foliageGeo2, foliageMat);
+                const fol2 = new THREE.Mesh(foliageGeo2, fMat);
                 fol2.position.y = 5.8;
                 fol2.castShadow = true;
                 tree.add(fol2);
@@ -267,9 +332,16 @@ class Game3D {
         }
         this.scene.add(this.roadsideTreesGroup);
 
-        // City Skyline
+        // City Skyline with Emissive Night Window Glow Mesh
         this.citySkylineGroup = new THREE.Group();
         const buildingMat = new THREE.MeshStandardMaterial({ color: 0x181b26, roughness: 0.7 });
+        const windowEmissiveMat = new THREE.MeshStandardMaterial({
+            color: 0xffdd88,
+            emissive: 0xffaa33,
+            emissiveIntensity: 0.0
+        });
+        this.windowEmissiveMat = windowEmissiveMat;
+
         for (let z = 0; z > -420; z -= 38) {
             [-45, 45].forEach(xPos => {
                 const height = 16 + Math.random() * 26;
@@ -277,10 +349,66 @@ class Game3D {
                 const building = new THREE.Mesh(new THREE.BoxGeometry(width, height, width), buildingMat);
                 building.position.set(xPos, height / 2, z);
                 building.castShadow = true;
+
+                const winMesh = new THREE.Mesh(new THREE.BoxGeometry(width + 0.05, height * 0.7, width + 0.05), windowEmissiveMat);
+                winMesh.position.set(xPos, height / 2, z);
+                this.buildingWindows.push(winMesh);
+                this.citySkylineGroup.add(winMesh);
+
                 this.citySkylineGroup.add(building);
             });
         }
         this.scene.add(this.citySkylineGroup);
+
+        // Apply Initial Time of Day Preset
+        this.setTimeOfDay(this.timeOfDay);
+    }
+
+    setTimeOfDay(mode) {
+        this.timeOfDay = mode;
+        localStorage.setItem('neon_timeofday', mode);
+
+        if (mode === 'SUNSET') {
+            this.scene.background = new THREE.Color(0xc45c2c);
+            this.scene.fog.color.setHex(0xc45c2c);
+            this.sunLight.color.setHex(0xff9944);
+            this.sunLight.intensity = 1.35;
+            this.hemiLight.color.setHex(0xffaa66);
+            this.hemiLight.groundColor.setHex(0x332211);
+            if (this.windowEmissiveMat) this.windowEmissiveMat.emissiveIntensity = 0.4;
+            this.streetLampSpotlights.forEach(s => s.intensity = 0.5);
+        } else if (mode === 'NIGHT') {
+            this.scene.background = new THREE.Color(0x070a14);
+            this.scene.fog.color.setHex(0x070a14);
+            this.sunLight.color.setHex(0x334466);
+            this.sunLight.intensity = 0.25;
+            this.hemiLight.color.setHex(0x112244);
+            this.hemiLight.groundColor.setHex(0x050510);
+            if (this.windowEmissiveMat) this.windowEmissiveMat.emissiveIntensity = 1.2;
+            this.streetLampSpotlights.forEach(s => s.intensity = 2.0);
+        } else { // DAY
+            this.scene.background = new THREE.Color(0x608abf);
+            this.scene.fog.color.setHex(0x608abf);
+            this.sunLight.color.setHex(0xfffaed);
+            this.sunLight.intensity = 1.45;
+            this.hemiLight.color.setHex(0xffffff);
+            this.hemiLight.groundColor.setHex(0x444444);
+            if (this.windowEmissiveMat) this.windowEmissiveMat.emissiveIntensity = 0.0;
+            this.streetLampSpotlights.forEach(s => s.intensity = 0.0);
+        }
+
+        const todBtn = document.getElementById('tod-btn');
+        if (todBtn) {
+            const icons = { 'DAY': '☀️ روز', 'SUNSET': '🌅 غروب', 'NIGHT': '🌙 شب' };
+            todBtn.innerText = icons[mode];
+        }
+    }
+
+    cycleTimeOfDay() {
+        const modes = ['DAY', 'SUNSET', 'NIGHT'];
+        const nextIdx = (modes.indexOf(this.timeOfDay) + 1) % modes.length;
+        this.setTimeOfDay(modes[nextIdx]);
+        audioMgr.playCoin();
     }
 
     createContactShadowTexture() {
@@ -698,6 +826,7 @@ class Game3D {
             this.keys[e.code] = true;
             if (e.code === 'KeyP' || e.code === 'Escape') this.togglePause();
             if (e.code === 'KeyC') this.toggleCameraMode();
+            if (e.code === 'KeyT') this.cycleTimeOfDay();
             if (e.code === 'KeyR') this.cycleRadioStation();
 
             if (this.state === 'PLAYING' && !this.player.isSpinning) {
@@ -720,6 +849,7 @@ class Game3D {
         };
 
         addClick('camera-btn', () => this.toggleCameraMode());
+        addClick('tod-btn', () => this.cycleTimeOfDay());
         addClick('radio-btn', () => this.cycleRadioStation());
         addClick('screenshot-btn', () => this.takeScreenshot());
         addClick('btn-menu-screenshot', () => this.takeScreenshot());
@@ -860,10 +990,13 @@ class Game3D {
         this.score = 0;
         this.distance = 0;
         this.speed = this.baseSpeed;
+        this.currentGear = 1;
+        this.currentRPM = 1000;
         this.currentLane = 2;
         this.targetLane = 2;
         this.player.x = this.laneX[2];
         this.player.tilt = 0;
+        this.player.pitch = 0;
         this.player.spinAngle = 0;
         this.player.isSpinning = false;
         this.player.nitroGauge = 100;
@@ -910,6 +1043,7 @@ class Game3D {
 
     gameOver(reason = 'تصادف شدید در آزادراه') {
         this.state = 'GAMEOVER';
+        this.cameraShake = 0.8; // Trigger camera impact shake
         audioMgr.playCrash();
 
         if (this.score > this.highScore) {
@@ -986,13 +1120,22 @@ class Game3D {
         const targetX = this.laneX[this.targetLane];
         const diffX = targetX - this.player.x;
 
+        // Camera impact shake reduction
+        let shakeX = 0;
+        let shakeY = 0;
+        if (this.cameraShake > 0) {
+            this.cameraShake = Math.max(0, this.cameraShake - dt * 2.5);
+            shakeX = (Math.random() - 0.5) * this.cameraShake * 0.4;
+            shakeY = (Math.random() - 0.5) * this.cameraShake * 0.4;
+        }
+
         this.camera.up.set(0, 1, 0);
 
         if (this.cameraMode === 'COCKPIT') {
             if (this.cockpitGroup) this.cockpitGroup.visible = true;
 
-            const targetCamX = this.player.x - 0.35;
-            const targetCamY = 1.02;
+            const targetCamX = this.player.x - 0.35 + shakeX;
+            const targetCamY = 1.02 + shakeY;
             const targetCamZ = 0.12;
 
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 20.0);
@@ -1007,8 +1150,8 @@ class Game3D {
         } else if (this.cameraMode === 'HOOD') {
             if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
-            const targetCamX = this.player.x;
-            const targetCamY = 0.82;
+            const targetCamX = this.player.x + shakeX;
+            const targetCamY = 0.82 + shakeY;
             const targetCamZ = -1.25;
 
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 20.0);
@@ -1019,8 +1162,8 @@ class Game3D {
         } else {
             if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
-            const targetCamX = this.player.x;
-            const targetCamY = 2.15;
+            const targetCamX = this.player.x + shakeX;
+            const targetCamY = 2.15 + shakeY;
             const targetCamZ = 5.4;
 
             this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 18.0);
@@ -1062,13 +1205,30 @@ class Game3D {
         });
     }
 
+    spawnTireSmokeParticle(xPos, zPos) {
+        const particleGeo = new THREE.SphereGeometry(0.14, 8, 8);
+        const particleMat = new THREE.MeshBasicMaterial({
+            color: 0xdddddd,
+            transparent: true,
+            opacity: 0.5
+        });
+        const particle = new THREE.Mesh(particleGeo, particleMat);
+        particle.position.set(xPos, 0.15, zPos);
+        this.scene.add(particle);
+
+        this.tireSmokeParticles.push({
+            mesh: particle,
+            life: 0.8,
+            vy: 0.4 + Math.random() * 0.3
+        });
+    }
+
     update(dt) {
-        // Speed Physics & Input Handling
-        let targetSpeed = this.baseSpeed;
+        // Inputs
         const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
         const isBrakePressed = this.isBrakePressed || this.keys['ArrowDown'] || this.keys['KeyS'];
 
-        // Dynamic Taillight Intensity & Braking
+        // Dynamic Taillights & Emissive Intensity
         if (this.taillights) {
             const glowEmissive = isBrakePressed ? 0xff0000 : 0x990022;
             const glowIntensity = isBrakePressed ? 2.5 : 0.4;
@@ -1080,47 +1240,72 @@ class Game3D {
             });
         }
 
-        // Acceleration & Braking Weight Transfer Pitch
+        // Speed, Drag & Acceleration Physics Curve
+        let targetSpeed = this.baseSpeed;
         let targetBodyPitch = 0;
+
         if (this.player.isNitroActive) {
-            targetSpeed = 32.0;
+            targetSpeed = 34.0;
             targetBodyPitch = -0.05; // Squat back
             this.speed += (targetSpeed - this.speed) * dt * 5.0;
             this.player.nitroTime--;
             this.player.nitroGauge = Math.max(0, (this.player.nitroTime / 180) * 100);
-
-            this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, 72, 0.1);
-            this.camera.updateProjectionMatrix();
 
             if (this.player.nitroTime <= 0) this.player.isNitroActive = false;
         } else {
             this.baseSpeed = Math.min(16.0, this.baseSpeed + dt * 0.03);
             let accelRate = 1.8;
             if (isGasPressed) {
-                targetSpeed = 24.0;
+                targetSpeed = 26.0;
                 accelRate = 2.4;
                 targetBodyPitch = -0.035; // Squat back on acceleration
             } else if (isBrakePressed) {
-                targetSpeed = 4.5;
-                accelRate = 4.5;
-                targetBodyPitch = 0.06; // Nose dive on braking
+                targetSpeed = 4.0;
+                accelRate = 4.8;
+                targetBodyPitch = 0.065; // Nose dive on braking
             } else {
                 targetSpeed = this.baseSpeed;
                 accelRate = 1.8;
                 targetBodyPitch = 0;
             }
 
+            // Aerodynamic drag force (0.5 * Cd * A * v^2)
+            const dragForce = 0.0008 * (this.speed * this.speed);
+            this.speed = Math.max(2.0, this.speed - dragForce * dt * 10.0);
+
             this.speed += (targetSpeed - this.speed) * dt * accelRate;
-            const targetFov = 58 + (this.speed / 30) * 12;
-            this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, 0.08);
-            this.camera.updateProjectionMatrix();
 
             if (this.player.nitroGauge < 100) {
                 this.player.nitroGauge = Math.min(100, this.player.nitroGauge + 0.15);
             }
         }
 
-        audioMgr.updateEnginePitch(this.speed / 32.0);
+        // Gear & Simulated RPM Engine Calculation (Gears 1 through 5)
+        const speedRatio = Math.min(1.0, this.speed / 34.0);
+        let newGear = 1;
+        if (speedRatio > 0.8) newGear = 5;
+        else if (speedRatio > 0.6) newGear = 4;
+        else if (speedRatio > 0.4) newGear = 3;
+        else if (speedRatio > 0.2) newGear = 2;
+
+        if (newGear !== this.currentGear) {
+            this.currentGear = newGear;
+            audioMgr.playGearShift();
+        }
+
+        // Calculate RPM within current gear range (1000 - 6800 RPM)
+        const gearRatios = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+        const minGearSpeed = gearRatios[this.currentGear - 1];
+        const maxGearSpeed = gearRatios[this.currentGear];
+        const normalizedGearSpeed = (speedRatio - minGearSpeed) / (maxGearSpeed - minGearSpeed || 0.2);
+
+        this.currentRPM = 1200 + Math.min(1.0, Math.max(0.0, normalizedGearSpeed)) * 5600;
+        audioMgr.updateEngineRPM(this.currentRPM, speedRatio);
+
+        // Speed-Dependent FOV Camera Expansion
+        const targetFov = 58 + (this.speed / 34.0) * 14;
+        this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, 0.08);
+        this.camera.updateProjectionMatrix();
 
         this.distance += (this.speed * dt * 2.5);
         this.score += (this.speed * dt * 10);
@@ -1152,6 +1337,22 @@ class Game3D {
         this.player.x += diffX * 0.18;
         this.player.tilt = -diffX * 0.06; // Body Roll tilt
 
+        // Tire Slip Calculation & Skid Effects
+        const lateralSlip = Math.abs(diffX);
+        if (lateralSlip > 1.2 || (isBrakePressed && this.speed > 18)) {
+            audioMgr.triggerTireSkid(lateralSlip / 3.0);
+            if (Math.random() < 0.4) {
+                this.spawnTireSmokeParticle(this.player.x - 0.8, 1.2);
+                this.spawnTireSmokeParticle(this.player.x + 0.8, 1.2);
+            }
+        } else {
+            audioMgr.stopTireSkid();
+        }
+
+        // 4-Wheel Independent Suspension Bounce Simulation
+        const suspensionBounce = Math.sin(timestamp * 0.015) * 0.012 * (this.speed / 20.0);
+        this.player.pitch = THREE.MathUtils.lerp(this.player.pitch || 0, targetBodyPitch + suspensionBounce, dt * 8.0);
+
         // Wheel Rotation Matching Vehicle Speed & Steering Angle
         if (this.wheels) {
             this.wheels.forEach(w => {
@@ -1170,11 +1371,7 @@ class Game3D {
             this.playerCarGroup.position.x = this.player.x;
             this.playerCarGroup.rotation.y = this.player.spinAngle;
             this.playerCarGroup.rotation.z = this.player.tilt;
-            this.playerCarGroup.rotation.x = THREE.MathUtils.lerp(
-                this.playerCarGroup.rotation.x,
-                (this.player.stance === 'SHOOTI' ? -0.06 : 0) + targetBodyPitch,
-                dt * 8.0
-            );
+            this.playerCarGroup.rotation.x = (this.player.stance === 'SHOOTI' ? -0.06 : 0) + this.player.pitch;
         }
 
         // Spawn Exhaust Smoke Particles
@@ -1194,6 +1391,20 @@ class Game3D {
             if (p.life <= 0) {
                 this.scene.remove(p.mesh);
                 this.exhaustParticles.splice(i, 1);
+            }
+        }
+
+        // Update Tire Smoke Particles
+        for (let i = this.tireSmokeParticles.length - 1; i >= 0; i--) {
+            const tp = this.tireSmokeParticles[i];
+            tp.life -= dt * 2.5;
+            tp.mesh.position.y += tp.vy * dt;
+            tp.mesh.scale.addScalar(dt * 2.0);
+            tp.mesh.material.opacity = tp.life * 0.5;
+
+            if (tp.life <= 0) {
+                this.scene.remove(tp.mesh);
+                this.tireSmokeParticles.splice(i, 1);
             }
         }
 
@@ -1224,6 +1435,7 @@ class Game3D {
             if (Math.abs(obs.z - 0) < 2.0 && Math.abs(obs.x - this.player.x) < 1.4) {
                 if (this.player.hasShield) {
                     this.player.hasShield = false;
+                    this.cameraShake = 0.5;
                     audioMgr.playCrash();
                     this.scene.remove(obs.mesh);
                     this.obstacles.splice(i, 1);
@@ -1342,6 +1554,10 @@ class Game3D {
         if (this.hudCoins) this.hudCoins.innerText = this.coins.toLocaleString('fa-IR');
         if (this.hudSpeed) this.hudSpeed.innerText = speedKmh + ' km/h';
         if (this.hudDistance) this.hudDistance.innerText = Math.floor(this.distance) + ' m';
+
+        if (this.hudGearRPM) {
+            this.hudGearRPM.innerText = `دنده ${this.currentGear} | ${Math.floor(this.currentRPM)} RPM`;
+        }
 
         if (this.powerupBar) {
             this.powerupBar.innerHTML = '';

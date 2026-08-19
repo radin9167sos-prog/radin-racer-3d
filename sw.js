@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v50-photorealistic-pars';
+const CACHE_NAME = 'iranian-highway-v60-photorealistic-racing-sim';
 
 const PRECACHE_ASSETS = [
     './',
