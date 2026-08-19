@@ -1,0 +1,9 @@
+{
+  "name": "پژو پارس ۳بعدی HD - سلطان جاده",
+  "short_name": "پارس HD",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0c16",
+  "theme_color": "#00f0ff",
+  "orientation": "any"
+}
