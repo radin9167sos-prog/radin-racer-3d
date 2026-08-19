@@ -256,7 +256,7 @@ class Game3D {
 
         this.playerCarGroup = new THREE.Group();
 
-        // HD Photorealistic Glossy Metallic Body Paint
+        // HD Photorealistic Metallic Clearcoat Body Paint
         const carMat = new THREE.MeshStandardMaterial({
             color: 0xffffff,
             metalness: 0.65,
@@ -266,7 +266,7 @@ class Game3D {
         const darkTrimMat = new THREE.MeshStandardMaterial({ color: 0x11121c, roughness: 0.8 });
         const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 0.98, roughness: 0.05 });
         const glassMat = new THREE.MeshStandardMaterial({
-            color: 0x060812,
+            color: 0x080c1a,
             metalness: 0.85,
             roughness: 0.1,
             transparent: true,
@@ -282,107 +282,147 @@ class Game3D {
         this.taillights = [];
         this.brakeLightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
-        // ==========================================
-        // PHOTOREALISTIC PEUGEOT PARS ELX HD MODEL
-        // ==========================================
+        // ===================================================================
+        // REALISTIC PEUGEOT PARS ELX 3D MODEL (INSTANTLY RECOGNIZABLE BODY)
+        // ===================================================================
+        
         // 1. Lower Main Body Chassis
-        const bodyGeo = new THREE.BoxGeometry(1.84, 0.46, 4.08);
+        const bodyGeo = new THREE.BoxGeometry(1.78, 0.42, 4.02);
         const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
-        bodyMesh.position.y = 0.44;
+        bodyMesh.position.y = 0.42;
         bodyMesh.castShadow = true;
         this.playerCarGroup.add(bodyMesh);
 
-        // 2. Sloped Bonnet / Hood with Chamfered Side Ridges
-        const bonnetGeo = new THREE.BoxGeometry(1.80, 0.12, 1.32);
+        // 2. Front Hood / Bonnet (کاپوت شیب‌دار پژو پارس)
+        const bonnetGeo = new THREE.BoxGeometry(1.74, 0.12, 1.30);
         bonnetGeo.rotateX(0.065);
         const bonnetMesh = new THREE.Mesh(bonnetGeo, carMat);
-        bonnetMesh.position.set(0, 0.62, -1.35);
+        bonnetMesh.position.set(0, 0.60, -1.32);
         bonnetMesh.castShadow = true;
         this.playerCarGroup.add(bonnetMesh);
 
-        // 3. Peugeot Pars Front Grille & Lion Badge
-        const grilleGeo = new THREE.BoxGeometry(1.1, 0.15, 0.06);
-        const grilleMesh = new THREE.Mesh(grilleGeo, darkTrimMat);
-        grilleMesh.position.set(0, 0.52, -2.02);
+        // 3. Front Grille & Chrome Lion Emblem Badge
+        const grilleMesh = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.14, 0.06), darkTrimMat);
+        grilleMesh.position.set(0, 0.50, -2.01);
         this.playerCarGroup.add(grilleMesh);
 
-        const badgeGeo = new THREE.BoxGeometry(0.18, 0.12, 0.08);
-        const badgeMesh = new THREE.Mesh(badgeGeo, chromeMat);
-        badgeMesh.position.set(0, 0.53, -2.03);
+        const badgeMesh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.11, 0.08), chromeMat);
+        badgeMesh.position.set(0, 0.51, -2.02);
         this.playerCarGroup.add(badgeMesh);
 
-        // 4. Slanted Slanted Crystal Headlights (چراغ کریستالی)
-        const headGeo = new THREE.BoxGeometry(0.42, 0.16, 0.08);
+        // 4. Crystal Headlights (چراغ‌های کریستالی پارس)
+        const headGeo = new THREE.BoxGeometry(0.40, 0.15, 0.08);
         const crystalHeadMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.95, roughness: 0.05 });
-        [-0.64, 0.64].forEach(x => {
+        [-0.62, 0.62].forEach(x => {
             const hl = new THREE.Mesh(headGeo, crystalHeadMat);
-            hl.position.set(x, 0.53, -2.02);
+            hl.position.set(x, 0.51, -2.01);
             hl.rotation.y = x > 0 ? -0.08 : 0.08;
             this.playerCarGroup.add(hl);
         });
 
-        // 5. Aerodynamic Cabin Glass Roof & Pillar Frames
-        const cabinGeo = new THREE.BoxGeometry(1.52, 0.54, 2.12);
-        const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
-        cabinMesh.position.set(0, 0.91, -0.08);
-        cabinMesh.castShadow = true;
-        this.playerCarGroup.add(cabinMesh);
+        // 5. Sloped Windshield (شیشه جلو شیب‌دار)
+        const frontWinGeo = new THREE.BoxGeometry(1.48, 0.48, 0.85);
+        frontWinGeo.rotateX(-0.52);
+        const frontWinMesh = new THREE.Mesh(frontWinGeo, glassMat);
+        frontWinMesh.position.set(0, 0.88, -0.72);
+        this.playerCarGroup.add(frontWinMesh);
 
-        const roofGeo = new THREE.BoxGeometry(1.42, 0.08, 1.40);
+        // 6. Cabin Roof & Side Pillars (سقف و ستون‌های پارس)
+        const roofGeo = new THREE.BoxGeometry(1.42, 0.08, 1.35);
         const roofMesh = new THREE.Mesh(roofGeo, carMat);
-        roofMesh.position.set(0, 1.18, -0.08);
+        roofMesh.position.set(0, 1.14, -0.08);
         roofMesh.castShadow = true;
         this.playerCarGroup.add(roofMesh);
 
-        // 6. Black Side Protective Door Moldings (زه بغل درهای پژو پارس)
-        const sideMoldingGeo = new THREE.BoxGeometry(1.88, 0.085, 2.85);
-        const sideMolding = new THREE.Mesh(sideMoldingGeo, darkTrimMat);
-        sideMolding.position.set(0, 0.42, -0.08);
-        this.playerCarGroup.add(sideMolding);
+        const sideGlassGeo = new THREE.BoxGeometry(1.48, 0.46, 1.30);
+        const sideGlassMesh = new THREE.Mesh(sideGlassGeo, glassMat);
+        sideGlassMesh.position.set(0, 0.90, -0.08);
+        this.playerCarGroup.add(sideGlassMesh);
 
-        // 7. ELX Smoked Taillights Assembly (چراغ‌های دودی عقب ELX)
-        const tailGeo = new THREE.BoxGeometry(0.52, 0.24, 0.08);
-        [-0.58, 0.58].forEach(x => {
+        // 7. Sloped Rear Glass Window (شیشه عقب شیب‌دار)
+        const rearWinGeo = new THREE.BoxGeometry(1.44, 0.46, 0.78);
+        rearWinGeo.rotateX(0.48);
+        const rearWinMesh = new THREE.Mesh(rearWinGeo, glassMat);
+        rearWinMesh.position.set(0, 0.88, 0.58);
+        this.playerCarGroup.add(rearWinMesh);
+
+        // 8. Sloped Rear Trunk Lid (صندوق عقب پژو پارس)
+        const trunkGeo = new THREE.BoxGeometry(1.68, 0.12, 0.88);
+        trunkGeo.rotateX(-0.04);
+        const trunkMesh = new THREE.Mesh(trunkGeo, carMat);
+        trunkMesh.position.set(0, 0.62, 1.45);
+        trunkMesh.castShadow = true;
+        this.playerCarGroup.add(trunkMesh);
+
+        // 9. Rear Trunk Chrome Peugeot Lion Badge
+        const rearBadgeMesh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.10, 0.06), chromeMat);
+        rearBadgeMesh.position.set(0, 0.62, 1.90);
+        this.playerCarGroup.add(rearBadgeMesh);
+
+        // 10. ELX Smoked Taillight Assemblies (چراغ‌های دودی عقب ELX)
+        const tailGeo = new THREE.BoxGeometry(0.48, 0.22, 0.08);
+        [-0.56, 0.56].forEach(x => {
             const tl = new THREE.Mesh(tailGeo, this.brakeLightMat);
-            tl.position.set(x, 0.55, 2.03);
+            tl.position.set(x, 0.54, 1.90);
             this.playerCarGroup.add(tl);
             this.taillights.push(tl);
         });
 
-        // 8. Rear Trunk Lip Spoiler (باله عقب پژو پارس)
-        const spoilerGeo = new THREE.BoxGeometry(1.72, 0.06, 0.28);
+        // 11. Rear Trunk Lip Spoiler (باله عقب پژو پارس)
+        const spoilerGeo = new THREE.BoxGeometry(1.64, 0.06, 0.24);
         const spoilerMesh = new THREE.Mesh(spoilerGeo, carMat);
-        spoilerMesh.position.set(0, 0.72, 1.95);
+        spoilerMesh.position.set(0, 0.70, 1.84);
         spoilerMesh.castShadow = true;
         this.playerCarGroup.add(spoilerMesh);
 
-        // 9. Iranian License Plate Holder (پلاک ایران ۶۶)
-        const plateGeo = new THREE.BoxGeometry(0.48, 0.15, 0.06);
+        // 12. Rear Bumper with Iranian License Plate & Exhaust (سپر عقب و پلاک)
+        const rearBumperGeo = new THREE.BoxGeometry(1.78, 0.32, 0.22);
+        const rearBumperMesh = new THREE.Mesh(rearBumperGeo, carMat);
+        rearBumperMesh.position.set(0, 0.34, 1.88);
+        rearBumperMesh.castShadow = true;
+        this.playerCarGroup.add(rearBumperMesh);
+
+        const plateGeo = new THREE.BoxGeometry(0.46, 0.14, 0.06);
         const plateMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const plate = new THREE.Mesh(plateGeo, plateMat);
-        plate.position.set(0, 0.42, 2.05);
+        plate.position.set(0, 0.38, 1.99);
         this.playerCarGroup.add(plate);
 
-        // 10. Dual Chrome Exhaust Tips (اگزوز دوبل شوتی)
-        const exhaustGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.38, 16);
+        // Dual Chrome Exhaust Pipes (اگزوز دوبل شوتی)
+        const exhaustGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.36, 16);
         exhaustGeo.rotateX(Math.PI / 2);
         const exhaustL = new THREE.Mesh(exhaustGeo, chromeMat);
-        exhaustL.position.set(-0.35, 0.28, 2.08);
+        exhaustL.position.set(-0.35, 0.24, 2.00);
         const exhaustR = new THREE.Mesh(exhaustGeo, chromeMat);
-        exhaustR.position.set(-0.20, 0.28, 2.08);
+        exhaustR.position.set(-0.20, 0.24, 2.00);
         this.playerCarGroup.add(exhaustL);
         this.playerCarGroup.add(exhaustR);
 
-        // 11. Interior Cockpit Group
+        // 13. Side Door Protective Rubber Moldings (زه بغل درهای پژو پارس)
+        const sideMoldingGeo = new THREE.BoxGeometry(1.82, 0.08, 2.70);
+        const sideMolding = new THREE.Mesh(sideMoldingGeo, darkTrimMat);
+        sideMolding.position.set(0, 0.42, -0.08);
+        this.playerCarGroup.add(sideMolding);
+
+        // 14. Side Rear-View Mirrors (آینه‌های راهنمادار بغل پژو پارس)
+        const mirrorGeo = new THREE.BoxGeometry(0.24, 0.12, 0.16);
+        [-0.92, 0.92].forEach(x => {
+            const mirror = new THREE.Mesh(mirrorGeo, carMat);
+            mirror.position.set(x, 0.82, -0.65);
+            mirror.castShadow = true;
+            this.playerCarGroup.add(mirror);
+        });
+
+        // 15. Interior Cockpit Group
         this.cockpitGroup = new THREE.Group();
 
-        const dashGeo = new THREE.BoxGeometry(1.50, 0.48, 0.74);
+        const dashGeo = new THREE.BoxGeometry(1.46, 0.46, 0.70);
         const dashMat = new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.85, metalness: 0.1 });
         const dashboard = new THREE.Mesh(dashGeo, dashMat);
         dashboard.position.set(0, 0.85, -0.45);
         this.cockpitGroup.add(dashboard);
 
-        const woodTrimGeo = new THREE.BoxGeometry(1.48, 0.08, 0.75);
+        const woodTrimGeo = new THREE.BoxGeometry(1.44, 0.08, 0.71);
         const woodTrimMat = new THREE.MeshStandardMaterial({ color: 0x663311, roughness: 0.4, metalness: 0.2 });
         const woodTrim = new THREE.Mesh(woodTrimGeo, woodTrimMat);
         woodTrim.position.set(0, 0.74, -0.45);
@@ -423,20 +463,20 @@ class Game3D {
 
         this.playerCarGroup.add(this.cockpitGroup);
 
-        // 12. HD 5-Spoke Alloy Sport Wheels & Tires
-        const tireGeo = new THREE.CylinderGeometry(0.40, 0.40, 0.36, 32);
+        // 16. HD 5-Spoke Sport Rims & Tires
+        const tireGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.34, 32);
         const tireMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.8 });
-        const rimGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.37, 16);
+        const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.35, 16);
         const rimMat = new THREE.MeshStandardMaterial({ color: 0xd8d8d8, metalness: 0.95, roughness: 0.08 });
         const brakeDiscMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.9, roughness: 0.2 });
 
         tireGeo.rotateZ(Math.PI / 2);
         rimGeo.rotateZ(Math.PI / 2);
 
-        [[-0.95, 0.40, 1.25], [0.95, 0.40, 1.25], [-0.95, 0.40, -1.25], [0.95, 0.40, -1.25]].forEach(pos => {
+        [[-0.92, 0.38, 1.20], [0.92, 0.38, 1.20], [-0.92, 0.38, -1.20], [0.92, 0.38, -1.20]].forEach(pos => {
             const tire = new THREE.Mesh(tireGeo, tireMat);
             const rim = new THREE.Mesh(rimGeo, rimMat);
-            const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.30, 16), brakeDiscMat);
+            const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.28, 16), brakeDiscMat);
             disc.rotation.z = Math.PI / 2;
 
             tire.position.set(pos[0], pos[1], pos[2]);
@@ -449,7 +489,7 @@ class Game3D {
             this.playerCarGroup.add(disc);
         });
 
-        // 13. Stance Setup (SHOOTI vs LOW vs NORMAL)
+        // 17. Stance Setup (SHOOTI vs LOW vs NORMAL)
         if (this.player.stance === 'SHOOTI') {
             this.playerCarGroup.rotation.x = -0.06;
             this.playerCarGroup.position.y = 0.22;

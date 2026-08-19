@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v40-real-hd-pars';
+const CACHE_NAME = 'iranian-highway-v45-pars-recognizable-hd';
 
 const PRECACHE_ASSETS = [
     './',
