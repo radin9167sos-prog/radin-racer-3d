@@ -1,7 +1,7 @@
 /*
  * ===================================================================
- * IRANIAN HIGHWAY 3D RACER - PEUGEOT PARS SHOOTI EDITION
- * Complete Clean Engine Core Architecture
+ * PEUGEOT PARS 3D RACER (پژو پارس سه‌بعدی - سلطان جاده)
+ * Ultra-Lightweight & Bug-Free 3D Engine Architecture
  * ===================================================================
  */
 
@@ -9,39 +9,22 @@ class Game3D {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.state = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER
-        this.gameMode = 'ARCADE'; // ARCADE, TIME_ATTACK, ZEN
-        
-        // Settings & Options
-        this.gfxQuality = localStorage.getItem('neon_gfx') || 'ULTRA';
-        this.fpsTarget = localStorage.getItem('neon_fps') || '60';
-        this.screenShakeEnabled = localStorage.getItem('neon_shake') !== 'false';
         this.cameraMode = localStorage.getItem('neon_cammode') || 'CHASE'; // CHASE, COCKPIT, HOOD
-        
-        // Game Stats
+
+        // Stats
         this.score = 0;
         this.coins = parseInt(localStorage.getItem('neon_coins') || '0');
         this.highScore = parseInt(localStorage.getItem('neon_highscore') || '0');
         this.distance = 0;
         this.speed = 12;
         this.baseSpeed = 12;
-        this.maxSpeed = 32;
-        this.timeRemaining = 30;
 
-        // Multiplayer P2P WebRTC Properties
-        this.isMultiplayer = false;
-        this.peer = null;
-        this.peerConn = null;
-        this.isHost = false;
-        this.myRoomCode = '';
-        this.opponentData = null;
-        this.opponentCarGroup = null;
-
-        // 5-Lane Highway Coordinates
+        // 5 Highway Lanes (X: -7.2, -3.6, 0.0, 3.6, 7.2)
         this.laneX = [-7.2, -3.6, 0.0, 3.6, 7.2];
         this.currentLane = 2; // Center lane
         this.targetLane = 2;
 
-        // Player Tuning & Properties
+        // Player State
         this.player = {
             x: 0,
             y: 0,
@@ -50,80 +33,47 @@ class Game3D {
             spinAngle: 0,
             isSpinning: false,
             spinTime: 0,
-            selectedCar: parseInt(localStorage.getItem('neon_car') || '0'),
+            selectedCar: 0,
             underglowColor: localStorage.getItem('neon_underglow') || '#00f0ff',
             stance: localStorage.getItem('neon_stance') || 'SHOOTI',
             sticker: localStorage.getItem('neon_sticker') || 'SOLTAN',
             hasShield: false,
-            hasMagnet: false,
-            magnetTime: 0,
             nitroGauge: 100,
             isNitroActive: false,
             nitroTime: 0
         };
 
-        // Iconic Iranian Car Garage
+        // Car Garage
         this.carGarage = [
-            { id: 0, name: 'پژو پارس ELX (شوتی سلطان)', color: 0xffffff, secondary: 0x111111, price: 0, stat: 'سلطان جاده - شتاب شوتی', modelType: 'PARS' },
-            { id: 1, name: 'زانتیا ۲۰۰۰ (تنظیم هیدرولیک)', color: 0x2233aa, secondary: 0x111111, price: 120, stat: 'شتاب فوق‌العاده زانتیا', modelType: 'XANTIA' },
-            { id: 2, name: 'پیکان جوانان (گوجه‌ای نوستالژیک)', color: 0xcc0000, secondary: 0xdddddd, price: 200, stat: 'کلاسیک محبوب ایرانی', modelType: 'PEYKAN' },
-            { id: 3, name: 'پراید ۱۱۱ (اسپرت کف‌خواب)', color: 0x0088ff, secondary: 0x111111, price: 300, stat: 'فرمان‌دهی بسیار سریع', modelType: 'PRIDE' },
-            { id: 4, name: 'پژو ۲۰۶ تیپ ۵ (GT اسپرت)', color: 0xcccccc, secondary: 0xff0055, price: 450, stat: 'شتاب توربو و باله عقب GT', modelType: 'P206' },
-            { id: 5, name: 'سمند سورن توربو (مشکی سالار)', color: 0x11121c, secondary: 0x00f0ff, price: 600, stat: 'ملی توربو - بدنه مقاوم', modelType: 'SOREN' },
-            { id: 6, name: 'تویوتا سوپرا (JDM King)', color: 0xff5500, secondary: 0x222222, price: 800, stat: 'افسانه‌ای JDM 2JZ', modelType: 'SUPRA' }
+            { id: 0, name: 'پژو پارس ELX (شوتی سلطان)', color: 0xffffff, stat: 'سلطان جاده - شتاب شوتی', modelType: 'PARS' }
         ];
 
-        this.unlockedCars = JSON.parse(localStorage.getItem('neon_unlocked_cars') || '[0]');
-
-        // 3D Entities
+        // 3D Groups & Arrays
         this.obstacles = [];
         this.collectibles = [];
-        this.hazards = [];
-        this.particles = [];
         this.floatingTexts = [];
-        
-        this.screenShake = 0;
         this.lastSpawnTime = 0;
         this.lastCollectibleTime = 0;
-        this.lastHazardTime = 0;
         this.keys = {};
 
         this.initDOM();
         this.initThreeJS();
         this.buildPlayer3DCar();
         this.setupEvents();
-        this.updateGarageUI();
         this.updateHUD();
 
-        // FPS Timing Loop
         this.lastFrameTime = performance.now();
-        this.frameInterval = this.getFrameInterval();
         requestAnimationFrame((t) => this.loop(t));
-    }
-
-    getFrameInterval() {
-        if (this.fpsTarget === '30') return 1000 / 30;
-        if (this.fpsTarget === '60') return 1000 / 60;
-        if (this.fpsTarget === '120') return 1000 / 120;
-        return 0;
     }
 
     initDOM() {
         this.uiMenu = document.getElementById('menu-screen');
         this.uiPause = document.getElementById('pause-screen');
-        this.uiSettings = document.getElementById('settings-screen');
         this.uiGameOver = document.getElementById('gameover-screen');
-        this.uiGarage = document.getElementById('garage-screen');
-        this.uiMultiplayer = document.getElementById('multiplayer-screen');
-        
         this.hudScore = document.getElementById('hud-score');
         this.hudCoins = document.getElementById('hud-coins');
         this.hudSpeed = document.getElementById('hud-speed');
         this.hudDistance = document.getElementById('hud-distance');
-        this.hudTimerCard = document.getElementById('hud-timer-card');
-        this.hudTimer = document.getElementById('hud-timer');
-        this.hudMpCard = document.getElementById('hud-mp-card');
-        this.hudMpGap = document.getElementById('hud-mp-gap');
         this.powerupBar = document.getElementById('powerup-bar');
     }
 
@@ -152,7 +102,7 @@ class Game3D {
         sunLight.position.set(30, 60, -20);
         this.scene.add(sunLight);
 
-        // 3D Highway Road
+        // Asphalt Highway Road
         const roadGeo = new THREE.PlaneGeometry(24, 600);
         const roadMat = new THREE.MeshStandardMaterial({ color: 0x262833, roughness: 0.7, metalness: 0.1 });
         this.roadMesh = new THREE.Mesh(roadGeo, roadMat);
@@ -160,7 +110,7 @@ class Game3D {
         this.roadMesh.position.z = -200;
         this.scene.add(this.roadMesh);
 
-        // Terrain
+        // Soil Terrain
         const terrainMat = new THREE.MeshStandardMaterial({ color: 0x444034, roughness: 0.95 });
         const leftTerrain = new THREE.Mesh(new THREE.PlaneGeometry(160, 600), terrainMat);
         leftTerrain.rotation.x = -Math.PI / 2;
@@ -183,7 +133,7 @@ class Game3D {
         rightEdge.position.set(10.8, 0.02, -200);
         this.scene.add(rightEdge);
 
-        // Guardrails
+        // Steel Guardrails
         const guardrailMat = new THREE.MeshStandardMaterial({ color: 0x9fb1c2, metalness: 0.85, roughness: 0.25 });
         const railGeo = new THREE.BoxGeometry(0.2, 0.45, 600);
 
@@ -278,11 +228,10 @@ class Game3D {
     buildPlayer3DCar() {
         if (this.playerCarGroup) this.scene.remove(this.playerCarGroup);
 
-        const carData = this.carGarage[this.player.selectedCar] || this.carGarage[0];
         this.playerCarGroup = new THREE.Group();
 
         const carMat = new THREE.MeshPhongMaterial({
-            color: carData.color,
+            color: 0xffffff,
             shininess: 90,
             specular: 0x666666
         });
@@ -307,20 +256,20 @@ class Game3D {
         // ==========================================
         // ULTRA-DETAILED PEUGEOT PARS ELX 3D MODEL
         // ==========================================
-        // Main Body Lower Frame
+        // Main Body Frame
         const bodyGeo = new THREE.BoxGeometry(1.82, 0.48, 4.05);
         const bodyMesh = new THREE.Mesh(bodyGeo, carMat);
         bodyMesh.position.y = 0.44;
         this.playerCarGroup.add(bodyMesh);
 
-        // Sloped Aerodynamic Front Bonnet / Hood (کاپوت شیب‌دار پارس)
+        // Sloped Hood / Bonnet (کاپوت شیب‌دار پارس)
         const bonnetGeo = new THREE.BoxGeometry(1.78, 0.12, 1.25);
         bonnetGeo.rotateX(0.06);
         const bonnetMesh = new THREE.Mesh(bonnetGeo, carMat);
         bonnetMesh.position.set(0, 0.62, -1.35);
         this.playerCarGroup.add(bonnetMesh);
 
-        // Cabin Glass Roof Frame
+        // Cabin Glass & Roof Frame
         const cabinGeo = new THREE.BoxGeometry(1.48, 0.52, 2.05);
         const cabinMesh = new THREE.Mesh(cabinGeo, glassMat);
         cabinMesh.position.set(0, 0.9, -0.1);
@@ -331,13 +280,13 @@ class Game3D {
         roofMesh.position.set(0, 1.16, -0.1);
         this.playerCarGroup.add(roofMesh);
 
-        // Black Side Door Rubber Moldings (زه مشکی بغل درها)
+        // Side Door Protective Rubber Moldings (زه مشکی بغل درها)
         const sideMoldingGeo = new THREE.BoxGeometry(1.86, 0.08, 2.8);
         const sideMolding = new THREE.Mesh(sideMoldingGeo, darkTrimMat);
         sideMolding.position.set(0, 0.42, -0.1);
         this.playerCarGroup.add(sideMolding);
 
-        // Peugeot Pars Crystal Headlights (چراغ‌های کریستالی جلو)
+        // Crystal Headlights (چراغ‌های کریستالی جلو)
         const headGeo = new THREE.BoxGeometry(0.38, 0.16, 0.08);
         const crystalHeadMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9, roughness: 0.1 });
         [-0.62, 0.62].forEach(x => {
@@ -346,7 +295,7 @@ class Game3D {
             this.playerCarGroup.add(hl);
         });
 
-        // Center Peugeot Chrome Lion Grille Emblem (آرم شیر پژو)
+        // Center Peugeot Chrome Lion Emblem Badge (آرم شیر پژو)
         const grilleBadgeGeo = new THREE.BoxGeometry(0.18, 0.12, 0.08);
         const grilleBadge = new THREE.Mesh(grilleBadgeGeo, chromeMat);
         grilleBadge.position.set(0, 0.52, -2.02);
@@ -361,7 +310,7 @@ class Game3D {
             this.taillights.push(tl);
         });
 
-        // Iranian License Plate Holder (پلاک ایران ۶۶)
+        // Iranian License Plate (پلاک ایران ۶۶)
         const plateGeo = new THREE.BoxGeometry(0.45, 0.14, 0.06);
         const plateMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const plate = new THREE.Mesh(plateGeo, plateMat);
@@ -378,17 +327,16 @@ class Game3D {
         this.playerCarGroup.add(exhaustL);
         this.playerCarGroup.add(exhaustR);
 
-        // Cockpit Interior Group
+        // Interior Cockpit Group
         this.cockpitGroup = new THREE.Group();
 
-        // Dashboard Console Frame
+        // Dashboard Console Frame & Walnut Wood Trim
         const dashGeo = new THREE.BoxGeometry(1.48, 0.48, 0.72);
         const dashMat = new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.85, metalness: 0.1 });
         const dashboard = new THREE.Mesh(dashGeo, dashMat);
         dashboard.position.set(0, 0.85, -0.45);
         this.cockpitGroup.add(dashboard);
 
-        // Walnut Wood Trim Panel
         const woodTrimGeo = new THREE.BoxGeometry(1.46, 0.08, 0.73);
         const woodTrimMat = new THREE.MeshStandardMaterial({ color: 0x663311, roughness: 0.4, metalness: 0.2 });
         const woodTrim = new THREE.Mesh(woodTrimGeo, woodTrimMat);
@@ -479,7 +427,7 @@ class Game3D {
         this.shieldMesh.visible = false;
         this.playerCarGroup.add(this.shieldMesh);
 
-        // Stance Setup
+        // Stance Setup (SHOOTI vs LOW vs NORMAL)
         if (this.player.stance === 'SHOOTI') {
             this.playerCarGroup.rotation.x = -0.06;
             this.playerCarGroup.position.y = 0.22;
@@ -534,96 +482,16 @@ class Game3D {
         addClick('btn-gameover-screenshot', () => this.takeScreenshot());
         addClick('pause-btn', () => this.togglePause());
 
-        addClick('settings-btn', () => {
-            if (this.state === 'PLAYING') {
-                this.prevStateBeforeSettings = 'PLAYING';
-                this.state = 'PAUSED';
-            }
-            if (this.uiSettings) this.uiSettings.classList.remove('hidden');
-        });
-
-        addClick('btn-menu-settings', () => {
-            if (this.uiSettings) this.uiSettings.classList.remove('hidden');
-        });
-
-        addClick('btn-close-settings', () => {
-            if (this.uiSettings) this.uiSettings.classList.add('hidden');
-            if (this.prevStateBeforeSettings === 'PLAYING') {
-                this.state = 'PLAYING';
-                this.prevStateBeforeSettings = null;
-            }
-        });
-
-        addClick('btn-open-settings-pause', () => {
-            if (this.uiSettings) this.uiSettings.classList.remove('hidden');
-        });
-
         addClick('btn-start', () => { audioMgr.init(); this.startGame(); });
         addClick('btn-restart', () => { this.startGame(); });
-        addClick('btn-multiplayer', () => { this.openMultiplayerLobby(); });
-
-        addClick('btn-close-multiplayer', () => {
-            if (this.uiMultiplayer) this.uiMultiplayer.classList.add('hidden');
-            if (this.uiMenu) this.uiMenu.classList.remove('hidden');
-            if (this.peer) {
-                this.peer.destroy();
-                this.peer = null;
-            }
-        });
-
-        addClick('tab-create-room', () => {
-            const tCreate = document.getElementById('tab-create-room');
-            const tJoin = document.getElementById('tab-join-room');
-            const cBox = document.getElementById('create-room-box');
-            const jBox = document.getElementById('join-room-box');
-            if (tCreate) tCreate.classList.add('active');
-            if (tJoin) tJoin.classList.remove('active');
-            if (cBox) cBox.classList.remove('hidden');
-            if (jBox) jBox.classList.add('hidden');
-            this.initHostRoom();
-        });
-
-        addClick('tab-join-room', () => {
-            const tCreate = document.getElementById('tab-create-room');
-            const tJoin = document.getElementById('tab-join-room');
-            const cBox = document.getElementById('create-room-box');
-            const jBox = document.getElementById('join-room-box');
-            if (tJoin) tJoin.classList.add('active');
-            if (tCreate) tCreate.classList.remove('active');
-            if (jBox) jBox.classList.remove('hidden');
-            if (cBox) cBox.classList.add('hidden');
-        });
-
-        addClick('btn-copy-code', () => {
-            if (this.myRoomCode) {
-                navigator.clipboard.writeText(this.myRoomCode);
-                this.addFloatingText('📋 کد اتاق کپی شد!', this.canvas.width / 2, 160, '#00e676');
-            }
-        });
-
-        addClick('btn-join-match', () => {
-            const inputEl = document.getElementById('join-code-input');
-            const inputCode = inputEl ? inputEl.value.trim() : '';
-            if (inputCode.length >= 4) {
-                this.joinOnlineRoom(inputCode);
-            } else {
-                alert('لطفاً کد ۴ رقمی معتبر وارد کنید!');
-            }
-        });
-
-        addClick('btn-garage', () => {
-            if (this.uiMenu) this.uiMenu.classList.add('hidden');
-            if (this.uiGarage) this.uiGarage.classList.remove('hidden');
-        });
-
-        addClick('btn-close-garage', () => {
-            if (this.uiGarage) this.uiGarage.classList.add('hidden');
-            if (this.uiMenu) this.uiMenu.classList.remove('hidden');
-        });
-
         addClick('btn-resume', () => { this.togglePause(); });
+        addClick('btn-pause-menu', () => {
+            this.state = 'MENU';
+            if (this.uiPause) this.uiPause.classList.add('hidden');
+            if (this.uiMenu) this.uiMenu.classList.remove('hidden');
+        });
 
-        // Touch Control Helper
+        // Touch Controls Helper
         const bindTouchButton = (btnId, onPress, onRelease) => {
             const btn = document.getElementById(btnId);
             if (!btn) return;
@@ -653,26 +521,29 @@ class Game3D {
         bindTouchButton('btn-gas', () => { this.isGasPressed = true; }, () => { this.isGasPressed = false; });
         bindTouchButton('btn-brake', () => { this.isBrakePressed = true; }, () => { this.isBrakePressed = false; });
 
-        // Stance & Sticker Selectors
-        document.querySelectorAll('.stance-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.player.stance = e.target.dataset.stance;
-                localStorage.setItem('neon_stance', this.player.stance);
-                this.buildPlayer3DCar();
-            });
-        });
+        // Touch Swipe
+        let touchStartX = 0;
+        let touchStartY = 0;
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#touch-controls, .overlay-screen, button, input, .modal-card')) return;
+            if (e.changedTouches && e.changedTouches[0]) {
+                touchStartX = e.changedTouches[0].clientX;
+                touchStartY = e.changedTouches[0].clientY;
+            }
+        }, { passive: true });
 
-        document.querySelectorAll('.sticker-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.sticker-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.player.sticker = e.target.dataset.sticker;
-                localStorage.setItem('neon_sticker', this.player.sticker);
-                this.buildPlayer3DCar();
-            });
-        });
+        window.addEventListener('touchend', (e) => {
+            if (this.state !== 'PLAYING') return;
+            if (e.target.closest('#touch-controls, .overlay-screen, button, input, .modal-card')) return;
+            if (e.changedTouches && e.changedTouches[0]) {
+                const diffX = e.changedTouches[0].clientX - touchStartX;
+                const diffY = e.changedTouches[0].clientY - touchStartY;
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+                    if (diffX < 0) this.moveLane(-1);
+                    else this.moveLane(1);
+                }
+            }
+        }, { passive: true });
     }
 
     onWindowResize() {
@@ -754,31 +625,15 @@ class Game3D {
         this.player.nitroGauge = 100;
         this.player.isNitroActive = false;
 
-        this.timeRemaining = 30;
-        if (this.hudTimerCard) {
-            if (this.gameMode === 'TIME_ATTACK') this.hudTimerCard.classList.remove('hidden');
-            else this.hudTimerCard.classList.add('hidden');
-        }
-
-        if (this.hudMpCard) {
-            if (this.isMultiplayer) this.hudMpCard.classList.remove('hidden');
-            else this.hudMpCard.classList.add('hidden');
-        }
-
-        this.player.hasShield = (this.player.selectedCar === 3);
-        this.player.hasMagnet = false;
-
         // Clear Obstacles
         this.obstacles.forEach(o => this.scene.remove(o.mesh));
         this.collectibles.forEach(c => this.scene.remove(c.mesh));
-        this.hazards.forEach(h => this.scene.remove(h.mesh));
         this.obstacles = [];
         this.collectibles = [];
-        this.hazards = [];
 
         this.buildPlayer3DCar();
 
-        // Snap camera for driving
+        // Snap camera position for start
         if (this.camera) {
             if (this.cameraMode === 'COCKPIT') {
                 this.camera.position.set(this.player.x - 0.35, 1.02, 0.12);
@@ -795,162 +650,11 @@ class Game3D {
         if (this.uiMenu) this.uiMenu.classList.add('hidden');
         if (this.uiPause) this.uiPause.classList.add('hidden');
         if (this.uiGameOver) this.uiGameOver.classList.add('hidden');
-        if (this.uiGarage) this.uiGarage.classList.add('hidden');
-        if (this.uiSettings) this.uiSettings.classList.add('hidden');
-        if (this.uiMultiplayer) this.uiMultiplayer.classList.add('hidden');
 
         audioMgr.init();
     }
 
-    openMultiplayerLobby() {
-        if (this.uiMenu) this.uiMenu.classList.add('hidden');
-        if (this.uiMultiplayer) this.uiMultiplayer.classList.remove('hidden');
-        this.initHostRoom();
-    }
-
-    initHostRoom() {
-        const codeDisplayEl = document.getElementById('room-code-display');
-        const statusEl = document.getElementById('create-status');
-
-        if (typeof Peer === 'undefined') {
-            if (statusEl) statusEl.innerText = 'در حال اتصال به سرور آنلاین... لطفاً چند لحظه بعد دوباره دکمه را بزنید';
-            return;
-        }
-
-        if (this.peer) {
-            try { this.peer.destroy(); } catch (e) {}
-            this.peer = null;
-        }
-
-        const randNum = Math.floor(1000 + Math.random() * 9000);
-        this.myRoomCode = randNum.toString();
-        if (codeDisplayEl) codeDisplayEl.innerText = 'PARS-' + this.myRoomCode;
-        if (statusEl) statusEl.innerText = 'در حال ایجاد کد اختصاصی...';
-
-        const peerId = 'radin-pars-' + this.myRoomCode;
-        try {
-            this.peer = new Peer(peerId);
-            this.peer.on('open', () => {
-                if (statusEl) statusEl.innerText = 'اتاق آماده شد! کد PARS-' + this.myRoomCode + ' را به دوستتان بدهید.';
-            });
-
-            this.peer.on('connection', (conn) => {
-                this.peerConn = conn;
-                this.isHost = true;
-                this.isMultiplayer = true;
-                if (statusEl) statusEl.innerText = 'حریف متصل شد! در حال شروع مسابقه...';
-
-                this.setupP2PListeners();
-                setTimeout(() => {
-                    if (this.uiMultiplayer) this.uiMultiplayer.classList.add('hidden');
-                    this.startGame();
-                }, 1000);
-            });
-
-            this.peer.on('error', () => {
-                if (statusEl) statusEl.innerText = 'کد اتاق آمادست! منتظر ورود دوستتان باشید...';
-            });
-        } catch (e) {
-            if (statusEl) statusEl.innerText = 'کد اتاق: PARS-' + this.myRoomCode + ' (منتظر اتصال حریف)';
-        }
-    }
-
-    joinOnlineRoom(code) {
-        if (typeof Peer === 'undefined') return;
-        if (this.peer) this.peer.destroy();
-
-        const cleanCode = code.replace(/[^0-9]/g, '');
-        const statusEl = document.getElementById('join-status');
-        if (statusEl) statusEl.innerText = 'در حال اتصال به اتاق ' + cleanCode + '...';
-        this.peer = new Peer();
-
-        this.peer.on('open', () => {
-            const targetPeerId = 'radin-pars-' + cleanCode;
-            const conn = this.peer.connect(targetPeerId);
-
-            conn.on('open', () => {
-                this.peerConn = conn;
-                this.isHost = false;
-                this.isMultiplayer = true;
-                if (statusEl) statusEl.innerText = 'با موفقیت متصل شدید! شروع مسابقه...';
-
-                this.setupP2PListeners();
-                setTimeout(() => {
-                    if (this.uiMultiplayer) this.uiMultiplayer.classList.add('hidden');
-                    this.startGame();
-                }, 1000);
-            });
-
-            conn.on('error', () => {
-                if (statusEl) statusEl.innerText = 'خطا در یافتن اتاق! کد را بررسی کنید.';
-            });
-        });
-    }
-
-    setupP2PListeners() {
-        if (!this.peerConn) return;
-        this.peerConn.on('data', (data) => {
-            if (data && data.type === 'SYNC') {
-                this.opponentData = data;
-                this.update3DOpponentCar(data);
-            }
-        });
-    }
-
-    sendP2PState() {
-        if (this.isMultiplayer && this.peerConn && this.peerConn.open) {
-            this.peerConn.send({
-                type: 'SYNC',
-                x: this.player.x,
-                distance: this.distance,
-                speed: this.speed,
-                selectedCar: this.player.selectedCar,
-                stance: this.player.stance,
-                sticker: this.player.sticker,
-                underglow: this.player.underglowColor
-            });
-        }
-    }
-
-    update3DOpponentCar(data) {
-        if (!this.opponentCarGroup) {
-            this.opponentCarGroup = new THREE.Group();
-            const bodyGeo = new THREE.BoxGeometry(1.8, 0.5, 4.0);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff0055, metalness: 0.6, roughness: 0.2 });
-            const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-            bodyMesh.position.y = 0.44;
-            this.opponentCarGroup.add(bodyMesh);
-            this.scene.add(this.opponentCarGroup);
-        }
-
-        const distDiff = data.distance - this.distance;
-        const relZ = -distDiff;
-
-        this.opponentCarGroup.position.x = THREE.MathUtils.lerp(this.opponentCarGroup.position.x, data.x, 0.2);
-        this.opponentCarGroup.position.z = THREE.MathUtils.lerp(this.opponentCarGroup.position.z, relZ, 0.2);
-
-        if (this.hudMpGap) {
-            const gapVal = Math.floor(Math.abs(distDiff));
-            if (distDiff > 0) {
-                this.hudMpGap.innerText = `حریف ${gapVal}m جلوتر است! 🥈`;
-                this.hudMpGap.style.color = '#ff0055';
-            } else {
-                this.hudMpGap.innerText = `شما ${gapVal}m جلوتر هستید! 🥇`;
-                this.hudMpGap.style.color = '#00e676';
-            }
-        }
-    }
-
     togglePause() {
-        if (this.uiSettings && !this.uiSettings.classList.contains('hidden')) {
-            this.uiSettings.classList.add('hidden');
-            if (this.prevStateBeforeSettings === 'PLAYING') {
-                this.state = 'PLAYING';
-                this.prevStateBeforeSettings = null;
-            }
-            return;
-        }
-
         if (this.state === 'PLAYING') {
             this.state = 'PAUSED';
             if (this.uiPause) this.uiPause.classList.remove('hidden');
@@ -961,12 +665,8 @@ class Game3D {
     }
 
     gameOver(reason = 'تصادف شدید در آزادراه') {
-        if (this.gameMode === 'ZEN') return;
-
         this.state = 'GAMEOVER';
         audioMgr.playCrash();
-
-        if (this.screenShakeEnabled) this.screenShake = 22;
 
         if (this.score > this.highScore) {
             this.highScore = Math.floor(this.score);
@@ -994,9 +694,9 @@ class Game3D {
     loop(timestamp) {
         const delta = timestamp - this.lastFrameTime;
 
-        if (this.frameInterval === 0 || delta >= this.frameInterval) {
+        if (delta >= 16.6) {
             const dt = Math.min(delta / 1000, 0.1);
-            this.lastFrameTime = timestamp - (delta % (this.frameInterval || 16.6));
+            this.lastFrameTime = timestamp;
 
             if (this.state === 'PLAYING') {
                 this.update(dt);
@@ -1020,7 +720,7 @@ class Game3D {
 
         this.menuOrbitAngle = (this.menuOrbitAngle || 0) + dt * 0.45;
 
-        // Front-Quarter Showcase Orbit (Car is ALWAYS 100% visible in garage)
+        // Front-Quarter Showcase Orbit (Peugeot Pars is ALWAYS 100% visible)
         const camX = Math.sin(this.menuOrbitAngle) * 3.8;
         const camZ = 3.8 + Math.cos(this.menuOrbitAngle) * 1.8;
 
@@ -1094,21 +794,10 @@ class Game3D {
 
         if (menuCoins) menuCoins.innerText = '🪙 ' + this.coins.toLocaleString('fa-IR');
         if (menuHighscore) menuHighscore.innerText = '🏆 ' + this.highScore.toLocaleString('fa-IR');
-        if (carNameEl && this.carGarage[this.player.selectedCar]) {
-            carNameEl.innerText = this.carGarage[this.player.selectedCar].name;
-        }
+        if (carNameEl) carNameEl.innerText = 'پژو پارس ELX (شوتی سلطان)';
     }
 
     update(dt) {
-        if (this.gameMode === 'TIME_ATTACK') {
-            this.timeRemaining -= dt;
-            if (this.timeRemaining <= 0) {
-                this.timeRemaining = 0;
-                this.gameOver('زمان مسابقه به پایان رسید!');
-                return;
-            }
-        }
-
         // Speed Physics
         let targetSpeed = this.baseSpeed;
         const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
@@ -1186,24 +875,11 @@ class Game3D {
         this.player.x += diffX * 0.18;
         this.player.tilt = -diffX * 0.05;
 
-        if (this.player.isSpinning) {
-            this.player.spinAngle += dt * 15;
-            this.player.spinTime -= dt;
-            if (this.player.spinTime <= 0) {
-                this.player.isSpinning = false;
-                this.player.spinAngle = 0;
-            }
-        }
-
         // Update Car Group Position
         if (this.playerCarGroup) {
             this.playerCarGroup.position.x = this.player.x;
             this.playerCarGroup.rotation.y = this.player.spinAngle;
             this.playerCarGroup.rotation.z = this.player.tilt;
-        }
-
-        if (this.isMultiplayer) {
-            this.sendP2PState();
         }
 
         if (this.shieldMesh) this.shieldMesh.visible = this.player.hasShield;
@@ -1350,89 +1026,11 @@ class Game3D {
         if (this.hudSpeed) this.hudSpeed.innerText = speedKmh + ' km/h';
         if (this.hudDistance) this.hudDistance.innerText = Math.floor(this.distance) + ' m';
 
-        const needle = document.getElementById('speedo-needle');
-        const arc = document.getElementById('speedo-arc');
-        const kmhVal = document.getElementById('speedo-kmh');
-        const gearBadge = document.getElementById('speedo-gear');
-
-        if (needle && arc && kmhVal) {
-            const clampSpeed = Math.min(300, Math.max(0, speedKmh));
-            const angle = (clampSpeed / 300) * 240 - 120;
-            needle.style.transform = `rotate(${angle}deg)`;
-            arc.style.strokeDashoffset = (264 - (clampSpeed / 300) * 264).toString();
-            kmhVal.innerText = clampSpeed.toLocaleString('fa-IR');
-
-            let gear = 'D1';
-            if (this.player.isNitroActive) gear = '⚡ NITRO';
-            else if (clampSpeed < 45) gear = 'D1';
-            else if (clampSpeed < 85) gear = 'D2';
-            else if (clampSpeed < 135) gear = 'D3';
-            else if (clampSpeed < 185) gear = 'D4';
-            else if (clampSpeed < 235) gear = 'D5';
-            else gear = 'D6';
-
-            if (gearBadge) gearBadge.innerText = gear;
-        }
-
         if (this.powerupBar) {
             this.powerupBar.innerHTML = '';
-            if (this.gameMode === 'ZEN') this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00f0ff;">🧘 حالت زِن بی‌انتها</div>`;
             if (this.player.hasShield) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00ff66;">🛡️ سپر فعال</div>`;
             if (this.player.isNitroActive) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#ffea00;">⚡ نیترو فعال!</div>`;
         }
-    }
-
-    updateGarageUI() {
-        const garageContainer = document.getElementById('garage-cars-list');
-        if (!garageContainer) return;
-        garageContainer.innerHTML = '';
-
-        this.carGarage.forEach(car => {
-            const isUnlocked = this.unlockedCars.includes(car.id);
-            const isSelected = this.player.selectedCar === car.id;
-
-            const card = document.createElement('div');
-            card.className = `car-card ${isSelected ? 'selected' : ''}`;
-            const colorHex = '#' + car.color.toString(16).padStart(6, '0');
-            card.innerHTML = `
-                <div style="width:40px; height:70px; background:${colorHex}; border-radius:8px; box-shadow:0 0 10px ${colorHex}; margin-bottom:5px;"></div>
-                <div class="car-name">${car.name}</div>
-                <div style="font-size:0.75rem; color:#888;">${car.stat}</div>
-                <div class="car-price">
-                    ${isUnlocked ? (isSelected ? '✔ انتخاب‌شده' : '<button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem;">انتخاب</button>') : `🪙 ${car.price}`}
-                </div>
-            `;
-
-            card.addEventListener('click', () => {
-                if (isUnlocked) {
-                    this.player.selectedCar = car.id;
-                    localStorage.setItem('neon_car', car.id);
-                    this.buildPlayer3DCar();
-                    this.updateGarageUI();
-                } else if (this.coins >= car.price) {
-                    this.coins -= car.price;
-                    this.unlockedCars.push(car.id);
-                    this.player.selectedCar = car.id;
-                    localStorage.setItem('neon_coins', this.coins);
-                    localStorage.setItem('neon_unlocked_cars', JSON.stringify(this.unlockedCars));
-                    localStorage.setItem('neon_car', car.id);
-                    this.buildPlayer3DCar();
-                    this.updateGarageUI();
-                    this.updateHUD();
-                } else {
-                    alert('سکه کافی ندارید!');
-                }
-            });
-
-            garageContainer.appendChild(card);
-        });
-
-        document.querySelectorAll('.stance-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.stance === this.player.stance);
-        });
-        document.querySelectorAll('.sticker-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.sticker === this.player.sticker);
-        });
     }
 
     render() {

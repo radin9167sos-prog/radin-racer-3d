@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>سلطان جاده ۳بعدی - بازی رانندگی ایرانی</title>
-    <meta name="description" content="بازی رانندگی واقعی سه‌بعدی ایرانی با نمای داخل کابین پژو پارس، سیستم شوتی، زانتیا، پیکان جوانان و آزادراه ایرانی.">
+    <title>پژو پارس ۳بعدی - سلطان جاده</title>
+    <meta name="description" content="بازی جدید سه‌بعدی و فوق‌العاده سبک رانندگی پژو پارس ELX شوتی در آزادراه.">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=20.0.0">
-    <!-- Local Offline Three.js 3D WebGL Engine & PeerJS WebRTC (with CDN fallbacks) -->
+    <link rel="stylesheet" href="style.css?v=30.0.0">
+    <!-- Three.js Engine & PeerJS (Local with CDN fallbacks) -->
     <script src="three.min.js"></script>
     <script>if (typeof THREE === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
     <script src="peer.min.js"></script>
@@ -19,26 +19,25 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=20.0.0', { updateViaCache: 'none' }).catch(() => {});
+                navigator.serviceWorker.register('./sw.js?v=30.0.0', { updateViaCache: 'none' }).catch(() => {});
             });
         }
     </script>
 </head>
 <body>
     <div id="game-container">
-        <!-- Main 3D Canvas -->
+        <!-- 3D Canvas -->
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Top Controls Bar -->
+        <!-- Top Bar Control Buttons -->
         <div id="top-controls-bar">
             <button id="pause-btn" title="توقف بازی">⏸️</button>
-            <button id="settings-btn" title="تنظیمات گرافیک و بازی">⚙️</button>
             <button id="camera-btn" title="تغییر نمای دوربین">🎥 دوربین</button>
             <button id="screenshot-btn" title="ثبت اسکرین‌شات از بازی">📸 اسکرین‌شات</button>
-            <button id="radio-btn" title="تغییر ایستگاه رادیوی خودرو">📻 رادیو شوتی ⚡</button>
+            <button id="radio-btn" title="تغییر رادیو">📻 رادیو شوتی ⚡</button>
         </div>
 
-        <!-- HUD Header Overlay -->
+        <!-- HUD Overlay -->
         <div id="hud">
             <div class="hud-group">
                 <div class="hud-card">
@@ -47,15 +46,7 @@
                 </div>
                 <div class="hud-card">
                     <span class="hud-title">سکه‌ها:</span>
-                    <span id="hud-coins" class="hud-value" style="color:var(--accent);">🪙 ۰</span>
-                </div>
-                <div id="hud-timer-card" class="hud-card hidden">
-                    <span class="hud-title">زمان:</span>
-                    <span id="hud-timer" class="hud-value timer-value">۳۰s</span>
-                </div>
-                <div id="hud-mp-card" class="hud-card hidden" style="border-color:#00e676;">
-                    <span class="hud-title">رقابت آنلاین:</span>
-                    <span id="hud-mp-gap" class="hud-value" style="color:#00e676; font-size:0.85rem;">حریف متصل شد!</span>
+                    <span id="hud-coins" class="hud-value" style="color:#ffea00;">🪙 ۰</span>
                 </div>
             </div>
 
@@ -71,25 +62,10 @@
             </div>
         </div>
 
-        <!-- Active Powerups Badges -->
+        <!-- Active Powerup Badges -->
         <div id="powerup-bar"></div>
 
-        <!-- Speedometer Gauge Widget -->
-        <div id="speedometer-box">
-            <svg id="speedo-dial" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.1)" stroke-width="6" fill="none" />
-                <circle id="speedo-arc" cx="50" cy="50" r="42" stroke="#00f0ff" stroke-width="6" fill="none"
-                        stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(135 50 50)" />
-                <line id="speedo-needle" x1="50" y1="50" x2="50" y2="18" stroke="#ff007f" stroke-width="3" stroke-linecap="round" />
-            </svg>
-            <div class="speedo-readout">
-                <span id="speedo-kmh">۰</span>
-                <span class="speedo-unit">KM/H</span>
-            </div>
-            <div id="speedo-gear" class="gear-badge">D1</div>
-        </div>
-
-        <!-- On-Screen Controls for Mobile & Touch -->
+        <!-- On-Screen Touch Controls for Mobile -->
         <div id="touch-controls">
             <div class="lane-btns">
                 <button id="btn-left" class="control-btn">◀</button>
@@ -111,13 +87,12 @@
             </div>
         </div>
 
-        <!-- START MENU SCREEN (Style 1: 3D Dynamic Garage Showcase) -->
+        <!-- START MENU SCREEN -->
         <div id="menu-screen" class="overlay-screen garage-menu-overlay">
-            <!-- Top Header Driver Profile Bar -->
             <div class="menu-top-bar">
                 <div class="menu-brand">
                     <span class="game-logo">🏎️</span>
-                    <span class="game-title-text">سلطان جاده ۳بعدی</span>
+                    <span class="game-title-text">پژو پارس ۳بعدی (سلطان جاده)</span>
                 </div>
                 <div class="driver-stats-pill">
                     <span id="menu-coins">🪙 ۰</span>
@@ -128,187 +103,42 @@
                 </div>
             </div>
 
-            <!-- Tilted Frosted Glass Side Card -->
             <div class="garage-showcase-card">
                 <div class="car-status-header">
                     <span class="car-status-label">🚘 خودروی آماده مسابقه:</span>
                     <span id="menu-selected-car-name" class="car-status-name">پژو پارس ELX (شوتی سلطان)</span>
                 </div>
 
-                <!-- Game Mode Selector -->
-                <div class="mode-selector">
-                    <div class="mode-btn active" data-mode="ARCADE">
-                        <span class="mode-icon">🏎️</span>
-                        <span class="mode-title">آرکید تک‌نفره</span>
-                    </div>
-                    <div class="mode-btn" data-mode="ONLINE" style="border-color:#00e676; background:rgba(0,230,118,0.15);">
-                        <span class="mode-icon">🌐</span>
-                        <span class="mode-title" style="color:#00e676; font-weight:bold;">آنلاین ۲ نفره</span>
-                    </div>
-                    <div class="mode-btn" data-mode="TIME_ATTACK">
-                        <span class="mode-icon">⏱️</span>
-                        <span class="mode-title">رکورد زمانی</span>
-                    </div>
-                    <div class="mode-btn" data-mode="ZEN">
-                        <span class="mode-icon">🧘</span>
-                        <span class="mode-title">حالت زِن</span>
-                    </div>
-                </div>
-
-                <div class="menu-action-stack">
+                <div class="menu-action-stack" style="margin-top:20px;">
                     <button id="btn-start" class="btn-primary btn-garage-start">🚀 شروع رانندگی در آزادراه</button>
-                    <button id="btn-multiplayer" class="btn-primary btn-garage-online">🌐 مسابقه آنلاین ۲ نفره</button>
-                    <div class="menu-btn-row">
-                        <button id="btn-garage" class="btn-secondary" style="flex:1;">🏎️ گاراژ و تیونینگ</button>
-                        <button id="btn-menu-screenshot" class="btn-secondary" style="width:48px; padding:0; font-size:1.2rem;" title="ثبت اسکرین‌شات از ماشین">📸</button>
-                        <button id="btn-menu-settings" class="btn-secondary" style="width:48px; padding:0; font-size:1.2rem;" title="تنظیمات">⚙️</button>
+                    <div class="menu-btn-row" style="display:flex; gap:10px; margin-top:10px;">
+                        <button id="btn-menu-screenshot" class="btn-secondary" style="flex:1;" title="ثبت اسکرین‌شات">📸 اسکرین‌شات از پارس</button>
                     </div>
                 </div>
 
-                <div class="controls-hint" style="margin-top:12px;">
-                    <span>💡 لمس و درگ صفحه = چرخش ۳۶۰ درجه دوربین دور ماشین</span>
+                <div class="controls-hint" style="margin-top:16px;">
+                    <span>💡 لمس و درگ صفحه = چرخش ۳۶۰ درجه دوربین دور پژو پارس</span>
                 </div>
             </div>
         </div>
 
-        <!-- MULTIPLAYER ONLINE LOBBY MODAL -->
-        <div id="multiplayer-screen" class="overlay-screen hidden">
-            <div class="modal-card" style="max-width:520px;">
-                <h2 style="color:#00e676;">🌐 مسابقه آنلاین دو نفره</h2>
-                <p class="subtitle">با دوست خود آنلاین کل‌کل کنید و در آزادراه مسابقه دهید!</p>
-
-                <div class="segmented-control" style="margin: 15px 0;">
-                    <button id="tab-create-room" class="seg-btn active">🔑 ساخت اتاق مسابقه</button>
-                    <button id="tab-join-room" class="seg-btn">👥 ورود با کد دعوت</button>
-                </div>
-
-                <!-- Create Room Section -->
-                <div id="create-room-box">
-                    <div class="tuning-title">کد اختصاصی اتاق شما:</div>
-                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin: 15px 0;">
-                        <span id="room-code-display" class="room-code-badge">PARS-----</span>
-                        <button id="btn-copy-code" class="btn-secondary" style="padding: 8px 14px;">📋 کپی کد</button>
-                    </div>
-                    <div id="create-status" class="online-status">در حال دریافت کد اتاق از سرور...</div>
-                </div>
-
-                <!-- Join Room Section -->
-                <div id="join-room-box" class="hidden">
-                    <div class="tuning-title">کد ۴ رقمی اتاق دوستتان را وارد کنید:</div>
-                    <div style="display:flex; gap:10px; margin: 15px 0;">
-                        <input type="text" id="join-code-input" placeholder="مثال: 8492" maxlength="6" class="room-input">
-                        <button id="btn-join-match" class="btn-primary" style="white-space:nowrap; background:#00e676; color:#000;">🚀 ورود به مسابقه</button>
-                    </div>
-                    <div id="join-status" class="online-status">آماده اتصال...</div>
-                </div>
-
-                <button id="btn-close-multiplayer" class="btn-secondary" style="margin-top:15px;">انصراف و بازگشت</button>
-            </div>
-        </div>
-
-        <!-- SETTINGS MODAL -->
-        <div id="settings-screen" class="overlay-screen hidden">
-            <div class="modal-card">
-                <h2 style="color:var(--secondary);">⚙️ تنظیمات گرافیک سه‌بعدی و بازی</h2>
-
-                <div class="settings-group">
-                    <div class="setting-row">
-                        <span class="setting-label">کیفیت گرافیک سه‌بعدی:</span>
-                        <div class="segmented-control">
-                            <button class="seg-btn" data-gfx="LOW">پایین</button>
-                            <button class="seg-btn" data-gfx="MEDIUM">متوسط</button>
-                            <button class="seg-btn active" data-gfx="ULTRA">Ultra 3D</button>
-                        </div>
-                    </div>
-
-                    <div class="setting-row">
-                        <span class="setting-label">نرخ فریم (Target FPS):</span>
-                        <div class="segmented-control">
-                            <button class="seg-btn" data-fps="30">30 FPS</button>
-                            <button class="seg-btn active" data-fps="60">60 FPS</button>
-                            <button class="seg-btn" data-fps="120">120 FPS</button>
-                        </div>
-                    </div>
-
-                    <div class="setting-row">
-                        <span class="setting-label">موزیک زمینه:</span>
-                        <div class="segmented-control">
-                            <button class="seg-btn active" data-track="0">Midnight Drive</button>
-                            <button class="seg-btn" data-track="1">Shooti Overdrive</button>
-                            <button class="seg-btn" data-track="2">Persian Speedway</button>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="btn-close-settings" class="btn-primary">ذخیره و بازگشت</button>
-            </div>
-        </div>
-
-        <!-- GARAGE & TUNING MODAL -->
-        <div id="garage-screen" class="overlay-screen hidden">
-            <div class="modal-card" style="max-width:640px;">
-                <h2 style="color:var(--secondary);">🏎️ گاراژ و تیونینگ خودروهای ایرانی</h2>
-                <p class="subtitle">ماشین محبوب خود را انتخاب کرده و حالت شوتی، استیکر شیشه و نور نئون آن را اسپرت کنید</p>
-
-                <!-- Car Selection -->
-                <div id="garage-cars-list" class="garage-cars"></div>
-
-                <!-- Iranian Tuning Controls Section -->
-                <div class="tuning-grid">
-                    <!-- Shooti Stance Selector -->
-                    <div class="tuning-box">
-                        <span class="tuning-title">⚖️ وضعیت ارتفاع تعلیق:</span>
-                        <div class="segmented-control">
-                            <button class="seg-btn stance-btn active" data-stance="SHOOTI">🚀 شوتی (عقب بالا)</button>
-                            <button class="seg-btn stance-btn" data-stance="LOW">👇 کف‌خواب اسپرت</button>
-                            <button class="seg-btn stance-btn" data-stance="NORMAL">معمولی کارخانه</button>
-                        </div>
-                    </div>
-
-                    <!-- Window Sticker Selector -->
-                    <div class="tuning-box">
-                        <span class="tuning-title">🏷️ برچسب شیشه عقب:</span>
-                        <div class="segmented-control">
-                            <button class="seg-btn sticker-btn active" data-sticker="SOLTAN">👑 سلطان</button>
-                            <button class="seg-btn sticker-btn" data-sticker="SHOOTI">⚡ عشق شوتی</button>
-                            <button class="seg-btn sticker-btn" data-sticker="SALAR">💎 سالار</button>
-                            <button class="seg-btn sticker-btn" data-sticker="NONE">بدون برچسب</button>
-                        </div>
-                    </div>
-
-                    <!-- Underglow Tuning Section -->
-                    <div class="tuning-box">
-                        <span class="tuning-title">💡 رنگ نور نئون زیر ماشین (Underglow):</span>
-                        <div class="color-swatches">
-                            <div class="color-swatch active" data-underglow="#00f0ff" style="background:#00f0ff;"></div>
-                            <div class="color-swatch" data-underglow="#ff007f" style="background:#ff007f;"></div>
-                            <div class="color-swatch" data-underglow="#00ff66" style="background:#00ff66;"></div>
-                            <div class="color-swatch" data-underglow="#ffe600" style="background:#ffe600;"></div>
-                            <div class="color-swatch" data-underglow="#aa00ff" style="background:#aa00ff;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="btn-close-garage" class="btn-primary" style="margin-top:15px;">🚀 ذخیره و بازگشت به بازی</button>
-            </div>
-        </div>
-
-        <!-- PAUSE MODAL -->
+        <!-- PAUSE SCREEN MODAL -->
         <div id="pause-screen" class="overlay-screen hidden">
             <div class="modal-card">
-                <h2 style="color:var(--secondary);">⏸️ توقف بازی</h2>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button id="btn-resume" class="btn-primary">ادامه رانندگی</button>
-                    <button id="btn-open-settings-pause" class="btn-secondary">⚙️ تنظیمات گرافیک</button>
+                <h2>⏸️ توقف مسابقه</h2>
+                <p class="subtitle">بازی متوقف شده است.</p>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                    <button id="btn-resume" class="btn-primary">▶ ادامه رانندگی</button>
+                    <button id="btn-pause-menu" class="btn-secondary">🏠 بازگشت به منوی اصلی</button>
                 </div>
             </div>
         </div>
 
-        <!-- GAME OVER MODAL -->
+        <!-- GAME OVER SCREEN MODAL -->
         <div id="gameover-screen" class="overlay-screen hidden">
             <div class="modal-card">
-                <h2 style="color:var(--primary);">💥 پایان رانندگی!</h2>
-                <p id="gameover-reason" class="subtitle">تصادف شدید در آزادراه</p>
+                <h2 style="color:#ff0055;">💥 تصادف شدید!</h2>
+                <p id="gameover-reason" class="subtitle">تصادف با خودرو در آزادراه</p>
 
                 <div class="stats-grid">
                     <div class="stat-item">
@@ -316,11 +146,11 @@
                         <span id="final-score" class="stat-val" style="color:var(--accent);">۰</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">سکه‌های دریافتی</span>
-                        <span id="final-coins" class="stat-val" style="color:var(--secondary);">۰</span>
+                        <span class="stat-label">سکه‌ها</span>
+                        <span id="final-coins" class="stat-val" style="color:#ffea00;">۰</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">مسافت طی‌شده</span>
+                        <span class="stat-label">مسافت</span>
                         <span id="final-dist" class="stat-val">۰ m</span>
                     </div>
                     <div class="stat-item">
@@ -329,15 +159,15 @@
                     </div>
                 </div>
 
-                <div style="display:flex; gap:10px;">
+                <div style="display:flex; gap:10px; margin-top:20px;">
                     <button id="btn-restart" class="btn-primary" style="flex:1;">🔄 شروع مجدد</button>
-                    <button id="btn-gameover-screenshot" class="btn-secondary" style="width:54px; padding:0; font-size:1.3rem;" title="ثبت اسکرین‌شات از کارنامه">📸</button>
+                    <button id="btn-gameover-screenshot" class="btn-secondary" style="width:54px; padding:0; font-size:1.3rem;" title="اسکرین‌شات">📸</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="audio.js?v=20.0.0"></script>
-    <script src="game.js?v=20.0.0"></script>
+    <script src="audio.js?v=30.0.0"></script>
+    <script src="game.js?v=30.0.0"></script>
 </body>
 </html>

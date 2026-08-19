@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v20-clean-rewrite';
+const CACHE_NAME = 'iranian-highway-v30-clean-pars-game';
 
 const PRECACHE_ASSETS = [
     './',
@@ -29,7 +29,7 @@ self.addEventListener('activate', (e) => {
     self.clients.claim();
 });
 
-// Always Fetch Fresh from Server (Network First)
+// Always Fetch Fresh from Server
 self.addEventListener('fetch', (e) => {
     e.respondWith(
         fetch(e.request).then((response) => {
