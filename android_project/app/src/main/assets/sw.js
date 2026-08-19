@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v18-standard-smooth';
+const CACHE_NAME = 'iranian-highway-v20-clean-rewrite';
 
 const PRECACHE_ASSETS = [
     './',
