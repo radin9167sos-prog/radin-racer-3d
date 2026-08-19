@@ -142,35 +142,47 @@ class Game3D {
         this.camera.position.set(0, 1.08, 0.1);
         this.camera.lookAt(0, 0.98, -40);
 
-        // 3. WebGL Renderer with Realistic Shading
+        // 3. WebGL Renderer with Ultra HD Realistic Shading & Tone Mapping
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: true,
             preserveDrawingBuffer: true,
             powerPreference: "high-performance",
-            precision: "mediump"
+            precision: "highp"
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(1.0);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        if (THREE.ACESFilmicToneMapping) {
+            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            this.renderer.toneMappingExposure = 1.15;
+        }
 
         // 4. Natural Daylight Sunlight & Sky Hemisphere Lighting
-        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x443322, 0.65);
+        const hemiLight = new THREE.HemisphereLight(0xa0c8f0, 0x443322, 0.75);
         this.scene.add(hemiLight);
 
-        const sunLight = new THREE.DirectionalLight(0xfffaeb, 1.25);
-        sunLight.position.set(50, 80, -40);
+        const sunLight = new THREE.DirectionalLight(0xfffaeb, 1.45);
+        sunLight.position.set(40, 70, -30);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 150;
         this.scene.add(sunLight);
 
         // 5. Realistic 5-Lane Highway Charcoal Asphalt Road
         const roadGeo = new THREE.PlaneGeometry(24, 600);
         const roadMat = new THREE.MeshStandardMaterial({
-            color: 0x2a2c36,
-            roughness: 0.8,
-            metalness: 0.1
+            color: 0x22242d,
+            roughness: 0.55,
+            metalness: 0.25
         });
         this.roadMesh = new THREE.Mesh(roadGeo, roadMat);
         this.roadMesh.rotation.x = -Math.PI / 2;
         this.roadMesh.position.z = -200;
+        this.roadMesh.receiveShadow = true;
         this.scene.add(this.roadMesh);
 
         // Realistic Roadside Soil Terrain (Khaki / Soil Ground)
@@ -383,14 +395,30 @@ class Game3D {
         const carData = this.carGarage[this.player.selectedCar] || this.carGarage[0];
         this.playerCarGroup = new THREE.Group();
 
-        const carMat = new THREE.MeshPhongMaterial({
+        const carMat = new THREE.MeshPhysicalMaterial({
             color: carData.color,
-            shininess: 90,
-            specular: 0x777777
+            metalness: 0.55,
+            roughness: 0.15,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.08,
+            reflectivity: 0.95
         });
-        const darkTrimMat = new THREE.MeshBasicMaterial({ color: 0x11121c });
-        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.95, roughness: 0.1 });
-        const glassMat = new THREE.MeshPhongMaterial({ color: 0x080915, shininess: 100, transparent: true, opacity: 0.9 });
+        const darkTrimMat = new THREE.MeshStandardMaterial({ color: 0x11121c, roughness: 0.8 });
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.98, roughness: 0.05 });
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0x080915,
+            metalness: 0.9,
+            roughness: 0.05,
+            transmission: 0.3,
+            transparent: true,
+            opacity: 0.92
+        });
+
+        // Dynamic Neon Underglow Light
+        const underglowHex = parseInt((this.player.underglowColor || '#00f0ff').replace('#', '0x'));
+        this.underglowLight = new THREE.PointLight(underglowHex, 2.8, 7);
+        this.underglowLight.position.set(0, 0.15, 0);
+        this.playerCarGroup.add(this.underglowLight);
 
         this.taillights = [];
         this.brakeLightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
