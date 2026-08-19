@@ -918,6 +918,12 @@ class Game3D {
         const btnScreenshot = document.getElementById('screenshot-btn');
         if (btnScreenshot) btnScreenshot.addEventListener('click', () => this.takeScreenshot());
 
+        const btnMenuScreenshot = document.getElementById('btn-menu-screenshot');
+        if (btnMenuScreenshot) btnMenuScreenshot.addEventListener('click', () => this.takeScreenshot());
+
+        const btnGameOverScreenshot = document.getElementById('btn-gameover-screenshot');
+        if (btnGameOverScreenshot) btnGameOverScreenshot.addEventListener('click', () => this.takeScreenshot());
+
         // Multi-touch & Touch Control Helper
         const bindTouchButton = (btnId, onPress, onRelease) => {
             const btn = document.getElementById(btnId);
