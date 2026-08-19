@@ -1473,28 +1473,31 @@ class Game3D {
         const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
         const isBrakePressed = this.isBrakePressed || this.keys['ArrowDown'] || this.keys['KeyS'];
 
-        // Pitch reaction on acceleration / braking
-        const targetPitchOffset = isGasPressed ? -0.10 : (isBrakePressed ? 0.15 : 0.0);
-        this.cameraPitchOffset = THREE.MathUtils.lerp(this.cameraPitchOffset || 0, targetPitchOffset, 0.15);
+        // Dynamic pitch on acceleration / braking
+        const targetPitchOffset = isGasPressed ? -0.08 : (isBrakePressed ? 0.12 : 0.0);
+        this.cameraPitchOffset = THREE.MathUtils.lerp(this.cameraPitchOffset || 0, targetPitchOffset, dt * 10.0);
 
         // Target lane X offset for steering wheel calculation
         const targetX = this.laneX[this.targetLane];
         const diffX = targetX - this.player.x;
 
+        // Reset camera Up vector to keep camera perfectly level with horizon
+        this.camera.up.set(0, 1, 0);
+
         if (this.cameraMode === 'COCKPIT') {
             if (this.cockpitGroup) this.cockpitGroup.visible = true;
 
-            // Driver seat position inside Peugeot Pars cockpit (moves with car)
+            // Driver seat position inside Peugeot Pars cockpit (moves directly with car)
             const targetCamX = this.player.x - 0.35;
             const targetCamY = 1.02;
             const targetCamZ = 0.12;
 
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 0.45);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, 0.45);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, 0.45);
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 20.0);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, dt * 20.0);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, dt * 20.0);
 
-            // Look straight forward down the road from driver seat
-            this.camera.lookAt(targetCamX, 0.95 + this.cameraPitchOffset, -30.0);
+            // Point ALWAYS 100% parallel to highway Z-axis using current camera position X
+            this.camera.lookAt(this.camera.position.x, 0.95 + this.cameraPitchOffset, -40.0);
 
             if (this.steeringWheel) {
                 this.steeringWheel.rotation.z = -diffX * 0.85;
@@ -1502,30 +1505,30 @@ class Game3D {
         } else if (this.cameraMode === 'HOOD') {
             if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
-            // Front bonnet camera view (moves directly with car)
+            // Front bonnet camera view
             const targetCamX = this.player.x;
             const targetCamY = 0.82;
             const targetCamZ = -1.25;
 
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 0.45);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, 0.45);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, 0.45);
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 20.0);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, dt * 20.0);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, dt * 20.0);
 
-            this.camera.lookAt(targetCamX, 0.80 + this.cameraPitchOffset, -30.0);
+            this.camera.lookAt(this.camera.position.x, 0.78 + this.cameraPitchOffset, -40.0);
         } else {
-            // Default CHASE Mode (Follows player car X position instantly when moving/changing lanes)
+            // Default CHASE Mode (3rd Person View Centered Directly Behind Car)
             if (this.cockpitGroup) this.cockpitGroup.visible = false;
 
             const targetCamX = this.player.x;
             const targetCamY = 2.15;
             const targetCamZ = 5.4;
 
-            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 0.4);
-            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, 0.4);
-            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, 0.4);
+            this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, dt * 18.0);
+            this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, dt * 18.0);
+            this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, dt * 18.0);
 
-            // Look directly at car & horizon ahead
-            this.camera.lookAt(targetCamX, 0.95 + this.cameraPitchOffset, -30.0);
+            // Point ALWAYS 100% parallel to highway Z-axis using current camera position X
+            this.camera.lookAt(this.camera.position.x, 0.95 + this.cameraPitchOffset, -40.0);
         }
     }
 
