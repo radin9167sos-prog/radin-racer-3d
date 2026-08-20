@@ -385,6 +385,7 @@ class Game3D {
         // Apply Initial Time of Day Preset
         this.setTimeOfDay(this.timeOfDay);
         this.initParticlePool();
+        this.initObstacleAndItemPools();
     }
 
     initParticlePool() {
@@ -401,6 +402,66 @@ class Game3D {
             mesh.visible = false;
             this.scene.add(mesh);
             this.particlePool.push(mesh);
+        }
+    }
+
+    initObstacleAndItemPools() {
+        this.pooledObstacles = [];
+        this.pooledCollectibles = [];
+
+        // Shared Geometries
+        this.obsGeos = {
+            truck: new THREE.BoxGeometry(1.8, 0.7, 4.5),
+            car: new THREE.BoxGeometry(1.8, 0.7, 3.8),
+            sedan: new THREE.BoxGeometry(1.8, 0.7, 3.9),
+            glass: new THREE.BoxGeometry(1.4, 0.5, 1.8),
+            coin: new THREE.CylinderGeometry(0.5, 0.5, 0.12, 16),
+            shield: new THREE.IcosahedronGeometry(0.6, 1)
+        };
+        this.obsGeos.coin.rotateX(Math.PI / 2);
+        this.obsGeos.shield.rotateX(Math.PI / 2);
+
+        // Shared Materials
+        this.obsMats = {
+            truck: new THREE.MeshStandardMaterial({ color: 0xaa2222, metalness: 0.5, roughness: 0.3 }),
+            car: new THREE.MeshStandardMaterial({ color: 0x22aa55, metalness: 0.5, roughness: 0.3 }),
+            sedan: new THREE.MeshStandardMaterial({ color: 0x5555aa, metalness: 0.5, roughness: 0.3 }),
+            glass: new THREE.MeshStandardMaterial({ color: 0x050710, metalness: 0.9, roughness: 0.1 }),
+            coin: new THREE.MeshStandardMaterial({ color: 0xffea00, metalness: 0.8, roughness: 0.2 }),
+            shield: new THREE.MeshStandardMaterial({ color: 0x00ff66, metalness: 0.8, roughness: 0.2 })
+        };
+
+        // Pre-allocate 12 Obstacle Mesh Groups
+        const types = ['truck', 'car', 'sedan'];
+        for (let i = 0; i < 12; i++) {
+            const tName = types[i % types.length];
+            const group = new THREE.Group();
+
+            const body = new THREE.Mesh(this.obsGeos[tName], this.obsMats[tName]);
+            body.position.y = 0.5;
+            body.castShadow = true;
+            group.add(body);
+
+            const glass = new THREE.Mesh(this.obsGeos.glass, this.obsMats.glass);
+            glass.position.set(0, 0.9, 0.1);
+            group.add(glass);
+
+            group.userData = { obstacleType: tName, bodyMesh: body };
+            group.visible = false;
+            this.scene.add(group);
+            this.pooledObstacles.push(group);
+        }
+
+        // Pre-allocate 12 Collectible Meshes
+        for (let i = 0; i < 12; i++) {
+            const isShield = (i % 5 === 0);
+            const cType = isShield ? 'shield' : 'coin';
+            const mesh = new THREE.Mesh(this.obsGeos[cType], this.obsMats[cType]);
+            mesh.castShadow = true;
+            mesh.userData = { itemType: cType };
+            mesh.visible = false;
+            this.scene.add(mesh);
+            this.pooledCollectibles.push(mesh);
         }
     }
 
@@ -1175,9 +1236,19 @@ class Game3D {
         this.lastFrameTime = performance.now();
         try { window.focus(); } catch (e) {}
 
-        // Clear Obstacles
-        this.obstacles.forEach(o => this.scene.remove(o.mesh));
-        this.collectibles.forEach(c => this.scene.remove(c.mesh));
+        // Clear Obstacles & Collectibles back to pools
+        this.obstacles.forEach(o => {
+            if (o.mesh) {
+                o.mesh.visible = false;
+                if (this.pooledObstacles) this.pooledObstacles.push(o.mesh);
+            }
+        });
+        this.collectibles.forEach(c => {
+            if (c.mesh) {
+                c.mesh.visible = false;
+                if (this.pooledCollectibles) this.pooledCollectibles.push(c.mesh);
+            }
+        });
         this.obstacles = [];
         this.collectibles = [];
 
@@ -1186,6 +1257,14 @@ class Game3D {
         }
 
         this.buildPlayer3DCar();
+    }
+
+    onWindowResize() {
+        if (!this.camera || !this.renderer) return;
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
         // Snap camera position for start
         if (this.camera) {
@@ -2165,7 +2244,8 @@ class Game3D {
                     this.player.hasShield = false;
                     this.cameraShake = 0.5;
                     audioMgr.playCrash();
-                    this.scene.remove(obs.mesh);
+                    obs.mesh.visible = false;
+                    if (this.pooledObstacles) this.pooledObstacles.push(obs.mesh);
                     this.obstacles.splice(i, 1);
                     this.addFloatingText('🛡️ سپر شکست!', this.canvas.width / 2, 180, '#00ff66');
                 } else {
@@ -2173,7 +2253,8 @@ class Game3D {
                     return;
                 }
             } else if (obs.z > 25) {
-                this.scene.remove(obs.mesh);
+                obs.mesh.visible = false;
+                if (this.pooledObstacles) this.pooledObstacles.push(obs.mesh);
                 this.obstacles.splice(i, 1);
             }
         }
@@ -2195,11 +2276,13 @@ class Game3D {
                     audioMgr.playCoin();
                     this.addFloatingText('🛡️ سپر فعال شد!', this.canvas.width / 2, 200, '#00ff66');
                 }
-                this.scene.remove(item.mesh);
+                item.mesh.visible = false;
+                if (this.pooledCollectibles) this.pooledCollectibles.push(item.mesh);
                 this.collectibles.splice(i, 1);
                 this.updateHUD();
             } else if (item.z > 25) {
-                this.scene.remove(item.mesh);
+                item.mesh.visible = false;
+                if (this.pooledCollectibles) this.pooledCollectibles.push(item.mesh);
                 this.collectibles.splice(i, 1);
             }
         }
@@ -2213,31 +2296,19 @@ class Game3D {
     }
 
     spawn3DObstacle() {
+        if (!this.pooledObstacles || this.pooledObstacles.length === 0) return;
         const lane = Math.floor(Math.random() * 5);
         const obstacleTypes = [
-            { type: 'truck', color: 0xaa2222, speed: 6, scaleZ: 4.5 },
-            { type: 'car', color: 0x22aa55, speed: 8, scaleZ: 3.8 },
-            { type: 'sedan', color: 0x5555aa, speed: 7, scaleZ: 3.9 }
+            { type: 'truck', speed: 6 },
+            { type: 'car', speed: 8 },
+            { type: 'sedan', speed: 7 }
         ];
 
         const selected = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
-        const meshGroup = new THREE.Group();
-
-        const bodyGeo = new THREE.BoxGeometry(1.8, 0.7, selected.scaleZ);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: selected.color, metalness: 0.5, roughness: 0.3 });
-        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-        bodyMesh.position.y = 0.5;
-        bodyMesh.castShadow = true;
-        meshGroup.add(bodyMesh);
-
-        const glassGeo = new THREE.BoxGeometry(1.4, 0.5, 1.8);
-        const glassMat = new THREE.MeshStandardMaterial({ color: 0x050710, metalness: 0.9, roughness: 0.1 });
-        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-        glassMesh.position.set(0, 0.9, 0.1);
-        meshGroup.add(glassMesh);
+        const meshGroup = this.pooledObstacles.pop();
 
         meshGroup.position.set(this.laneX[lane], 0, -220);
-        this.scene.add(meshGroup);
+        meshGroup.visible = true;
 
         this.obstacles.push({
             type: selected.type,
@@ -2249,25 +2320,13 @@ class Game3D {
     }
 
     spawn3DCollectible() {
+        if (!this.pooledCollectibles || this.pooledCollectibles.length === 0) return;
         const lane = Math.floor(Math.random() * 5);
-        const rand = Math.random();
+        const mesh = this.pooledCollectibles.pop();
+        const type = mesh.userData.itemType || 'coin';
 
-        let type = 'coin';
-        let color = 0xffea00;
-        let geo = new THREE.CylinderGeometry(0.5, 0.5, 0.12, 16);
-
-        if (rand > 0.85) {
-            type = 'shield';
-            color = 0x00ff66;
-            geo = new THREE.IcosahedronGeometry(0.6, 1);
-        }
-
-        geo.rotateX(Math.PI / 2);
-        const mat = new THREE.MeshStandardMaterial({ color: color, metalness: 0.8, roughness: 0.2 });
-        const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(this.laneX[lane], 0.7, -220);
-        mesh.castShadow = true;
-        this.scene.add(mesh);
+        mesh.visible = true;
 
         this.collectibles.push({
             type: type,

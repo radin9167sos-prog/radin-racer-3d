@@ -150,6 +150,7 @@ class TuningSystem {
 
     init() {
         this.recalculatePhysics();
+        this.bindUIEvents();
     }
 
     loadSettings() {

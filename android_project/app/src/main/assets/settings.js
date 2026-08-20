@@ -75,6 +75,7 @@ class SettingsSystem {
     init() {
         this.detectHardwareCapabilities();
         this.applySettingsToEngine();
+        this.bindUIEvents();
     }
 
     loadSettings() {

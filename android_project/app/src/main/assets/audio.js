@@ -20,6 +20,8 @@ class AudioEngine {
         this.engineOsc1 = null;
         this.engineOsc2 = null;
         this.engineGain = null;
+        this.masterGain = null;
+        this.masterVolumeLevel = 1.0;
         this.isEngineRunning = false;
 
         // Tire Skid Noise Nodes
@@ -29,10 +31,22 @@ class AudioEngine {
     }
 
     init() {
-        if (this.ctx) return;
+        if (this.ctx) {
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+            return;
+        }
         try {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioCtx();
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.setValueAtTime(this.masterVolumeLevel, this.ctx.currentTime);
+            this.masterGain.connect(this.ctx.destination);
+
             this.isAudioUnlocked = true;
             this.setupEngineSound();
             this.setupTireSkidSound();
@@ -41,11 +55,22 @@ class AudioEngine {
         }
     }
 
+    setMasterVolume(vol) {
+        this.masterVolumeLevel = Math.max(0.0, Math.min(1.0, vol));
+        if (this.masterGain && this.ctx) {
+            this.masterGain.gain.setTargetAtTime(this.masterVolumeLevel, this.ctx.currentTime, 0.03);
+        }
+    }
+
+    getDestination() {
+        return this.masterGain || (this.ctx ? this.ctx.destination : null);
+    }
+
     setupEngineSound() {
         if (!this.ctx) return;
         try {
-            this.engineOsc1 = this.ctx.createOscillator(); // Sub-bass rumble
-            this.engineOsc2 = this.ctx.createOscillator(); // Exhaust roar
+            this.engineOsc1 = this.ctx.createOscillator();
+            this.engineOsc2 = this.ctx.createOscillator();
 
             this.engineOsc1.type = 'sawtooth';
             this.engineOsc2.type = 'triangle';
@@ -55,7 +80,7 @@ class AudioEngine {
 
             this.engineOsc1.connect(this.engineGain);
             this.engineOsc2.connect(this.engineGain);
-            this.engineGain.connect(this.ctx.destination);
+            this.engineGain.connect(this.getDestination());
 
             this.engineOsc1.start();
             this.engineOsc2.start();
@@ -137,7 +162,7 @@ class AudioEngine {
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
 
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.getDestination());
 
             osc.start();
             osc.stop(this.ctx.currentTime + 0.06);
@@ -157,7 +182,7 @@ class AudioEngine {
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
 
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.getDestination());
 
             osc.start();
             osc.stop(this.ctx.currentTime + 0.12);
@@ -177,7 +202,7 @@ class AudioEngine {
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
 
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.getDestination());
 
             osc.start();
             osc.stop(this.ctx.currentTime + 0.4);
@@ -197,7 +222,7 @@ class AudioEngine {
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
 
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.getDestination());
 
             osc.start();
             osc.stop(this.ctx.currentTime + 0.5);
@@ -217,7 +242,7 @@ class AudioEngine {
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
 
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.getDestination());
 
             osc.start();
             osc.stop(this.ctx.currentTime + 0.08);

@@ -43,6 +43,10 @@ class TrafficManager {
         this.sharedGeometries.roof = new THREE.BoxGeometry(1.4, 0.55, 2.0);
         this.sharedGeometries.wheel = new THREE.CylinderGeometry(0.32, 0.32, 0.24, 12);
         this.sharedGeometries.wheel.rotateZ(Math.PI / 2);
+        this.sharedGeometries.headlight = new THREE.BoxGeometry(0.3, 0.12, 0.05);
+        this.sharedGeometries.taillight = new THREE.BoxGeometry(0.35, 0.12, 0.05);
+        this.sharedGeometries.indicator = new THREE.BoxGeometry(0.15, 0.1, 0.05);
+        this.sharedGeometries.siren = new THREE.BoxGeometry(0.3, 0.12, 0.12);
 
         // Shared Materials (Fixed Palette)
         const colors = [0xffffff, 0x111218, 0xcc0022, 0x0088ff, 0xffaa00, 0x555555, 0x002288];
@@ -98,26 +102,26 @@ class TrafficManager {
         group.add(roofMesh);
 
         // Headlights
-        const hl1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.05), this.sharedMaterials.headlight);
+        const hl1 = new THREE.Mesh(this.sharedGeometries.headlight, this.sharedMaterials.headlight);
         hl1.position.set(-0.65, 0.5, -1.9);
-        const hl2 = hl1.clone();
-        hl2.position.x = 0.65;
+        const hl2 = new THREE.Mesh(this.sharedGeometries.headlight, this.sharedMaterials.headlight);
+        hl2.position.set(0.65, 0.5, -1.9);
         group.add(hl1);
         group.add(hl2);
 
         // Taillights
-        const tl1 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, 0.05), this.sharedMaterials.taillight);
+        const tl1 = new THREE.Mesh(this.sharedGeometries.taillight, this.sharedMaterials.taillight);
         tl1.position.set(-0.65, 0.55, 1.9);
-        const tl2 = tl1.clone();
-        tl2.position.x = 0.65;
+        const tl2 = new THREE.Mesh(this.sharedGeometries.taillight, this.sharedMaterials.taillight);
+        tl2.position.set(0.65, 0.55, 1.9);
         group.add(tl1);
         group.add(tl2);
 
         // Indicator Lights
-        const indLeft = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.05), this.sharedMaterials.indicatorOff);
+        const indLeft = new THREE.Mesh(this.sharedGeometries.indicator, this.sharedMaterials.indicatorOff);
         indLeft.position.set(-0.85, 0.5, -1.91);
-        const indRight = indLeft.clone();
-        indRight.position.x = 0.85;
+        const indRight = new THREE.Mesh(this.sharedGeometries.indicator, this.sharedMaterials.indicatorOff);
+        indRight.position.set(0.85, 0.5, -1.91);
         group.add(indLeft);
         group.add(indRight);
 
@@ -131,9 +135,9 @@ class TrafficManager {
 
         // Police Siren Light bar
         if (type === 'POLICE') {
-            const sirenB = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.12), this.sharedMaterials.policeBlue);
+            const sirenB = new THREE.Mesh(this.sharedGeometries.siren, this.sharedMaterials.policeBlue);
             sirenB.position.set(-0.25, 1.3, 0);
-            const sirenR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.12), this.sharedMaterials.policeRed);
+            const sirenR = new THREE.Mesh(this.sharedGeometries.siren, this.sharedMaterials.policeRed);
             sirenR.position.set(0.25, 1.3, 0);
             group.add(sirenB);
             group.add(sirenR);
