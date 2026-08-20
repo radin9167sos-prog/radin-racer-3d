@@ -1,9 +1,10 @@
-const CACHE_NAME = 'iranian-highway-v60-photorealistic-racing-sim';
+const CACHE_NAME = 'iranian-highway-v65-tuning-system-pro';
 
 const PRECACHE_ASSETS = [
     './',
     './index.html',
     './style.css',
+    './tuning.js',
     './game.js',
     './audio.js',
     './three.min.js',
