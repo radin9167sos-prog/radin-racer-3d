@@ -155,6 +155,7 @@ class Game3D {
 
     initThreeJS() {
         this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.Fog(0x608abf, 30, 250);
 
         this.envMap = this.createEnvMapTexture();
         this.scene.environment = this.envMap;
@@ -366,41 +367,60 @@ class Game3D {
 
     setTimeOfDay(mode) {
         this.timeOfDay = mode;
-        localStorage.setItem('neon_timeofday', mode);
+        try {
+            localStorage.setItem('neon_timeofday', mode);
+        } catch (e) {}
+
+        if (!this.scene) return;
+        if (!this.scene.fog) {
+            this.scene.fog = new THREE.Fog(0x608abf, 30, 250);
+        }
+
+        const fogColorHex = mode === 'SUNSET' ? 0xc45c2c : (mode === 'NIGHT' ? 0x070a14 : 0x608abf);
+        this.scene.background = new THREE.Color(fogColorHex);
+        if (this.scene.fog && this.scene.fog.color) {
+            this.scene.fog.color.setHex(fogColorHex);
+        }
 
         if (mode === 'SUNSET') {
-            this.scene.background = new THREE.Color(0xc45c2c);
-            this.scene.fog.color.setHex(0xc45c2c);
-            this.sunLight.color.setHex(0xff9944);
-            this.sunLight.intensity = 1.35;
-            this.hemiLight.color.setHex(0xffaa66);
-            this.hemiLight.groundColor.setHex(0x332211);
+            if (this.sunLight) {
+                this.sunLight.color.setHex(0xff9944);
+                this.sunLight.intensity = 1.35;
+            }
+            if (this.hemiLight) {
+                this.hemiLight.color.setHex(0xffaa66);
+                this.hemiLight.groundColor.setHex(0x332211);
+            }
             if (this.windowEmissiveMat) this.windowEmissiveMat.emissiveIntensity = 0.4;
-            this.streetLampSpotlights.forEach(s => s.intensity = 0.5);
+            if (this.streetLampSpotlights) this.streetLampSpotlights.forEach(s => { if (s) s.intensity = 0.5; });
         } else if (mode === 'NIGHT') {
-            this.scene.background = new THREE.Color(0x070a14);
-            this.scene.fog.color.setHex(0x070a14);
-            this.sunLight.color.setHex(0x334466);
-            this.sunLight.intensity = 0.25;
-            this.hemiLight.color.setHex(0x112244);
-            this.hemiLight.groundColor.setHex(0x050510);
+            if (this.sunLight) {
+                this.sunLight.color.setHex(0x334466);
+                this.sunLight.intensity = 0.25;
+            }
+            if (this.hemiLight) {
+                this.hemiLight.color.setHex(0x112244);
+                this.hemiLight.groundColor.setHex(0x050510);
+            }
             if (this.windowEmissiveMat) this.windowEmissiveMat.emissiveIntensity = 1.2;
-            this.streetLampSpotlights.forEach(s => s.intensity = 2.0);
+            if (this.streetLampSpotlights) this.streetLampSpotlights.forEach(s => { if (s) s.intensity = 2.0; });
         } else { // DAY
-            this.scene.background = new THREE.Color(0x608abf);
-            this.scene.fog.color.setHex(0x608abf);
-            this.sunLight.color.setHex(0xfffaed);
-            this.sunLight.intensity = 1.45;
-            this.hemiLight.color.setHex(0xffffff);
-            this.hemiLight.groundColor.setHex(0x444444);
+            if (this.sunLight) {
+                this.sunLight.color.setHex(0xfffaed);
+                this.sunLight.intensity = 1.45;
+            }
+            if (this.hemiLight) {
+                this.hemiLight.color.setHex(0xffffff);
+                this.hemiLight.groundColor.setHex(0x444444);
+            }
             if (this.windowEmissiveMat) this.windowEmissiveMat.emissiveIntensity = 0.0;
-            this.streetLampSpotlights.forEach(s => s.intensity = 0.0);
+            if (this.streetLampSpotlights) this.streetLampSpotlights.forEach(s => { if (s) s.intensity = 0.0; });
         }
 
         const todBtn = document.getElementById('tod-btn');
         if (todBtn) {
             const icons = { 'DAY': '☀️ روز', 'SUNSET': '🌅 غروب', 'NIGHT': '🌙 شب' };
-            todBtn.innerText = icons[mode];
+            todBtn.innerText = icons[mode] || icons['DAY'];
         }
     }
 
