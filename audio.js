@@ -29,10 +29,18 @@ class AudioEngine {
     }
 
     init() {
-        if (this.ctx) return;
+        if (this.ctx) {
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+            return;
+        }
         try {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioCtx();
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
             this.isAudioUnlocked = true;
             this.setupEngineSound();
             this.setupTireSkidSound();

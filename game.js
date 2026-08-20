@@ -865,7 +865,18 @@ class Game3D {
 
         const addClick = (id, fn) => {
             const el = document.getElementById(id);
-            if (el) el.addEventListener('click', fn);
+            if (!el) return;
+            let lastTrigger = 0;
+            const handler = (e) => {
+                const now = Date.now();
+                if (now - lastTrigger < 300) return;
+                lastTrigger = now;
+                fn(e);
+            };
+            el.addEventListener('click', handler);
+            el.addEventListener('touchstart', (e) => {
+                handler(e);
+            }, { passive: true });
         };
 
         addClick('camera-btn', () => this.toggleCameraMode());
@@ -876,7 +887,7 @@ class Game3D {
         addClick('btn-gameover-screenshot', () => this.takeScreenshot());
         addClick('pause-btn', () => this.togglePause());
 
-        addClick('btn-start', () => { audioMgr.init(); this.startGame(); });
+        addClick('btn-start', () => { if (window.audioMgr) window.audioMgr.init(); this.startGame(); });
         addClick('btn-restart', () => { this.startGame(); });
         addClick('btn-resume', () => { this.togglePause(); });
         addClick('btn-pause-menu', () => {
@@ -889,14 +900,19 @@ class Game3D {
         const bindTouchButton = (btnId, onPress, onRelease) => {
             const btn = document.getElementById(btnId);
             if (!btn) return;
+            let isPressed = false;
 
             const handlePress = (e) => {
-                if (e.cancelable) e.preventDefault();
+                if (e && e.cancelable) e.preventDefault();
+                if (isPressed) return;
+                isPressed = true;
                 btn.classList.add('active');
                 if (onPress) onPress();
             };
 
             const handleRelease = (e) => {
+                if (!isPressed) return;
+                isPressed = false;
                 btn.classList.remove('active');
                 if (onRelease) onRelease();
             };
@@ -1021,6 +1037,11 @@ class Game3D {
         this.player.isSpinning = false;
         this.player.nitroGauge = 100;
         this.player.isNitroActive = false;
+        this.isGasPressed = false;
+        this.isBrakePressed = false;
+
+        this.lastFrameTime = performance.now();
+        try { window.focus(); } catch (e) {}
 
         // Clear Obstacles
         this.obstacles.forEach(o => this.scene.remove(o.mesh));
@@ -1048,7 +1069,17 @@ class Game3D {
         if (this.uiPause) this.uiPause.classList.add('hidden');
         if (this.uiGameOver) this.uiGameOver.classList.add('hidden');
 
-        audioMgr.init();
+        if (window.audioMgr) {
+            window.audioMgr.init();
+        }
+
+        console.log("START CLICKED");
+        console.log("GAME STATE:", this.state);
+        console.log("GAME SPEED:", this.speed);
+        console.log("CAR:", this.playerCarGroup);
+        console.log("SCENE:", this.scene);
+        console.log("CAMERA:", this.camera);
+        console.log("RENDERER:", this.renderer);
     }
 
     togglePause() {
@@ -1090,20 +1121,19 @@ class Game3D {
     }
 
     loop(timestamp) {
+        if (!this.lastFrameTime) this.lastFrameTime = timestamp;
         const delta = timestamp - this.lastFrameTime;
+        this.lastFrameTime = timestamp;
 
-        if (delta >= 16.6) {
-            const dt = Math.min(delta / 1000, 0.1);
-            this.lastFrameTime = timestamp;
+        const dt = Math.min(Math.max(delta / 1000, 0.001), 0.1);
 
-            if (this.state === 'PLAYING') {
-                this.update(dt);
-            } else {
-                this.updateGarageOrbit(dt);
-            }
-
-            this.render();
+        if (this.state === 'PLAYING') {
+            this.update(dt);
+        } else {
+            this.updateGarageOrbit(dt);
         }
+
+        this.render();
 
         requestAnimationFrame((t) => this.loop(t));
     }
