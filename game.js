@@ -885,7 +885,10 @@ class Game3D {
             if (e.code === 'KeyC') this.toggleCameraMode();
             if (e.code === 'KeyT') this.cycleTimeOfDay();
             if (e.code === 'KeyR') this.cycleRadioStation();
-            if (e.code === 'F2') this.toggleProfiler();
+            if (e.key === 'F2' || e.code === 'F2') {
+                e.preventDefault();
+                this.toggleProfiler();
+            }
 
             if (this.state === 'PLAYING' && !this.player.isSpinning) {
                 if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.moveLane(-1);
@@ -925,6 +928,7 @@ class Game3D {
         addClick('btn-gameover-screenshot', () => this.takeScreenshot());
         addClick('pause-btn', () => this.togglePause());
         addClick('settings-btn', () => { if (this.settingsSystem) this.settingsSystem.openSettings(); });
+        addClick('perf-btn', () => this.toggleProfiler());
 
         addClick('btn-start', () => { if (window.audioMgr) window.audioMgr.init(); this.startGame(); });
         addClick('btn-restart', () => { this.startGame(); });
@@ -1217,12 +1221,16 @@ class Game3D {
             const tris = (this.renderer && this.renderer.info) ? (this.renderer.info.render.triangles / 1000).toFixed(1) + 'k' : '0k';
             const activeAI = (this.trafficManager ? this.trafficManager.activeVehicles.length : 0);
 
+            const currentDpr = (this.renderer ? this.renderer.getPixelRatio().toFixed(2) : '1.0');
+            const resScale = (this.settingsSystem ? this.settingsSystem.data.graphics.resolutionScale : 100) + '%';
+
             const fpsEl = document.getElementById('prof-fps');
             const ftEl = document.getElementById('prof-frametime');
             const tmEl = document.getElementById('prof-timing');
             const dcEl = document.getElementById('prof-drawcalls');
             const trEl = document.getElementById('prof-triangles');
             const aiEl = document.getElementById('prof-active-ai');
+            const dsEl = document.getElementById('prof-dpr-scale');
 
             if (fpsEl) fpsEl.innerText = avgFps + ' FPS';
             if (ftEl) ftEl.innerText = avgFrameTime + ' ms';
@@ -1230,6 +1238,7 @@ class Game3D {
             if (dcEl) dcEl.innerText = calls;
             if (trEl) trEl.innerText = tris;
             if (aiEl) aiEl.innerText = activeAI;
+            if (dsEl) dsEl.innerText = `${currentDpr} / ${resScale}`;
 
             this.profFrameCount = 0;
             this.profTimeAcc = 0;
