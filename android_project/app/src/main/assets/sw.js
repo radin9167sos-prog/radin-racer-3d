@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v70-settings-auto-graphics';
+const CACHE_NAME = 'iranian-highway-v80-smart-traffic-ai';
 
 const PRECACHE_ASSETS = [
     './',
@@ -6,6 +6,7 @@ const PRECACHE_ASSETS = [
     './style.css',
     './tuning.js',
     './settings.js',
+    './traffic.js',
     './game.js',
     './audio.js',
     './three.min.js',

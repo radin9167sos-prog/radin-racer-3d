@@ -354,6 +354,7 @@ class SettingsSystem {
             });
         };
 
+        bindSelect('set-input-traffic-density', (e) => { this.data.graphics.trafficDensity = e.target.value; });
         bindSelect('set-input-preset', (e) => this.setPreset(e.target.value));
         bindSelect('set-input-target-fps', (e) => { this.data.graphics.targetFps = parseInt(e.target.value); });
         bindInput('set-input-res-scale', (e) => { this.data.graphics.resolutionScale = parseInt(e.target.value); });
@@ -379,6 +380,7 @@ class SettingsSystem {
         };
 
         const g = this.data.graphics;
+        setVal('set-input-traffic-density', g.trafficDensity || 'MEDIUM');
         setVal('set-input-preset', g.preset);
         setVal('set-input-target-fps', g.targetFps);
         setVal('set-input-res-scale', g.resolutionScale);

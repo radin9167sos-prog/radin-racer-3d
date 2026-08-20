@@ -69,10 +69,12 @@ class Game3D {
         this.lastCollectibleTime = 0;
         this.keys = {};
 
+        this.frameCount = 0;
         this.initDOM();
         this.initThreeJS();
         this.tuning = new TuningSystem(this);
         this.settingsSystem = new SettingsSystem(this);
+        this.trafficManager = new TrafficManager(this);
         this.buildPlayer3DCar();
         this.setupEvents();
         this.updateHUD();
@@ -1065,6 +1067,10 @@ class Game3D {
         this.obstacles = [];
         this.collectibles = [];
 
+        if (this.trafficManager) {
+            this.trafficManager.reset();
+        }
+
         this.buildPlayer3DCar();
 
         // Snap camera position for start
@@ -1140,6 +1146,7 @@ class Game3D {
         if (!this.lastFrameTime) this.lastFrameTime = timestamp;
         const delta = timestamp - this.lastFrameTime;
         this.lastFrameTime = timestamp;
+        this.frameCount++;
 
         const dt = Math.min(Math.max(delta / 1000, 0.001), 0.1);
 
@@ -1553,6 +1560,11 @@ class Game3D {
                 this.scene.remove(item.mesh);
                 this.collectibles.splice(i, 1);
             }
+        }
+
+        // Smart Traffic & AI Drivers Update
+        if (this.trafficManager) {
+            this.trafficManager.update(dt, timestamp);
         }
 
         this.updateHUD();
