@@ -121,8 +121,191 @@
                 <div class="menu-action-stack" style="margin-top:15px;">
                     <button id="btn-start" class="btn-primary btn-garage-start">🚀 شروع رانندگی با پارس HD</button>
                     <div class="menu-btn-row" style="display:flex; gap:10px; margin-top:10px;">
+                        <button id="btn-open-tuning" class="btn-primary" style="flex:1; background:linear-gradient(135deg, #ffaa00, #ff5500);">🛠️ تیونینگ و ارتقا</button>
                         <button id="btn-menu-screenshot" class="btn-secondary" style="flex:1;" title="ثبت اسکرین‌شات">📸 اسکرین‌شات HD</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TUNING GARAGE MODAL -->
+        <div id="tuning-screen" class="overlay-screen tuning-overlay hidden">
+            <div class="tuning-card">
+                <div class="tuning-header">
+                    <span class="tuning-title">🏁 TUNING GARAGE — گاراژ تخصصی تیونینگ</span>
+                    <button id="btn-tuning-close" class="btn-secondary" style="padding:4px 10px;">❌ خروج</button>
+                </div>
+
+                <!-- Realtime Stat Bars -->
+                <div class="tuning-stats-bar">
+                    <div class="tstat-card">
+                        <div class="stat-label">قدرت (HP)</div>
+                        <div id="stat-hp-val" class="tstat-val">110 HP</div>
+                        <div class="tstat-bar-container"><div id="bar-hp" class="tstat-bar-fill"></div></div>
+                    </div>
+                    <div class="tstat-card">
+                        <div class="stat-label">گشتاور (Nm)</div>
+                        <div id="stat-torque-val" class="tstat-val">155 Nm</div>
+                        <div class="tstat-bar-container"><div id="bar-torque" class="tstat-bar-fill"></div></div>
+                    </div>
+                    <div class="tstat-card">
+                        <div class="stat-label">وزن خودرو</div>
+                        <div id="stat-weight-val" class="tstat-val">1180 kg</div>
+                        <div class="tstat-bar-container"><div id="bar-weight" class="tstat-bar-fill"></div></div>
+                    </div>
+                    <div class="tstat-card">
+                        <div class="stat-label">حداکثر سرعت</div>
+                        <div id="stat-top-speed-val" class="tstat-val">215 km/h</div>
+                        <div class="tstat-bar-container"><div id="bar-speed" class="tstat-bar-fill"></div></div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tuning-tabs">
+                    <button class="tuning-tab-btn active" data-tab="engine">⚡ موتور</button>
+                    <button class="tuning-tab-btn" data-tab="weight">⚖️ وزن</button>
+                    <button class="tuning-tab-btn" data-tab="drivetrain">⚙️ دیفرانسیل</button>
+                    <button class="tuning-tab-btn" data-tab="tires">🛞 لاستیک</button>
+                    <button class="tuning-tab-btn" data-tab="suspension">🚘 تعلیق</button>
+                    <button class="tuning-tab-btn" data-tab="brakes">🛑 ترمز</button>
+                    <button class="tuning-tab-btn" data-tab="nitro">🔥 نیترو</button>
+                    <button class="tuning-tab-btn" data-tab="visual">🎨 ظاهر</button>
+                    <button class="tuning-tab-btn" data-tab="presets">⭐ پریست‌ها</button>
+                    <button class="tuning-tab-btn" data-tab="dyno">📊 نمودار Dyno</button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div id="tab-content-engine" class="tuning-tab-content">
+                    <div class="tuning-row">
+                        <span class="tuning-label">مرحله ارتقای موتور (Engine Stage)</span>
+                        <input id="input-engine-stage" class="tuning-slider" type="range" min="1" max="5" value="1">
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">توربوشارژر (Turbocharger)</span>
+                        <select id="input-turbo" class="tuning-ctrl-input">
+                            <option value="0">بدون توربو (Stock)</option>
+                            <option value="1">تک توربو اسپرت (Single Turbo)</option>
+                            <option value="2">توین توربو مسابقه‌ای (Twin Turbo)</option>
+                        </select>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">سوپرشارژر (Supercharger)</span>
+                        <select id="input-supercharger" class="tuning-ctrl-input">
+                            <option value="0">خاموش (None)</option>
+                            <option value="1">سوپرشارژر Roots (High Boost)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="tab-content-weight" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">سبک‌سازی بدنه (Weight Reduction)</span>
+                        <input id="input-weight-stage" class="tuning-slider" type="range" min="0" max="3" value="0">
+                    </div>
+                </div>
+
+                <div id="tab-content-drivetrain" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">نوع دیفرانسیل (Drivetrain Layout)</span>
+                        <select id="input-drivetrain" class="tuning-ctrl-input">
+                            <option value="FWD">جلو دیفرانسیل (FWD)</option>
+                            <option value="RWD">عقب دیفرانسیل (RWD - دریفت)</option>
+                            <option value="AWD">چهار چرخ متحرک (AWD - شتاب فوق‌العاده)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="tab-content-tires" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">نوع تایرهای خودرو (Tire Compound)</span>
+                        <select id="input-tire-type" class="tuning-ctrl-input">
+                            <option value="Street">خیابانی استاندارد (Street)</option>
+                            <option value="Sport">اسپرت (Sport)</option>
+                            <option value="SemiSlick">سمی اسلیک (Semi-Slick)</option>
+                            <option value="Racing">ریسینگ چسبنده (Racing Slick)</option>
+                        </select>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">فشار باد تایرها (PSI)</span>
+                        <input id="input-tire-pressure" class="tuning-slider" type="range" min="24" max="40" value="32">
+                    </div>
+                </div>
+
+                <div id="tab-content-suspension" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">استایل ارتفاع (Stance Preset)</span>
+                        <select id="input-stance" class="tuning-ctrl-input">
+                            <option value="SHOOTI">شوتی سلطان (کمک عقب بالا)</option>
+                            <option value="LOW">کف‌خواب اسپرت (Low Stance)</option>
+                            <option value="TRACK">ترک مسابقه‌ای (Track Stance)</option>
+                            <option value="NORMAL">ارتفاع فابریک (Stock)</option>
+                        </select>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">تنظیم میلی‌متری ارتفاع (Height Offset)</span>
+                        <input id="input-susp-height" class="tuning-slider" type="range" min="-5" max="5" value="0">
+                    </div>
+                </div>
+
+                <div id="tab-content-brakes" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">قدرت ترمزها (Brake Force)</span>
+                        <input id="input-brake-power" class="tuning-slider" type="range" min="1.0" max="2.5" step="0.1" value="1.0">
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">توزیع ترمز جلو/عقب (Brake Bias %)</span>
+                        <input id="input-brake-bias" class="tuning-slider" type="range" min="40" max="80" value="60">
+                    </div>
+                </div>
+
+                <div id="tab-content-nitro" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">سطح نیترو (Nitro Stage N1-N5)</span>
+                        <input id="input-nitro-level" class="tuning-slider" type="range" min="1" max="5" value="1">
+                    </div>
+                </div>
+
+                <div id="tab-content-visual" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">رنگ بدنه پژو پارس</span>
+                        <select id="input-color-car" class="tuning-ctrl-input">
+                            <option value="#ffffff">سفید پرشیا (White)</option>
+                            <option value="#111218">مشکی متالیک (Black)</option>
+                            <option value="#cc0022">قرمز شوتی (Red)</option>
+                            <option value="#0088ff">آبی کاربنی (Carbon Blue)</option>
+                            <option value="#ffaa00">طلایی شوتی (Gold)</option>
+                            <option value="#666666">خاکستری نوک‌مدادی (Grey)</option>
+                        </select>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">رنگ نئون زیر خودرو (Underglow)</span>
+                        <select id="input-color-underglow" class="tuning-ctrl-input">
+                            <option value="#00f0ff">آبی نئون (Cyan)</option>
+                            <option value="#ff007f">صورتی نئون (Pink)</option>
+                            <option value="#00e676">سبز فسفری (Green)</option>
+                            <option value="#ffea00">زرد آفتابی (Yellow)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="tab-content-presets" class="tuning-tab-content hidden">
+                    <div class="preset-grid">
+                        <button class="preset-btn" data-preset="STOCK">⚙️ فابریک (STOCK)</button>
+                        <button class="preset-btn" data-preset="STREET">🏁 شهری (STREET)</button>
+                        <button class="preset-btn" data-preset="SPORT">⚡ اسپرت (SPORT)</button>
+                        <button class="preset-btn" data-preset="TRACK">🏎️ پیست (TRACK)</button>
+                        <button class="preset-btn" data-preset="DRIFT">💨 دریفت (DRIFT)</button>
+                        <button class="preset-btn" data-preset="DRAG">🚀 درگ (DRAG)</button>
+                        <button class="preset-btn" data-preset="MAX PERFORMANCE">👑 حداکثر قدرت (MAX)</button>
+                    </div>
+                </div>
+
+                <div id="tab-content-dyno" class="tuning-tab-content hidden">
+                    <canvas id="dyno-canvas" width="600" height="180"></canvas>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+                    <button id="btn-tuning-reset" class="btn-secondary" style="color:#ff0055;">🔄 بازنشانی به فابریک (RESET)</button>
                 </div>
             </div>
         </div>
@@ -173,6 +356,7 @@
     </div>
 
     <script src="audio.js?v=60.0.0"></script>
+    <script src="tuning.js?v=60.0.0"></script>
     <script src="game.js?v=60.0.0"></script>
 </body>
 </html>

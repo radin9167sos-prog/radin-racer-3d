@@ -71,6 +71,7 @@ class Game3D {
 
         this.initDOM();
         this.initThreeJS();
+        this.tuning = new TuningSystem(this);
         this.buildPlayer3DCar();
         this.setupEvents();
         this.updateHUD();
@@ -833,9 +834,17 @@ class Game3D {
 
         this.playerCarGroup.position.x = this.laneX[this.currentLane];
         this.scene.add(this.playerCarGroup);
+
+        if (this.tuning) {
+            this.tuning.applyVisualsToCar();
+        }
     }
 
     setupEvents() {
+        if (this.tuning) {
+            this.tuning.bindUIEvents();
+        }
+
         window.addEventListener('resize', () => this.onWindowResize());
         window.addEventListener('orientationchange', () => {
             setTimeout(() => this.onWindowResize(), 150);
@@ -890,6 +899,7 @@ class Game3D {
         addClick('btn-start', () => { if (window.audioMgr) window.audioMgr.init(); this.startGame(); });
         addClick('btn-restart', () => { this.startGame(); });
         addClick('btn-resume', () => { this.togglePause(); });
+        addClick('btn-open-tuning', () => { if (this.tuning) this.tuning.openGarage(); });
         addClick('btn-pause-menu', () => {
             this.state = 'MENU';
             if (this.uiPause) this.uiPause.classList.add('hidden');
@@ -1290,14 +1300,22 @@ class Game3D {
             });
         }
 
+        // Tuning System Multipliers
+        const tunedAccel = this.tuning ? (this.tuning.physicsStats.accelRate * 0.9) : 2.4;
+        const tunedTopSpeed = this.tuning ? (this.tuning.physicsStats.topSpeedKmh / 9.5) : 34.0;
+        const tunedBrakeMult = this.tuning ? this.tuning.physicsStats.brakePower : 1.0;
+        const tunedGripMult = this.tuning ? this.tuning.physicsStats.gripFactor : 1.0;
+        const tunedRpmLimit = this.tuning ? this.tuning.physicsStats.rpmLimit : 6800;
+        const nitroLevel = this.tuning ? (this.tuning.data.nitro.level || 1) : 1;
+
         // Speed, Drag & Acceleration Physics Curve
         let targetSpeed = this.baseSpeed;
         let targetBodyPitch = 0;
 
         if (this.player.isNitroActive) {
-            targetSpeed = 34.0;
+            targetSpeed = tunedTopSpeed * (1.1 + nitroLevel * 0.05);
             targetBodyPitch = -0.05; // Squat back
-            this.speed += (targetSpeed - this.speed) * dt * 5.0;
+            this.speed += (targetSpeed - this.speed) * dt * (4.5 + nitroLevel * 0.8);
             this.player.nitroTime--;
             this.player.nitroGauge = Math.max(0, (this.player.nitroTime / 180) * 100);
 
@@ -1306,12 +1324,12 @@ class Game3D {
             this.baseSpeed = Math.min(16.0, this.baseSpeed + dt * 0.03);
             let accelRate = 1.8;
             if (isGasPressed) {
-                targetSpeed = 26.0;
-                accelRate = 2.4;
+                targetSpeed = tunedTopSpeed * 0.85;
+                accelRate = tunedAccel;
                 targetBodyPitch = -0.035; // Squat back on acceleration
             } else if (isBrakePressed) {
                 targetSpeed = 4.0;
-                accelRate = 4.8;
+                accelRate = 4.8 * tunedBrakeMult;
                 targetBodyPitch = 0.065; // Nose dive on braking
             } else {
                 targetSpeed = this.baseSpeed;
@@ -1331,7 +1349,7 @@ class Game3D {
         }
 
         // Gear & Simulated RPM Engine Calculation (Gears 1 through 5)
-        const speedRatio = Math.min(1.0, this.speed / 34.0);
+        const speedRatio = Math.min(1.0, this.speed / tunedTopSpeed);
         let newGear = 1;
         if (speedRatio > 0.8) newGear = 5;
         else if (speedRatio > 0.6) newGear = 4;
@@ -1343,13 +1361,14 @@ class Game3D {
             audioMgr.playGearShift();
         }
 
-        // Calculate RPM within current gear range (1000 - 6800 RPM)
+        // Calculate RPM within current gear range (1000 - tunedRpmLimit RPM)
         const gearRatios = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
         const minGearSpeed = gearRatios[this.currentGear - 1];
         const maxGearSpeed = gearRatios[this.currentGear];
         const normalizedGearSpeed = (speedRatio - minGearSpeed) / (maxGearSpeed - minGearSpeed || 0.2);
 
-        this.currentRPM = 1200 + Math.min(1.0, Math.max(0.0, normalizedGearSpeed)) * 5600;
+        const rpmRange = tunedRpmLimit - 1200;
+        this.currentRPM = 1200 + Math.min(1.0, Math.max(0.0, normalizedGearSpeed)) * rpmRange;
         audioMgr.updateEngineRPM(this.currentRPM, speedRatio);
 
         // Speed-Dependent FOV Camera Expansion
