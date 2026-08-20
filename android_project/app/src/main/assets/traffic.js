@@ -198,6 +198,14 @@ class TrafficManager {
     update(dt, timestamp) {
         if (!this.game) return;
 
+        // Honor Test Mode Traffic Toggle
+        if (this.game.testConfig && (!this.game.testConfig.traffic || this.game.testConfig.isMinRender)) {
+            if (this.activeVehicles.length > 0) {
+                this.reset();
+            }
+            return;
+        }
+
         // 1. Update Traffic Lights Cycle
         this.trafficLightTimer += dt;
         if (this.trafficLightTimer > 6.0) {
@@ -288,6 +296,7 @@ class TrafficManager {
     // AI Driver Decision Logic
     updateAILogic(v, data, dt, playerX, playerSpeed) {
         if (data.isCrashed) return;
+        if (this.game && this.game.testConfig && !this.game.testConfig.ai) return;
 
         // Check Vehicle Ahead in same Spatial Cell or Next Cell
         const currentCell = this.getSpatialCellKey(data.z);
@@ -363,7 +372,8 @@ class TrafficManager {
     getDesiredDensityCount() {
         if (!this.game || !this.game.settingsSystem) return 12;
         const dens = this.game.settingsSystem.data.graphics.trafficDensity || 'MEDIUM';
-        if (dens === 'LOW') return 6;
+        if (dens === 'OFF') return 0;
+        if (dens === 'LOW') return 4;
         if (dens === 'MEDIUM') return 12;
         if (dens === 'HIGH') return 20;
         if (dens === 'ULTRA') return 30;

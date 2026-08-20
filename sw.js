@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v110-perf-button-f2-fix';
+const CACHE_NAME = 'iranian-highway-v120-test-performance-build';
 
 const PRECACHE_ASSETS = [
     './',

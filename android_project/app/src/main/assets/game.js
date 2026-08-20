@@ -70,6 +70,19 @@ class Game3D {
         this.keys = {};
 
         this.frameCount = 0;
+        this.testConfig = {
+            traffic: true,
+            shadows: true,
+            reflections: true,
+            environment: 'FULL',
+            effects: 'HIGH',
+            playerQuality: 'HIGH',
+            dpr: 'AUTO',
+            resolutionScale: 100,
+            ai: true,
+            physics: true,
+            isMinRender: false
+        };
         this.initDOM();
         this.initThreeJS();
         this.tuning = new TuningSystem(this);
@@ -936,33 +949,75 @@ class Game3D {
         addClick('btn-open-tuning', () => { if (this.tuning) this.tuning.openGarage(); });
         addClick('btn-open-settings', () => { if (this.settingsSystem) this.settingsSystem.openSettings(); });
 
-        // Profiler Interactive Test Toggles
-        addClick('prof-btn-traffic', () => {
-            const btn = document.getElementById('prof-btn-traffic');
-            if (!this.settingsSystem) return;
-            const current = this.settingsSystem.data.graphics.trafficDensity || 'MEDIUM';
-            const next = (current === 'MEDIUM') ? 'OFF' : ((current === 'OFF') ? 'LOW' : 'MEDIUM');
-            this.settingsSystem.data.graphics.trafficDensity = next;
-            if (btn) btn.innerText = 'Traffic: ' + next;
-            if (next === 'OFF' && this.trafficManager) this.trafficManager.reset();
+        addClick('prof-close-btn', () => this.toggleProfiler());
+
+        // Master Test Presets
+        addClick('prof-preset-normal', () => this.setMasterPreset('NORMAL'));
+        addClick('prof-preset-lowend', () => this.setMasterPreset('LOWEND'));
+        addClick('prof-preset-extreme', () => this.setMasterPreset('EXTREME'));
+        addClick('prof-preset-minrender', () => this.setMasterPreset('MINRENDER'));
+
+        // Individual Test Toggles
+        addClick('prof-tgl-traffic', () => {
+            this.testConfig.traffic = !this.testConfig.traffic;
+            this.applyTestConfig();
         });
 
-        addClick('prof-btn-shadows', () => {
-            const btn = document.getElementById('prof-btn-shadows');
-            if (!this.renderer) return;
-            this.renderer.shadowMap.enabled = !this.renderer.shadowMap.enabled;
-            if (btn) btn.innerText = 'Shadows: ' + (this.renderer.shadowMap.enabled ? 'ON' : 'OFF');
+        addClick('prof-tgl-shadows', () => {
+            this.testConfig.shadows = !this.testConfig.shadows;
+            this.applyTestConfig();
         });
 
-        addClick('prof-btn-dpr', () => {
-            const btn = document.getElementById('prof-btn-dpr');
-            if (!this.renderer) return;
-            this._dprMode = ((this._dprMode || 0) + 1) % 3;
-            const dprs = [1.25, 1.0, 0.75];
-            const targetDpr = dprs[this._dprMode];
-            this.renderer.setPixelRatio(targetDpr);
-            if (btn) btn.innerText = 'DPR: ' + targetDpr;
+        addClick('prof-tgl-reflections', () => {
+            this.testConfig.reflections = !this.testConfig.reflections;
+            this.applyTestConfig();
         });
+
+        addClick('prof-tgl-env', () => {
+            const envs = ['FULL', 'LOW', 'OFF'];
+            const idx = (envs.indexOf(this.testConfig.environment) + 1) % envs.length;
+            this.testConfig.environment = envs[idx];
+            this.applyTestConfig();
+        });
+
+        addClick('prof-tgl-effects', () => {
+            const fx = ['HIGH', 'LOW', 'OFF'];
+            const idx = (fx.indexOf(this.testConfig.effects) + 1) % fx.length;
+            this.testConfig.effects = fx[idx];
+            this.applyTestConfig();
+        });
+
+        addClick('prof-tgl-player', () => {
+            this.testConfig.playerQuality = (this.testConfig.playerQuality === 'HIGH') ? 'LOW' : 'HIGH';
+            this.applyTestConfig();
+        });
+
+        addClick('prof-tgl-dpr', () => {
+            const dprs = ['AUTO', '1.0', '0.75', '0.50'];
+            const idx = (dprs.indexOf(this.testConfig.dpr) + 1) % dprs.length;
+            this.testConfig.dpr = dprs[idx];
+            this.applyTestConfig();
+        });
+
+        addClick('prof-tgl-scale', () => {
+            const scales = [100, 85, 75, 50];
+            const idx = (scales.indexOf(this.testConfig.resolutionScale) + 1) % scales.length;
+            this.testConfig.resolutionScale = scales[idx];
+            this.applyTestConfig();
+        });
+
+        addClick('prof-tgl-ai', () => {
+            this.testConfig.ai = !this.testConfig.ai;
+            this.applyTestConfig();
+        });
+
+        addClick('prof-tgl-physics', () => {
+            this.testConfig.physics = !this.testConfig.physics;
+            this.applyTestConfig();
+        });
+
+        // Benchmark Runner Button
+        addClick('prof-btn-run-benchmark', () => this.runAutomatedBenchmark());
 
         addClick('btn-pause-menu', () => {
             this.state = 'MENU';
@@ -1198,6 +1253,283 @@ class Game3D {
         }, 800);
     }
 
+    setMasterPreset(preset) {
+        if (preset === 'NORMAL') {
+            this.testConfig.traffic = true;
+            this.testConfig.shadows = true;
+            this.testConfig.reflections = true;
+            this.testConfig.environment = 'FULL';
+            this.testConfig.effects = 'HIGH';
+            this.testConfig.playerQuality = 'HIGH';
+            this.testConfig.dpr = 'AUTO';
+            this.testConfig.resolutionScale = 100;
+            this.testConfig.ai = true;
+            this.testConfig.physics = true;
+            this.testConfig.isMinRender = false;
+        } else if (preset === 'LOWEND') {
+            this.testConfig.traffic = true;
+            this.testConfig.shadows = false;
+            this.testConfig.reflections = false;
+            this.testConfig.environment = 'LOW';
+            this.testConfig.effects = 'LOW';
+            this.testConfig.playerQuality = 'HIGH';
+            this.testConfig.dpr = '0.75';
+            this.testConfig.resolutionScale = 75;
+            this.testConfig.ai = true;
+            this.testConfig.physics = true;
+            this.testConfig.isMinRender = false;
+        } else if (preset === 'EXTREME') {
+            this.testConfig.traffic = false;
+            this.testConfig.shadows = false;
+            this.testConfig.reflections = false;
+            this.testConfig.environment = 'OFF';
+            this.testConfig.effects = 'OFF';
+            this.testConfig.playerQuality = 'LOW';
+            this.testConfig.dpr = '0.50';
+            this.testConfig.resolutionScale = 50;
+            this.testConfig.ai = false;
+            this.testConfig.physics = false;
+            this.testConfig.isMinRender = false;
+        } else if (preset === 'MINRENDER') {
+            this.testConfig.traffic = false;
+            this.testConfig.shadows = false;
+            this.testConfig.reflections = false;
+            this.testConfig.environment = 'OFF';
+            this.testConfig.effects = 'OFF';
+            this.testConfig.playerQuality = 'LOW';
+            this.testConfig.dpr = '0.50';
+            this.testConfig.resolutionScale = 50;
+            this.testConfig.ai = false;
+            this.testConfig.physics = false;
+            this.testConfig.isMinRender = true;
+        }
+        this.applyTestConfig();
+    }
+
+    applyTestConfig() {
+        const c = this.testConfig;
+
+        // 1. Traffic Toggle
+        if (!c.traffic || c.isMinRender) {
+            if (this.trafficManager) {
+                this.trafficManager.reset();
+            }
+        }
+
+        // 2. Shadows Toggle
+        if (this.renderer) {
+            this.renderer.shadowMap.enabled = c.shadows;
+        }
+        if (this.sunLight) {
+            this.sunLight.castShadow = c.shadows;
+        }
+
+        // 3. Environment Toggle
+        const isEnvVisible = (c.environment !== 'OFF') && (!c.isMinRender);
+        if (this.citySkylineGroup) this.citySkylineGroup.visible = isEnvVisible;
+        if (this.roadsideTreesGroup) this.roadsideTreesGroup.visible = isEnvVisible;
+        if (this.streetLightsGroup) this.streetLightsGroup.visible = isEnvVisible;
+
+        // 4. DPR & Resolution Scale
+        if (this.renderer) {
+            let targetDpr = Math.min(window.devicePixelRatio, 1.25);
+            if (c.dpr === '1.0') targetDpr = 1.0;
+            else if (c.dpr === '0.75') targetDpr = 0.75;
+            else if (c.dpr === '0.50') targetDpr = 0.50;
+            this.renderer.setPixelRatio(targetDpr);
+        }
+
+        if (this.settingsSystem) {
+            this.settingsSystem.data.graphics.resolutionScale = c.resolutionScale;
+        }
+
+        this.updateTestToggleUI();
+    }
+
+    updateTestToggleUI() {
+        const setBtn = (id, text, isOff) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerText = text;
+                if (isOff) el.classList.add('active-off');
+                else el.classList.remove('active-off');
+            }
+        };
+
+        const c = this.testConfig;
+        setBtn('prof-tgl-traffic', '🚗 Traffic: ' + (c.traffic ? 'ON' : 'OFF'), !c.traffic);
+        setBtn('prof-tgl-shadows', '🌑 Shadows: ' + (c.shadows ? 'ON' : 'OFF'), !c.shadows);
+        setBtn('prof-tgl-reflections', '🪞 Reflect: ' + (c.reflections ? 'ON' : 'OFF'), !c.reflections);
+        setBtn('prof-tgl-env', '🌳 Env: ' + c.environment, c.environment === 'OFF');
+        setBtn('prof-tgl-effects', '✨ Effects: ' + c.effects, c.effects === 'OFF');
+        setBtn('prof-tgl-player', '🚘 Player: ' + c.playerQuality, c.playerQuality === 'LOW');
+        setBtn('prof-tgl-dpr', '🖥️ DPR: ' + c.dpr, c.dpr === '0.50');
+        setBtn('prof-tgl-scale', '📐 Scale: ' + c.resolutionScale + '%', c.resolutionScale < 100);
+        setBtn('prof-tgl-ai', '🧠 AI: ' + (c.ai ? 'ON' : 'OFF'), !c.ai);
+        setBtn('prof-tgl-physics', '⚙️ Physics: ' + (c.physics ? 'ON' : 'OFF'), !c.physics);
+    }
+
+    calculateDrawCallBreakdown() {
+        const totalCalls = (this.renderer && this.renderer.info) ? this.renderer.info.render.calls : 0;
+        const totalTris = (this.renderer && this.renderer.info) ? this.renderer.info.render.triangles : 0;
+
+        let playerCalls = 0;
+        if (this.playerCarGroup && this.playerCarGroup.visible) {
+            this.playerCarGroup.traverse(child => { if (child.isMesh && child.visible) playerCalls++; });
+        }
+
+        let roadCalls = 0;
+        if (this.roadMesh && this.roadMesh.visible) roadCalls++;
+        if (this.laneLinesGroup && this.laneLinesGroup.visible) {
+            this.laneLinesGroup.traverse(child => { if (child.isMesh && child.visible) roadCalls++; });
+        }
+
+        let envCalls = 0;
+        const countGroup = (grp) => {
+            if (grp && grp.visible) {
+                grp.traverse(child => { if (child.isMesh && child.visible) envCalls++; });
+            }
+        };
+        countGroup(this.citySkylineGroup);
+        countGroup(this.roadsideTreesGroup);
+        countGroup(this.streetLightsGroup);
+
+        let trafficCalls = 0;
+        if (this.trafficManager && this.testConfig.traffic && !this.testConfig.isMinRender) {
+            this.trafficManager.activeVehicles.forEach(v => {
+                if (v.visible) {
+                    v.traverse(child => { if (child.isMesh && child.visible) trafficCalls++; });
+                }
+            });
+        }
+
+        let effectsCalls = 0;
+        if (this.activeExhaustParticles) effectsCalls += this.activeExhaustParticles.length;
+        if (this.activeTireParticles) effectsCalls += this.activeTireParticles.length;
+
+        return {
+            total: totalCalls,
+            triangles: totalTris,
+            player: playerCalls,
+            road: roadCalls,
+            env: envCalls,
+            traffic: trafficCalls,
+            effects: effectsCalls
+        };
+    }
+
+    runAutomatedBenchmark() {
+        if (this.isBenchmarking) return;
+        this.isBenchmarking = true;
+
+        const statusEl = document.getElementById('prof-benchmark-status');
+        const barEl = document.getElementById('prof-benchmark-bar');
+        const resultsEl = document.getElementById('prof-results-container');
+
+        const tests = [
+            { name: 'Normal', preset: 'NORMAL' },
+            { name: 'Traffic OFF', toggle: 'traffic', val: false },
+            { name: 'Shadows OFF', toggle: 'shadows', val: false },
+            { name: 'Reflections OFF', toggle: 'reflections', val: false },
+            { name: 'Env LOW', toggle: 'environment', val: 'LOW' },
+            { name: 'Effects OFF', toggle: 'effects', val: 'OFF' },
+            { name: 'DPR 0.50', toggle: 'dpr', val: '0.50' },
+            { name: 'Min Render', preset: 'MINRENDER' }
+        ];
+
+        const results = [];
+        let currentStep = 0;
+
+        const executeStep = () => {
+            if (currentStep >= tests.length) {
+                this.isBenchmarking = false;
+                this.setMasterPreset('NORMAL');
+                if (statusEl) statusEl.innerText = '✅ Benchmark Complete!';
+                if (barEl) barEl.style.width = '100%';
+
+                this.renderBenchmarkResultsTable(results, resultsEl);
+                return;
+            }
+
+            const t = tests[currentStep];
+            if (t.preset === 'NORMAL') this.setMasterPreset('NORMAL');
+            else if (t.preset === 'MINRENDER') this.setMasterPreset('MINRENDER');
+            else if (t.toggle) {
+                this.testConfig[t.toggle] = t.val;
+                this.applyTestConfig();
+            }
+
+            if (statusEl) statusEl.innerText = `Running Test ${currentStep + 1}/8: ${t.name}...`;
+            if (barEl) barEl.style.width = `${((currentStep + 1) / tests.length) * 100}%`;
+
+            let frameCount = 0;
+            let fpsSum = 0;
+
+            const sampleInterval = setInterval(() => {
+                const sampleFps = Math.round(1000 / ((this.lastFrameTimeDelta || 0.016) * 1000));
+                fpsSum += sampleFps;
+                frameCount++;
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(sampleInterval);
+                const avgFps = Math.round(fpsSum / (frameCount || 1));
+                const dc = this.calculateDrawCallBreakdown();
+                const frameTime = (1000 / (avgFps || 60)).toFixed(1);
+
+                results.push({
+                    name: t.name,
+                    fps: avgFps,
+                    frameTime: frameTime,
+                    drawCalls: dc.total,
+                    triangles: (dc.triangles / 1000).toFixed(1) + 'k'
+                });
+
+                currentStep++;
+                executeStep();
+            }, 3000);
+        };
+
+        executeStep();
+    }
+
+    renderBenchmarkResultsTable(results, container) {
+        if (!container) return;
+
+        let html = `
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>FPS</th>
+                        <th>Frame Time</th>
+                        <th>Calls</th>
+                        <th>Tris</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        results.forEach(r => {
+            html += `
+                <tr>
+                    <td style="font-weight:bold; color:#00f0ff;">${r.name}</td>
+                    <td style="color:#00ff66;">${r.fps}</td>
+                    <td>${r.frameTime}ms</td>
+                    <td>${r.drawCalls}</td>
+                    <td>${r.triangles}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = html;
+    }
+
     toggleProfiler() {
         const p = document.getElementById('debug-profiler');
         if (p) {
@@ -1206,6 +1538,7 @@ class Game3D {
     }
 
     updateProfilerTelemetry(dt, jsTime, renderTime) {
+        this.lastFrameTimeDelta = dt;
         this.profFrameCount = (this.profFrameCount || 0) + 1;
         this.profTimeAcc = (this.profTimeAcc || 0) + dt;
         this.profJsTimeAcc = (this.profJsTimeAcc || 0) + jsTime;
@@ -1217,28 +1550,39 @@ class Game3D {
             const avgJsTime = (this.profJsTimeAcc / this.profFrameCount).toFixed(1);
             const avgRenderTime = (this.profRenderTimeAcc / this.profFrameCount).toFixed(1);
 
-            const calls = (this.renderer && this.renderer.info) ? this.renderer.info.render.calls : 0;
-            const tris = (this.renderer && this.renderer.info) ? (this.renderer.info.render.triangles / 1000).toFixed(1) + 'k' : '0k';
-            const activeAI = (this.trafficManager ? this.trafficManager.activeVehicles.length : 0);
-
+            const activeAI = (this.trafficManager && this.testConfig.traffic ? this.trafficManager.activeVehicles.length : 0);
             const currentDpr = (this.renderer ? this.renderer.getPixelRatio().toFixed(2) : '1.0');
             const resScale = (this.settingsSystem ? this.settingsSystem.data.graphics.resolutionScale : 100) + '%';
 
+            const dc = this.calculateDrawCallBreakdown();
+
             const fpsEl = document.getElementById('prof-fps');
             const ftEl = document.getElementById('prof-frametime');
-            const tmEl = document.getElementById('prof-timing');
-            const dcEl = document.getElementById('prof-drawcalls');
-            const trEl = document.getElementById('prof-triangles');
+            const jsEl = document.getElementById('prof-jstime');
+            const rndEl = document.getElementById('prof-rendertime');
             const aiEl = document.getElementById('prof-active-ai');
             const dsEl = document.getElementById('prof-dpr-scale');
 
             if (fpsEl) fpsEl.innerText = avgFps + ' FPS';
             if (ftEl) ftEl.innerText = avgFrameTime + ' ms';
-            if (tmEl) tmEl.innerText = `${avgJsTime}ms / ${avgRenderTime}ms`;
-            if (dcEl) dcEl.innerText = calls;
-            if (trEl) trEl.innerText = tris;
+            if (jsEl) jsEl.innerText = avgJsTime + ' ms';
+            if (rndEl) rndEl.innerText = avgRenderTime + ' ms';
             if (aiEl) aiEl.innerText = activeAI;
             if (dsEl) dsEl.innerText = `${currentDpr} / ${resScale}`;
+
+            const dcP = document.getElementById('prof-dc-player');
+            const dcR = document.getElementById('prof-dc-road');
+            const dcE = document.getElementById('prof-dc-env');
+            const dcT = document.getElementById('prof-dc-traffic');
+            const dcFx = document.getElementById('prof-dc-effects');
+            const dcTot = document.getElementById('prof-dc-total');
+
+            if (dcP) dcP.innerText = dc.player;
+            if (dcR) dcR.innerText = dc.road;
+            if (dcE) dcE.innerText = dc.env;
+            if (dcT) dcT.innerText = dc.traffic;
+            if (dcFx) dcFx.innerText = dc.effects;
+            if (dcTot) dcTot.innerText = dc.total;
 
             this.profFrameCount = 0;
             this.profTimeAcc = 0;
