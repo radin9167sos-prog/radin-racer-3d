@@ -367,6 +367,24 @@ class Game3D {
 
         // Apply Initial Time of Day Preset
         this.setTimeOfDay(this.timeOfDay);
+        this.initParticlePool();
+    }
+
+    initParticlePool() {
+        this.particleGeo = new THREE.SphereGeometry(0.12, 6, 6);
+        this.exhaustMat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.4 });
+        this.tireSmokeMat = new THREE.MeshBasicMaterial({ color: 0xdddddd, transparent: true, opacity: 0.5 });
+
+        this.particlePool = [];
+        this.activeExhaustParticles = [];
+        this.activeTireParticles = [];
+
+        for (let i = 0; i < 40; i++) {
+            const mesh = new THREE.Mesh(this.particleGeo, (i < 20) ? this.exhaustMat : this.tireSmokeMat);
+            mesh.visible = false;
+            this.scene.add(mesh);
+            this.particlePool.push(mesh);
+        }
     }
 
     setTimeOfDay(mode) {
@@ -1262,20 +1280,16 @@ class Game3D {
     }
 
     spawnExhaustSmokeParticle() {
-        const particleGeo = new THREE.SphereGeometry(0.08, 8, 8);
-        const particleMat = new THREE.MeshBasicMaterial({
-            color: 0xaaaaaa,
-            transparent: true,
-            opacity: 0.4
-        });
-        const particle = new THREE.Mesh(particleGeo, particleMat);
-
+        if (!this.particlePool || this.particlePool.length === 0) return;
+        const mesh = this.particlePool.pop();
         const sideX = (Math.random() - 0.5) * 0.2 - 0.28;
-        particle.position.set(this.player.x + sideX, 0.24, 2.1);
-        this.scene.add(particle);
+        mesh.position.set(this.player.x + sideX, 0.24, 2.1);
+        mesh.scale.set(1, 1, 1);
+        mesh.material = this.exhaustMat;
+        mesh.visible = true;
 
-        this.exhaustParticles.push({
-            mesh: particle,
+        this.activeExhaustParticles.push({
+            mesh: mesh,
             life: 1.0,
             vz: 2.0 + Math.random() * 1.5,
             vy: 0.3 + Math.random() * 0.3
@@ -1283,18 +1297,15 @@ class Game3D {
     }
 
     spawnTireSmokeParticle(xPos, zPos) {
-        const particleGeo = new THREE.SphereGeometry(0.14, 8, 8);
-        const particleMat = new THREE.MeshBasicMaterial({
-            color: 0xdddddd,
-            transparent: true,
-            opacity: 0.5
-        });
-        const particle = new THREE.Mesh(particleGeo, particleMat);
-        particle.position.set(xPos, 0.15, zPos);
-        this.scene.add(particle);
+        if (!this.particlePool || this.particlePool.length === 0) return;
+        const mesh = this.particlePool.pop();
+        mesh.position.set(xPos, 0.15, zPos);
+        mesh.scale.set(1, 1, 1);
+        mesh.material = this.tireSmokeMat;
+        mesh.visible = true;
 
-        this.tireSmokeParticles.push({
-            mesh: particle,
+        this.activeTireParticles.push({
+            mesh: mesh,
             life: 0.8,
             vy: 0.4 + Math.random() * 0.3
         });
@@ -1397,24 +1408,30 @@ class Game3D {
         this.score += (this.speed * dt * 10);
 
         // Animate Road Dividers
-        this.laneLinesGroup.children.forEach(line => {
+        const laneLines = this.laneLinesGroup.children;
+        for (let i = 0, len = laneLines.length; i < len; i++) {
+            const line = laneLines[i];
             line.position.z += this.speed * dt * 10.0;
             if (line.position.z > 15) line.position.z -= 410;
-        });
+        }
 
-        // Animate Scenery
+        // Animate Scenery Poles
         if (this.streetLightsGroup) {
-            this.streetLightsGroup.children.forEach(pole => {
+            const poles = this.streetLightsGroup.children;
+            for (let i = 0, len = poles.length; i < len; i++) {
+                const pole = poles[i];
                 pole.position.z += this.speed * dt * 10.0;
                 if (pole.position.z > 20) pole.position.z -= 440;
-            });
+            }
         }
 
         if (this.roadsideTreesGroup) {
-            this.roadsideTreesGroup.children.forEach(tree => {
+            const trees = this.roadsideTreesGroup.children;
+            for (let i = 0, len = trees.length; i < len; i++) {
+                const tree = trees[i];
                 tree.position.z += this.speed * dt * 10.0;
                 if (tree.position.z > 20) tree.position.z -= 440;
-            });
+            }
         }
 
         // Smooth Player Lane Lerping & Body Roll Physics
@@ -1466,31 +1483,31 @@ class Game3D {
         }
 
         // Update Exhaust Smoke Particles
-        for (let i = this.exhaustParticles.length - 1; i >= 0; i--) {
-            const p = this.exhaustParticles[i];
+        for (let i = this.activeExhaustParticles.length - 1; i >= 0; i--) {
+            const p = this.activeExhaustParticles[i];
             p.life -= dt * 2.0;
             p.mesh.position.z += p.vz * dt;
             p.mesh.position.y += p.vy * dt;
             p.mesh.scale.addScalar(dt * 1.5);
-            p.mesh.material.opacity = p.life * 0.4;
 
             if (p.life <= 0) {
-                this.scene.remove(p.mesh);
-                this.exhaustParticles.splice(i, 1);
+                p.mesh.visible = false;
+                this.particlePool.push(p.mesh);
+                this.activeExhaustParticles.splice(i, 1);
             }
         }
 
         // Update Tire Smoke Particles
-        for (let i = this.tireSmokeParticles.length - 1; i >= 0; i--) {
-            const tp = this.tireSmokeParticles[i];
+        for (let i = this.activeTireParticles.length - 1; i >= 0; i--) {
+            const tp = this.activeTireParticles[i];
             tp.life -= dt * 2.5;
             tp.mesh.position.y += tp.vy * dt;
             tp.mesh.scale.addScalar(dt * 2.0);
-            tp.mesh.material.opacity = tp.life * 0.5;
 
             if (tp.life <= 0) {
-                this.scene.remove(tp.mesh);
-                this.tireSmokeParticles.splice(i, 1);
+                tp.mesh.visible = false;
+                this.particlePool.push(tp.mesh);
+                this.activeTireParticles.splice(i, 1);
             }
         }
 
@@ -1640,20 +1657,52 @@ class Game3D {
     }
 
     updateHUD() {
-        const speedKmh = Math.floor(this.speed * 9.5);
-        if (this.hudScore) this.hudScore.innerText = Math.floor(this.score).toLocaleString('fa-IR');
-        if (this.hudCoins) this.hudCoins.innerText = this.coins.toLocaleString('fa-IR');
-        if (this.hudSpeed) this.hudSpeed.innerText = speedKmh + ' km/h';
-        if (this.hudDistance) this.hudDistance.innerText = Math.floor(this.distance) + ' m';
+        const intScore = Math.floor(this.score);
+        const intSpeed = Math.floor(this.speed * 9.5);
+        const intDist = Math.floor(this.distance);
+        const intRpm = Math.floor(this.currentRPM);
 
-        if (this.hudGearRPM) {
-            this.hudGearRPM.innerText = `دنده ${this.currentGear} | ${Math.floor(this.currentRPM)} RPM`;
+        const unit = (this.settingsSystem && this.settingsSystem.data.gameplay.unitSystem === 'MPH') ? 'mph' : 'km/h';
+        const speedVal = (unit === 'mph') ? Math.floor(intSpeed * 0.621371) : intSpeed;
+
+        if (intScore !== this._cachedScore) {
+            this._cachedScore = intScore;
+            if (this.hudScore) this.hudScore.innerText = intScore.toLocaleString('fa-IR');
         }
 
-        if (this.powerupBar) {
-            this.powerupBar.innerHTML = '';
-            if (this.player.hasShield) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#00ff66;">🛡️ سپر فعال</div>`;
-            if (this.player.isNitroActive) this.powerupBar.innerHTML += `<div class="powerup-badge" style="border-color:#ffea00;">⚡ نیترو فعال!</div>`;
+        if (this.coins !== this._cachedCoins) {
+            this._cachedCoins = this.coins;
+            if (this.hudCoins) this.hudCoins.innerText = '🪙 ' + this.coins.toLocaleString('fa-IR');
+        }
+
+        if (speedVal !== this._cachedSpeed || unit !== this._cachedUnit) {
+            this._cachedSpeed = speedVal;
+            this._cachedUnit = unit;
+            if (this.hudSpeed) this.hudSpeed.innerText = speedVal + ' ' + unit;
+        }
+
+        if (intDist !== this._cachedDistance) {
+            this._cachedDistance = intDist;
+            if (this.hudDistance) this.hudDistance.innerText = intDist + ' m';
+        }
+
+        if (this.currentGear !== this._cachedGear || Math.abs(intRpm - (this._cachedRpm || 0)) > 25) {
+            this._cachedGear = this.currentGear;
+            this._cachedRpm = intRpm;
+            if (this.hudGearRPM) {
+                this.hudGearRPM.innerText = `دنده ${this.currentGear} | ${intRpm} RPM`;
+            }
+        }
+
+        const badgeState = `${this.player.hasShield}_${this.player.isNitroActive}`;
+        if (badgeState !== this._cachedBadgeState) {
+            this._cachedBadgeState = badgeState;
+            if (this.powerupBar) {
+                let html = '';
+                if (this.player.hasShield) html += `<div class="powerup-badge" style="border-color:#00ff66;">🛡️ سپر فعال</div>`;
+                if (this.player.isNitroActive) html += `<div class="powerup-badge" style="border-color:#ffea00;">⚡ نیترو فعال!</div>`;
+                this.powerupBar.innerHTML = html;
+            }
         }
     }
 

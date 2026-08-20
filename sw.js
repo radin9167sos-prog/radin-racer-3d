@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v80-smart-traffic-ai';
+const CACHE_NAME = 'iranian-highway-v90-performance-optimized';
 
 const PRECACHE_ASSETS = [
     './',

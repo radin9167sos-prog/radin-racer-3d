@@ -225,6 +225,11 @@ class TrafficManager {
             // Distance LOD calculation
             const distZ = Math.abs(data.z - playerZ);
 
+            // Shadow Culling LOD for distant vehicles to save Draw Calls
+            if (v.children[0]) {
+                v.children[0].castShadow = (distZ < 30);
+            }
+
             // Despawn if vehicle falls too far behind or ahead
             if (data.z > 35 || data.z < -420) {
                 this.despawnVehicle(v, i);
