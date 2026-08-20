@@ -101,6 +101,20 @@
                 <button id="prof-tgl-physics" class="profiler-btn">⚙️ Physics: ON</button>
             </div>
 
+            <!-- WebGL Hardware Diagnostics -->
+            <div class="profiler-section-title">🔍 WebGL Hardware Diagnostics</div>
+            <div class="profiler-grid" style="grid-template-columns: 1fr;">
+                <div class="profiler-row"><span>WebGL Ver:</span><span id="prof-gl-ver" class="profiler-val">WebGL 2.0</span></div>
+                <div class="profiler-row"><span>GPU Renderer:</span><span id="prof-gl-renderer" class="profiler-val" style="color:#ffea00; font-size:0.65rem;">Detecting...</span></div>
+                <div class="profiler-row"><span>GPU Vendor:</span><span id="prof-gl-vendor" class="profiler-val" style="font-size:0.65rem;">Detecting...</span></div>
+                <div class="profiler-row"><span>Canvas Buffer:</span><span id="prof-gl-canvas-res" class="profiler-val">1920x1080 (CSS 1920x1080)</span></div>
+                <div class="profiler-row"><span>Win DPR / Render DPR:</span><span id="prof-gl-dprs" class="profiler-val">1.0 / 1.0</span></div>
+            </div>
+
+            <!-- GPU Isolation Benchmark -->
+            <div class="profiler-section-title">🧪 Hardware Isolation Benchmark</div>
+            <button id="prof-btn-gpu-test" class="gpu-test-btn">🧪 RUN GPU HARDWARE TEST (A/B/C/D)</button>
+
             <!-- Automated Benchmark Runner -->
             <div class="profiler-section-title">🚀 Benchmark Runner</div>
             <button id="prof-btn-run-benchmark" class="benchmark-run-btn">▶ RUN BENCHMARK (8 Tests)</button>
@@ -579,10 +593,10 @@
         </div>
     </div>
 
-    <script src="audio.js?v=120.0.0"></script>
-    <script src="tuning.js?v=120.0.0"></script>
-    <script src="settings.js?v=120.0.0"></script>
-    <script src="traffic.js?v=120.0.0"></script>
-    <script src="game.js?v=120.0.0"></script>
+    <script src="audio.js?v=130.0.0"></script>
+    <script src="tuning.js?v=130.0.0"></script>
+    <script src="settings.js?v=130.0.0"></script>
+    <script src="traffic.js?v=130.0.0"></script>
+    <script src="game.js?v=130.0.0"></script>
 </body>
 </html>

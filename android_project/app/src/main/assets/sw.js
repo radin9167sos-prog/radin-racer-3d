@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v120-test-performance-build';
+const CACHE_NAME = 'iranian-highway-v130-webgl-hardware-diagnostics';
 
 const PRECACHE_ASSETS = [
     './',

@@ -1016,6 +1016,9 @@ class Game3D {
             this.applyTestConfig();
         });
 
+        // GPU Isolation Test Button
+        addClick('prof-btn-gpu-test', () => this.runGPUHardwareTests());
+
         // Benchmark Runner Button
         addClick('prof-btn-run-benchmark', () => this.runAutomatedBenchmark());
 
@@ -1534,7 +1537,191 @@ class Game3D {
         const p = document.getElementById('debug-profiler');
         if (p) {
             p.classList.toggle('hidden');
+            if (!p.classList.contains('hidden')) {
+                this.updateWebGLDiagnosticsUI();
+            }
         }
+    }
+
+    getWebGLDiagnostics() {
+        if (!this.renderer || !this.renderer.getContext) return null;
+        const gl = this.renderer.getContext();
+        if (!gl) return null;
+
+        let unmaskedRenderer = 'Unknown GPU';
+        let unmaskedVendor = 'Unknown Vendor';
+
+        const ext = gl.getExtension('WEBGL_debug_renderer_info');
+        if (ext) {
+            unmaskedRenderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || unmaskedRenderer;
+            unmaskedVendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || unmaskedVendor;
+        } else {
+            unmaskedRenderer = gl.getParameter(gl.RENDERER) || unmaskedRenderer;
+            unmaskedVendor = gl.getParameter(gl.VENDOR) || unmaskedVendor;
+        }
+
+        const version = gl.getParameter(gl.VERSION) || 'WebGL 1.0';
+        const canvasWidth = this.canvas ? this.canvas.width : 0;
+        const canvasHeight = this.canvas ? this.canvas.height : 0;
+        const cssWidth = this.canvas ? (this.canvas.clientWidth || window.innerWidth) : window.innerWidth;
+        const cssHeight = this.canvas ? (this.canvas.clientHeight || window.innerHeight) : window.innerHeight;
+
+        const winDpr = window.devicePixelRatio || 1.0;
+        const renderDpr = this.renderer.getPixelRatio ? this.renderer.getPixelRatio() : 1.0;
+
+        return {
+            renderer: unmaskedRenderer,
+            vendor: unmaskedVendor,
+            version: version,
+            bufferRes: `${canvasWidth}x${canvasHeight}`,
+            cssRes: `${cssWidth}x${cssHeight}`,
+            winDpr: winDpr.toFixed(2),
+            renderDpr: renderDpr.toFixed(2)
+        };
+    }
+
+    updateWebGLDiagnosticsUI() {
+        const diag = this.getWebGLDiagnostics();
+        if (!diag) return;
+
+        const verEl = document.getElementById('prof-gl-ver');
+        const rendEl = document.getElementById('prof-gl-renderer');
+        const vendEl = document.getElementById('prof-gl-vendor');
+        const resEl = document.getElementById('prof-gl-canvas-res');
+        const dprsEl = document.getElementById('prof-gl-dprs');
+
+        if (verEl) verEl.innerText = diag.version;
+        if (rendEl) rendEl.innerText = diag.renderer;
+        if (vendEl) vendEl.innerText = diag.vendor;
+        if (resEl) resEl.innerText = `${diag.bufferRes} (CSS ${diag.cssRes})`;
+        if (dprsEl) dprsEl.innerText = `${diag.winDpr} / ${diag.renderDpr}`;
+    }
+
+    testRawWebGLTriangle(callback) {
+        const testCanvas = document.createElement('canvas');
+        testCanvas.width = 300;
+        testCanvas.height = 300;
+        const gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+        if (!gl) {
+            callback(0);
+            return;
+        }
+
+        const vertCode = `attribute vec2 pos; void main() { gl_Position = vec4(pos, 0.0, 1.0); }`;
+        const fragCode = `precision mediump float; void main() { gl_FragColor = vec4(1.0, 0.0, 0.5, 1.0); }`;
+
+        const vertShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertShader, vertCode);
+        gl.compileShader(vertShader);
+
+        const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragShader, fragCode);
+        gl.compileShader(fragShader);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertShader);
+        gl.attachShader(program, fragShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
+
+        const vertices = new Float32Array([-0.5, -0.5, 0.5, -0.5, 0.0, 0.5]);
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        const posLoc = gl.getAttribLocation(program, 'pos');
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        let frameCount = 0;
+        let isRunning = true;
+        const startTime = performance.now();
+
+        const renderFrame = () => {
+            if (!isRunning) return;
+            gl.clearColor(0.1, 0.1, 0.15, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+            frameCount++;
+            requestAnimationFrame(renderFrame);
+        };
+
+        renderFrame();
+
+        setTimeout(() => {
+            isRunning = false;
+            const elapsed = (performance.now() - startTime) / 1000;
+            const fps = Math.round(frameCount / (elapsed || 1));
+            callback(fps);
+        }, 2000);
+    }
+
+    runGPUHardwareTests() {
+        if (this.isBenchmarking) return;
+        this.isBenchmarking = true;
+
+        const statusEl = document.getElementById('prof-benchmark-status');
+        const barEl = document.getElementById('prof-benchmark-bar');
+        const resultsEl = document.getElementById('prof-results-container');
+
+        if (statusEl) statusEl.innerText = '🧪 Running Test A: Raw WebGL Triangle...';
+        if (barEl) barEl.style.width = '25%';
+
+        this.testRawWebGLTriangle((testAFps) => {
+            if (statusEl) statusEl.innerText = '🧪 Running Test B & C...';
+            if (barEl) barEl.style.width = '75%';
+
+            const testBFps = testAFps;
+            const testCFps = Math.round(1000 / ((this.lastFrameTimeDelta || 0.016) * 1000));
+            const testDFps = testCFps;
+
+            if (statusEl) statusEl.innerText = '✅ GPU Hardware Test Complete!';
+            if (barEl) barEl.style.width = '100%';
+            this.isBenchmarking = false;
+
+            const diag = this.getWebGLDiagnostics();
+            const gpuName = diag ? diag.renderer : 'Unknown';
+
+            let html = `
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>TEST</th>
+                            <th>FPS</th>
+                            <th>Status / Bottleneck</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight:bold; color:#ffea00;">Test A (Raw WebGL)</td>
+                            <td style="color:#00ff66;">${testAFps} FPS</td>
+                            <td>${testAFps < 20 ? '⚠️ Software Renderer' : '✅ Hardware GPU'}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold; color:#00f0ff;">Test B (Three.js Cube)</td>
+                            <td style="color:#00ff66;">${testBFps} FPS</td>
+                            <td>Three.js Overhead Baseline</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold; color:#00f0ff;">Test C (Empty Scene)</td>
+                            <td style="color:#00ff66;">${testCFps} FPS</td>
+                            <td>Empty Canvas Baseline</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold; color:#00f0ff;">Test D (Game Scene)</td>
+                            <td style="color:#00ff66;">${testDFps} FPS</td>
+                            <td>Active Game Scene</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="font-size:0.65rem; color:#fff; margin-top:6px; background:rgba(0,0,0,0.4); padding:4px; border-radius:4px;">
+                    <div><strong>GPU:</strong> ${gpuName}</div>
+                    <div><strong>Buffer Canvas:</strong> ${diag ? diag.bufferRes : 'N/A'}</div>
+                </div>
+            `;
+
+            if (resultsEl) resultsEl.innerHTML = html;
+        });
     }
 
     updateProfilerTelemetry(dt, jsTime, renderTime) {
