@@ -177,11 +177,15 @@ class Game3D {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
 
-        // Cinematic ACESFilmic Tone Mapping & Soft Shadow Maps
+        // Cap Device Pixel Ratio to prevent 4K viewport rendering on low-end integrated GPUs
+        const maxDpr = Math.min(window.devicePixelRatio, 1.25);
+        this.renderer.setPixelRatio(maxDpr);
+
+        // Low-End GPU Friendly Tone Mapping & Shadow Map Settings
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.05;
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.type = THREE.BasicShadowMap; // Basic shadow map for maximum low-end GPU performance
 
         this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.95);
         this.scene.add(this.hemiLight);
@@ -189,8 +193,8 @@ class Game3D {
         this.sunLight = new THREE.DirectionalLight(0xfffaed, 1.45);
         this.sunLight.position.set(30, 60, -20);
         this.sunLight.castShadow = true;
-        this.sunLight.shadow.mapSize.width = 2048;
-        this.sunLight.shadow.mapSize.height = 2048;
+        this.sunLight.shadow.mapSize.width = 1024; // Reduced from 2048 to save WebGL fill-rate
+        this.sunLight.shadow.mapSize.height = 1024;
         this.sunLight.shadow.camera.near = 0.5;
         this.sunLight.shadow.camera.far = 150;
         this.sunLight.shadow.camera.left = -25;
@@ -881,6 +885,7 @@ class Game3D {
             if (e.code === 'KeyC') this.toggleCameraMode();
             if (e.code === 'KeyT') this.cycleTimeOfDay();
             if (e.code === 'KeyR') this.cycleRadioStation();
+            if (e.code === 'F2') this.toggleProfiler();
 
             if (this.state === 'PLAYING' && !this.player.isSpinning) {
                 if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.moveLane(-1);
@@ -926,6 +931,35 @@ class Game3D {
         addClick('btn-resume', () => { this.togglePause(); });
         addClick('btn-open-tuning', () => { if (this.tuning) this.tuning.openGarage(); });
         addClick('btn-open-settings', () => { if (this.settingsSystem) this.settingsSystem.openSettings(); });
+
+        // Profiler Interactive Test Toggles
+        addClick('prof-btn-traffic', () => {
+            const btn = document.getElementById('prof-btn-traffic');
+            if (!this.settingsSystem) return;
+            const current = this.settingsSystem.data.graphics.trafficDensity || 'MEDIUM';
+            const next = (current === 'MEDIUM') ? 'OFF' : ((current === 'OFF') ? 'LOW' : 'MEDIUM');
+            this.settingsSystem.data.graphics.trafficDensity = next;
+            if (btn) btn.innerText = 'Traffic: ' + next;
+            if (next === 'OFF' && this.trafficManager) this.trafficManager.reset();
+        });
+
+        addClick('prof-btn-shadows', () => {
+            const btn = document.getElementById('prof-btn-shadows');
+            if (!this.renderer) return;
+            this.renderer.shadowMap.enabled = !this.renderer.shadowMap.enabled;
+            if (btn) btn.innerText = 'Shadows: ' + (this.renderer.shadowMap.enabled ? 'ON' : 'OFF');
+        });
+
+        addClick('prof-btn-dpr', () => {
+            const btn = document.getElementById('prof-btn-dpr');
+            if (!this.renderer) return;
+            this._dprMode = ((this._dprMode || 0) + 1) % 3;
+            const dprs = [1.25, 1.0, 0.75];
+            const targetDpr = dprs[this._dprMode];
+            this.renderer.setPixelRatio(targetDpr);
+            if (btn) btn.innerText = 'DPR: ' + targetDpr;
+        });
+
         addClick('btn-pause-menu', () => {
             this.state = 'MENU';
             if (this.uiPause) this.uiPause.classList.add('hidden');
@@ -1160,7 +1194,52 @@ class Game3D {
         }, 800);
     }
 
+    toggleProfiler() {
+        const p = document.getElementById('debug-profiler');
+        if (p) {
+            p.classList.toggle('hidden');
+        }
+    }
+
+    updateProfilerTelemetry(dt, jsTime, renderTime) {
+        this.profFrameCount = (this.profFrameCount || 0) + 1;
+        this.profTimeAcc = (this.profTimeAcc || 0) + dt;
+        this.profJsTimeAcc = (this.profJsTimeAcc || 0) + jsTime;
+        this.profRenderTimeAcc = (this.profRenderTimeAcc || 0) + renderTime;
+
+        if (this.profTimeAcc >= 0.5) {
+            const avgFps = Math.round(this.profFrameCount / this.profTimeAcc);
+            const avgFrameTime = (this.profTimeAcc / this.profFrameCount * 1000).toFixed(1);
+            const avgJsTime = (this.profJsTimeAcc / this.profFrameCount).toFixed(1);
+            const avgRenderTime = (this.profRenderTimeAcc / this.profFrameCount).toFixed(1);
+
+            const calls = (this.renderer && this.renderer.info) ? this.renderer.info.render.calls : 0;
+            const tris = (this.renderer && this.renderer.info) ? (this.renderer.info.render.triangles / 1000).toFixed(1) + 'k' : '0k';
+            const activeAI = (this.trafficManager ? this.trafficManager.activeVehicles.length : 0);
+
+            const fpsEl = document.getElementById('prof-fps');
+            const ftEl = document.getElementById('prof-frametime');
+            const tmEl = document.getElementById('prof-timing');
+            const dcEl = document.getElementById('prof-drawcalls');
+            const trEl = document.getElementById('prof-triangles');
+            const aiEl = document.getElementById('prof-active-ai');
+
+            if (fpsEl) fpsEl.innerText = avgFps + ' FPS';
+            if (ftEl) ftEl.innerText = avgFrameTime + ' ms';
+            if (tmEl) tmEl.innerText = `${avgJsTime}ms / ${avgRenderTime}ms`;
+            if (dcEl) dcEl.innerText = calls;
+            if (trEl) trEl.innerText = tris;
+            if (aiEl) aiEl.innerText = activeAI;
+
+            this.profFrameCount = 0;
+            this.profTimeAcc = 0;
+            this.profJsTimeAcc = 0;
+            this.profRenderTimeAcc = 0;
+        }
+    }
+
     loop(timestamp) {
+        const loopStart = performance.now();
         if (!this.lastFrameTime) this.lastFrameTime = timestamp;
         const delta = timestamp - this.lastFrameTime;
         this.lastFrameTime = timestamp;
@@ -1178,7 +1257,13 @@ class Game3D {
             this.updateGarageOrbit(dt, timestamp);
         }
 
+        const jsTime = performance.now() - loopStart;
+
+        const renderStart = performance.now();
         this.render();
+        const renderTime = performance.now() - renderStart;
+
+        this.updateProfilerTelemetry(dt, jsTime, renderTime);
 
         requestAnimationFrame((t) => this.loop(t));
     }

@@ -363,7 +363,8 @@ class TrafficManager {
     getDesiredDensityCount() {
         if (!this.game || !this.game.settingsSystem) return 12;
         const dens = this.game.settingsSystem.data.graphics.trafficDensity || 'MEDIUM';
-        if (dens === 'LOW') return 6;
+        if (dens === 'OFF') return 0;
+        if (dens === 'LOW') return 4;
         if (dens === 'MEDIUM') return 12;
         if (dens === 'HIGH') return 20;
         if (dens === 'ULTRA') return 30;

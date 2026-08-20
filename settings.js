@@ -240,20 +240,28 @@ class SettingsSystem {
         }
     }
 
-    // Smart Tiered Reduction (Rule #33: Shadows -> Reflections -> Resolution Scale)
+    // Smart Tiered Reduction (Shadows -> Traffic -> DPR -> Resolution Scale)
     stepDownGraphicsQuality() {
         const g = this.data.graphics;
 
-        if (g.shadowQuality === 'HIGH') {
-            g.shadowQuality = 'MEDIUM';
-        } else if (g.reflections === 'HIGH') {
-            g.reflections = 'LOW';
-        } else if (g.shadowQuality === 'MEDIUM') {
+        if (g.shadowQuality === 'HIGH' || g.shadowQuality === 'MEDIUM') {
             g.shadowQuality = 'LOW';
+        } else if (g.trafficDensity === 'ULTRA' || g.trafficDensity === 'HIGH') {
+            g.trafficDensity = 'MEDIUM';
+        } else if (g.reflections === 'HIGH' || g.reflections === 'MEDIUM') {
+            g.reflections = 'OFF';
+        } else if (g.trafficDensity === 'MEDIUM') {
+            g.trafficDensity = 'LOW'; // Drops to 4 AI cars for low-end devices
         } else if (g.resolutionScale > 75) {
-            g.resolutionScale = Math.max(75, g.resolutionScale - 10);
+            g.resolutionScale = Math.max(70, g.resolutionScale - 10);
         } else if (g.shadowQuality === 'LOW') {
             g.shadowQuality = 'OFF';
+        }
+
+        // Apply low-end DPR cap on WebGL renderer
+        if (this.game && this.game.renderer) {
+            const currentDpr = Math.min(window.devicePixelRatio, 1.0);
+            this.game.renderer.setPixelRatio(currentDpr);
         }
 
         this.applySettingsToEngine();

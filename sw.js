@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v90-performance-optimized';
+const CACHE_NAME = 'iranian-highway-v100-lowend-30fps-profiler';
 
 const PRECACHE_ASSETS = [
     './',
