@@ -1128,9 +1128,9 @@ class Game3D {
         const dt = Math.min(Math.max(delta / 1000, 0.001), 0.1);
 
         if (this.state === 'PLAYING') {
-            this.update(dt);
+            this.update(dt, timestamp);
         } else {
-            this.updateGarageOrbit(dt);
+            this.updateGarageOrbit(dt, timestamp);
         }
 
         this.render();
@@ -1138,7 +1138,7 @@ class Game3D {
         requestAnimationFrame((t) => this.loop(t));
     }
 
-    updateGarageOrbit(dt) {
+    updateGarageOrbit(dt, timestamp = performance.now()) {
         if (!this.playerCarGroup) {
             this.buildPlayer3DCar();
             return;
@@ -1273,7 +1273,7 @@ class Game3D {
         });
     }
 
-    update(dt) {
+    update(dt, timestamp = performance.now()) {
         // Inputs
         const isGasPressed = this.isGasPressed || this.keys['ArrowUp'] || this.keys['KeyW'];
         const isBrakePressed = this.isBrakePressed || this.keys['ArrowDown'] || this.keys['KeyS'];
