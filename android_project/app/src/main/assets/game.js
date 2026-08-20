@@ -72,6 +72,7 @@ class Game3D {
         this.initDOM();
         this.initThreeJS();
         this.tuning = new TuningSystem(this);
+        this.settingsSystem = new SettingsSystem(this);
         this.buildPlayer3DCar();
         this.setupEvents();
         this.updateHUD();
@@ -844,6 +845,9 @@ class Game3D {
         if (this.tuning) {
             this.tuning.bindUIEvents();
         }
+        if (this.settingsSystem) {
+            this.settingsSystem.bindUIEvents();
+        }
 
         window.addEventListener('resize', () => this.onWindowResize());
         window.addEventListener('orientationchange', () => {
@@ -895,11 +899,13 @@ class Game3D {
         addClick('btn-menu-screenshot', () => this.takeScreenshot());
         addClick('btn-gameover-screenshot', () => this.takeScreenshot());
         addClick('pause-btn', () => this.togglePause());
+        addClick('settings-btn', () => { if (this.settingsSystem) this.settingsSystem.openSettings(); });
 
         addClick('btn-start', () => { if (window.audioMgr) window.audioMgr.init(); this.startGame(); });
         addClick('btn-restart', () => { this.startGame(); });
         addClick('btn-resume', () => { this.togglePause(); });
         addClick('btn-open-tuning', () => { if (this.tuning) this.tuning.openGarage(); });
+        addClick('btn-open-settings', () => { if (this.settingsSystem) this.settingsSystem.openSettings(); });
         addClick('btn-pause-menu', () => {
             this.state = 'MENU';
             if (this.uiPause) this.uiPause.classList.add('hidden');
@@ -1136,6 +1142,10 @@ class Game3D {
         this.lastFrameTime = timestamp;
 
         const dt = Math.min(Math.max(delta / 1000, 0.001), 0.1);
+
+        if (this.settingsSystem) {
+            this.settingsSystem.recordFrame(dt);
+        }
 
         if (this.state === 'PLAYING') {
             this.update(dt, timestamp);
