@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v150-real-fps-acceleration';
+const CACHE_NAME = 'iranian-highway-v160-syntax-error-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

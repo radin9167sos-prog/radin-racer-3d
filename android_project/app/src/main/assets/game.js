@@ -1252,6 +1252,24 @@ class Game3D {
         }
 
         this.buildPlayer3DCar();
+
+        // Snap camera position for start
+        if (this.camera) {
+            if (this.cameraMode === 'COCKPIT') {
+                this.camera.position.set(this.player.x - 0.35, 1.02, 0.12);
+                this.camera.lookAt(this.player.x - 0.35, 0.95, -40.0);
+            } else if (this.cameraMode === 'HOOD') {
+                this.camera.position.set(this.player.x, 0.82, -1.25);
+                this.camera.lookAt(this.player.x, 0.78, -40.0);
+            } else {
+                this.camera.position.set(this.player.x, 2.15, 5.4);
+                this.camera.lookAt(this.player.x, 0.95, -40.0);
+            }
+        }
+
+        if (this.uiMenu) this.uiMenu.classList.add('hidden');
+        if (this.uiPause) this.uiPause.classList.add('hidden');
+        if (this.uiGameOver) this.uiGameOver.classList.add('hidden');
     }
 
     applyCanvasResolutionScale() {
@@ -1279,24 +1297,6 @@ class Game3D {
         this.camera.updateProjectionMatrix();
         this.applyCanvasResolutionScale();
     }
-
-        // Snap camera position for start
-        if (this.camera) {
-            if (this.cameraMode === 'COCKPIT') {
-                this.camera.position.set(this.player.x - 0.35, 1.02, 0.12);
-                this.camera.lookAt(this.player.x - 0.35, 0.95, -40.0);
-            } else if (this.cameraMode === 'HOOD') {
-                this.camera.position.set(this.player.x, 0.82, -1.25);
-                this.camera.lookAt(this.player.x, 0.78, -40.0);
-            } else {
-                this.camera.position.set(this.player.x, 2.15, 5.4);
-                this.camera.lookAt(this.player.x, 0.95, -40.0);
-            }
-        }
-
-        if (this.uiMenu) this.uiMenu.classList.add('hidden');
-        if (this.uiPause) this.uiPause.classList.add('hidden');
-        if (this.uiGameOver) this.uiGameOver.classList.add('hidden');
 
         if (window.audioMgr) {
             window.audioMgr.init();
