@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v170-unexpected-token-dot-fix';
+const CACHE_NAME = 'iranian-highway-v180-gpu-detection-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

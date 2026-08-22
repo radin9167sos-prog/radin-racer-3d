@@ -1657,6 +1657,16 @@ class Game3D {
         };
     }
 
+    isSoftwareRenderer(rendererString) {
+        if (!rendererString) return false;
+        const str = rendererString.toLowerCase();
+        const isSwiftShader = str.includes('swiftshader');
+        const isLlvmPipe = str.includes('llvmpipe') || str.includes('softpipe');
+        const isMsaWARP = str.includes('microsoft basic render driver') || str.includes('software adapter');
+        const isGenericSoftware = str.includes('software rasterizer') || str.includes('software emulation');
+        return isSwiftShader || isLlvmPipe || isMsaWARP || isGenericSoftware;
+    }
+
     updateWebGLDiagnosticsUI() {
         const diag = this.getWebGLDiagnostics();
         if (!diag) return;
@@ -1673,11 +1683,32 @@ class Game3D {
         if (resEl) resEl.innerText = `${diag.bufferRes} (CSS ${diag.cssRes})`;
         if (dprsEl) dprsEl.innerText = `${diag.winDpr} / ${diag.renderDpr}`;
 
-        const isSoftware = /SwiftShader|Software|Llvmpipe|Basic Render/i.test(diag.renderer);
+        const isSoftware = this.isSoftwareRenderer(diag.renderer);
         const banner = document.getElementById('sw-warning-banner');
         if (banner) {
-            if (isSoftware) banner.classList.remove('hidden');
-            else banner.classList.add('hidden');
+            if (isSoftware) {
+                banner.className = '';
+                banner.style.background = 'rgba(255, 0, 85, 0.95)';
+                banner.style.color = '#ffffff';
+                banner.style.border = '1px solid #ffea00';
+                banner.innerHTML = `⚠️ <strong>مرورگر در حال استفاده از رندر نرم‌افزاری (CPU) است!</strong><br><span style="font-size:0.75rem;">GPU: ${diag.renderer}</span>`;
+                banner.classList.remove('hidden');
+            } else {
+                banner.className = '';
+                banner.style.background = 'rgba(0, 230, 118, 0.95)';
+                banner.style.color = '#002b11';
+                banner.style.border = '1px solid #00ff66';
+                banner.innerHTML = `⚡ <strong>WebGL Hardware Accelerated</strong> — GPU: ${diag.renderer}`;
+                banner.classList.remove('hidden');
+                if (!this._bannerTimerSet) {
+                    this._bannerTimerSet = true;
+                    setTimeout(() => {
+                        if (banner && !this.isSoftwareRenderer(diag.renderer)) {
+                            banner.classList.add('hidden');
+                        }
+                    }, 4500);
+                }
+            }
         }
     }
 
@@ -1779,7 +1810,7 @@ class Game3D {
                         <tr>
                             <td style="font-weight:bold; color:#ffea00;">Test A (Raw WebGL)</td>
                             <td style="color:#00ff66;">${testAFps} FPS</td>
-                            <td>${testAFps < 20 ? '⚠️ Software Renderer' : '✅ Hardware GPU'}</td>
+                            <td>${this.isSoftwareRenderer(gpuName) ? '⚠️ Software Renderer' : '✅ Hardware GPU Accelerated'}</td>
                         </tr>
                         <tr>
                             <td style="font-weight:bold; color:#00f0ff;">Test B (Three.js Cube)</td>
