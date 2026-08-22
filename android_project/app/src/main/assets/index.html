@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>پژو پارس ۳بعدی HD - سلطان جاده</title>
     <meta name="description" content="بازی رانندگی سه‌بعدی HD پژو پارس ELX شوتی در آزادراه.">
     <meta name="mobile-web-app-capable" content="yes">
@@ -10,7 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00f0ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=65.0.0">
+    <link rel="stylesheet" href="style.css?v=150.0.0">
     <!-- Local & CDN Three.js and PeerJS -->
     <script src="three.min.js"></script>
     <script>if (typeof THREE === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
@@ -18,18 +21,17 @@
     <script>if (typeof Peer === 'undefined') document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');</script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then((registrations) => {
-                for (let registration of registrations) {
-                    registration.unregister();
-                }
-            });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=75.0.0', { updateViaCache: 'none' }).catch(() => {});
+                navigator.serviceWorker.register('./sw.js?v=150.0.0', { updateViaCache: 'none' }).catch(() => {});
             });
         }
     </script>
 </head>
 <body>
+    <!-- Software Renderer Warning Banner -->
+    <div id="sw-warning-banner" class="hidden" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); background:rgba(255,0,85,0.95); color:#fff; padding:10px 16px; border-radius:8px; z-index:9999; font-weight:bold; font-size:0.85rem; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.8); border:1px solid #ffea00; pointer-events:auto;">
+        ⚠️ مرورگر شما در حال استفاده از رندر نرم‌افزاری (CPU) است! برای 60 FPS، لطفاً Hardware Acceleration مرورگر خود را روشن کنید.
+    </div>
     <div id="game-container">
         <!-- 3D Canvas -->
         <canvas id="gameCanvas"></canvas>
@@ -593,10 +595,10 @@
         </div>
     </div>
 
-    <script src="audio.js?v=140.0.0"></script>
-    <script src="tuning.js?v=140.0.0"></script>
-    <script src="settings.js?v=140.0.0"></script>
-    <script src="traffic.js?v=140.0.0"></script>
-    <script src="game.js?v=140.0.0"></script>
+    <script src="audio.js?v=150.0.0"></script>
+    <script src="tuning.js?v=150.0.0"></script>
+    <script src="settings.js?v=150.0.0"></script>
+    <script src="traffic.js?v=150.0.0"></script>
+    <script src="game.js?v=150.0.0"></script>
 </body>
 </html>

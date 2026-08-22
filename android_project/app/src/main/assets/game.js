@@ -184,15 +184,10 @@ class Game3D {
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: true,
-            preserveDrawingBuffer: true,
+            preserveDrawingBuffer: false,
             powerPreference: "high-performance"
         });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
-
-        // Cap Device Pixel Ratio to prevent 4K viewport rendering on low-end integrated GPUs
-        const maxDpr = Math.min(window.devicePixelRatio, 1.25);
-        this.renderer.setPixelRatio(maxDpr);
+        this.applyCanvasResolutionScale();
 
         // Low-End GPU Friendly Tone Mapping & Shadow Map Settings
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1259,11 +1254,30 @@ class Game3D {
         this.buildPlayer3DCar();
     }
 
+    applyCanvasResolutionScale() {
+        if (!this.renderer || !this.canvas) return;
+        const scalePct = (this.testConfig ? this.testConfig.resolutionScale : (this.settingsSystem ? this.settingsSystem.data.graphics.resolutionScale : 100)) || 100;
+        const scale = scalePct / 100;
+
+        let dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+        if (this.testConfig) {
+            if (this.testConfig.dpr === '1.0') dpr = 1.0;
+            else if (this.testConfig.dpr === '0.75') dpr = 0.75;
+            else if (this.testConfig.dpr === '0.50') dpr = 0.50;
+        }
+
+        const width = Math.floor(window.innerWidth * scale);
+        const height = Math.floor(window.innerHeight * scale);
+
+        this.renderer.setPixelRatio(dpr);
+        this.renderer.setSize(width, height, false);
+    }
+
     onWindowResize() {
         if (!this.camera || !this.renderer) return;
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.applyCanvasResolutionScale();
     }
 
         // Snap camera position for start
@@ -1412,18 +1426,11 @@ class Game3D {
         if (this.roadsideTreesGroup) this.roadsideTreesGroup.visible = isEnvVisible;
         if (this.streetLightsGroup) this.streetLightsGroup.visible = isEnvVisible;
 
-        // 4. DPR & Resolution Scale
-        if (this.renderer) {
-            let targetDpr = Math.min(window.devicePixelRatio, 1.25);
-            if (c.dpr === '1.0') targetDpr = 1.0;
-            else if (c.dpr === '0.75') targetDpr = 0.75;
-            else if (c.dpr === '0.50') targetDpr = 0.50;
-            this.renderer.setPixelRatio(targetDpr);
-        }
-
+        // 4. DPR & Resolution Scale (Physical Canvas Buffer Downscaling)
         if (this.settingsSystem) {
             this.settingsSystem.data.graphics.resolutionScale = c.resolutionScale;
         }
+        this.applyCanvasResolutionScale();
 
         this.updateTestToggleUI();
     }
@@ -1674,6 +1681,13 @@ class Game3D {
         if (vendEl) vendEl.innerText = diag.vendor;
         if (resEl) resEl.innerText = `${diag.bufferRes} (CSS ${diag.cssRes})`;
         if (dprsEl) dprsEl.innerText = `${diag.winDpr} / ${diag.renderDpr}`;
+
+        const isSoftware = /SwiftShader|Software|Llvmpipe|Basic Render/i.test(diag.renderer);
+        const banner = document.getElementById('sw-warning-banner');
+        if (banner) {
+            if (isSoftware) banner.classList.remove('hidden');
+            else banner.classList.add('hidden');
+        }
     }
 
     testRawWebGLTriangle(callback) {

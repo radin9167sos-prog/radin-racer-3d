@@ -1,24 +1,6 @@
-const CACHE_NAME = 'iranian-highway-v140-audit-and-performance-fix';
-
-const PRECACHE_ASSETS = [
-    './',
-    './index.html',
-    './style.css',
-    './tuning.js',
-    './settings.js',
-    './traffic.js',
-    './game.js',
-    './audio.js',
-    './three.min.js',
-    './peer.min.js',
-    './manifest.json',
-    './images/peugeot_pars_hd.png'
-];
+const CACHE_NAME = 'iranian-highway-v150-real-fps-acceleration';
 
 self.addEventListener('install', (e) => {
-    e.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
-    );
     self.skipWaiting();
 });
 
@@ -28,23 +10,13 @@ self.addEventListener('activate', (e) => {
             return Promise.all(
                 keys.map((key) => caches.delete(key))
             );
-        })
+        }).then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
+    // Network-first strategy to prevent stale code caching
     e.respondWith(
-        fetch(e.request).then((response) => {
-            if (response && response.status === 200) {
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(e.request, responseClone);
-                });
-            }
-            return response;
-        }).catch(() => {
-            return caches.match(e.request);
-        })
+        fetch(e.request).catch(() => caches.match(e.request))
     );
 });
