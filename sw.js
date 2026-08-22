@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v180-gpu-detection-fix';
+const CACHE_NAME = 'iranian-highway-v190-banner-display-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

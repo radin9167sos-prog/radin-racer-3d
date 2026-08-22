@@ -1688,26 +1688,14 @@ class Game3D {
         if (banner) {
             if (isSoftware) {
                 banner.className = '';
+                banner.style.display = 'block';
                 banner.style.background = 'rgba(255, 0, 85, 0.95)';
                 banner.style.color = '#ffffff';
                 banner.style.border = '1px solid #ffea00';
                 banner.innerHTML = `⚠️ <strong>مرورگر در حال استفاده از رندر نرم‌افزاری (CPU) است!</strong><br><span style="font-size:0.75rem;">GPU: ${diag.renderer}</span>`;
-                banner.classList.remove('hidden');
             } else {
-                banner.className = '';
-                banner.style.background = 'rgba(0, 230, 118, 0.95)';
-                banner.style.color = '#002b11';
-                banner.style.border = '1px solid #00ff66';
-                banner.innerHTML = `⚡ <strong>WebGL Hardware Accelerated</strong> — GPU: ${diag.renderer}`;
-                banner.classList.remove('hidden');
-                if (!this._bannerTimerSet) {
-                    this._bannerTimerSet = true;
-                    setTimeout(() => {
-                        if (banner && !this.isSoftwareRenderer(diag.renderer)) {
-                            banner.classList.add('hidden');
-                        }
-                    }, 4500);
-                }
+                banner.className = 'hidden';
+                banner.style.display = 'none';
             }
         }
     }
