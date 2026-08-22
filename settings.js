@@ -14,14 +14,14 @@ class SettingsSystem {
         this.defaultSettings = {
             version: 2,
             graphics: {
-                preset: 'AUTO', // AUTO, VERY_LOW, LOW, MEDIUM, HIGH, ULTRA
+                preset: 'LOW', // LOW default for automatic high performance
                 autoGraphics: true,
-                targetFps: 60, // 30, 45, 60, 90, 120
-                resolutionScale: 100, // 50 to 100%
-                shadowQuality: 'MEDIUM', // OFF, LOW, MEDIUM, HIGH
-                reflections: 'MEDIUM', // OFF, LOW, HIGH
-                antiAliasing: true,
-                trafficDensity: 'MEDIUM' // LOW, MEDIUM, HIGH
+                targetFps: 60,
+                resolutionScale: 75, // 75% resolution scale
+                shadowQuality: 'OFF',
+                reflections: 'OFF',
+                antiAliasing: false,
+                trafficDensity: 'LOW'
             },
             display: {
                 fullscreen: false,
@@ -111,11 +111,7 @@ class SettingsSystem {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
         if (this.data.graphics.preset === 'AUTO') {
-            if (isMobile || cores <= 4 || memory < 4) {
-                this.applyPresetValues('MEDIUM');
-            } else {
-                this.applyPresetValues('HIGH');
-            }
+            this.applyPresetValues('LOW');
         }
     }
 

@@ -72,13 +72,13 @@ class Game3D {
         this.frameCount = 0;
         this.testConfig = {
             traffic: true,
-            shadows: true,
-            reflections: true,
-            environment: 'FULL',
-            effects: 'HIGH',
+            shadows: false,
+            reflections: false,
+            environment: 'LOW',
+            effects: 'LOW',
             playerQuality: 'HIGH',
-            dpr: 'AUTO',
-            resolutionScale: 100,
+            dpr: '0.75',
+            resolutionScale: 75,
             ai: true,
             physics: true,
             isMinRender: false
