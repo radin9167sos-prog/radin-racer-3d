@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v160-syntax-error-fix';
+const CACHE_NAME = 'iranian-highway-v170-unexpected-token-dot-fix';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

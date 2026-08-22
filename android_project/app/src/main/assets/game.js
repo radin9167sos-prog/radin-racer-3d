@@ -1270,6 +1270,10 @@ class Game3D {
         if (this.uiMenu) this.uiMenu.classList.add('hidden');
         if (this.uiPause) this.uiPause.classList.add('hidden');
         if (this.uiGameOver) this.uiGameOver.classList.add('hidden');
+
+        if (window.audioMgr) {
+            window.audioMgr.init();
+        }
     }
 
     applyCanvasResolutionScale() {
@@ -1296,19 +1300,6 @@ class Game3D {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.applyCanvasResolutionScale();
-    }
-
-        if (window.audioMgr) {
-            window.audioMgr.init();
-        }
-
-        console.log("START CLICKED");
-        console.log("GAME STATE:", this.state);
-        console.log("GAME SPEED:", this.speed);
-        console.log("CAR:", this.playerCarGroup);
-        console.log("SCENE:", this.scene);
-        console.log("CAMERA:", this.camera);
-        console.log("RENDERER:", this.renderer);
     }
 
     togglePause() {
