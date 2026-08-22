@@ -74,10 +74,10 @@ class Game3D {
             traffic: true,
             shadows: false,
             reflections: false,
-            environment: 'LOW',
-            effects: 'LOW',
+            environment: 'FULL',
+            effects: 'MEDIUM',
             playerQuality: 'HIGH',
-            dpr: '0.75',
+            dpr: 'AUTO',
             resolutionScale: 75,
             ai: true,
             physics: true,
@@ -315,38 +315,51 @@ class Game3D {
         }
         this.scene.add(this.streetLightsGroup);
 
-        // Scenery Variety: Roadside Pine & Broadleaf Trees
+        // Scenery Variety: Instanced Roadside Pine & Broadleaf Trees
         this.roadsideTreesGroup = new THREE.Group();
-        const trunkGeo = new THREE.CylinderGeometry(0.32, 0.48, 3.8, 10);
+        const trunkGeo = new THREE.CylinderGeometry(0.32, 0.48, 3.8, 8);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3b2213, roughness: 0.9 });
-        const foliageGeo1 = new THREE.ConeGeometry(2.4, 3.5, 10);
-        const foliageGeo2 = new THREE.ConeGeometry(1.8, 3.0, 10);
+        const foliageGeo1 = new THREE.ConeGeometry(2.4, 3.5, 8);
+        const foliageGeo2 = new THREE.ConeGeometry(1.8, 3.0, 8);
         const foliageMat1 = new THREE.MeshStandardMaterial({ color: 0x0c331a, roughness: 0.7 });
         const foliageMat2 = new THREE.MeshStandardMaterial({ color: 0x1e4620, roughness: 0.7 });
 
+        this.treeData = [];
         for (let z = 10; z > -420; z -= 22) {
             [-18, 18].forEach(xPos => {
-                const tree = new THREE.Group();
-                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-                trunk.position.y = 1.9;
-                trunk.castShadow = true;
-                tree.add(trunk);
-
-                const fMat = Math.random() > 0.5 ? foliageMat1 : foliageMat2;
-                const fol1 = new THREE.Mesh(foliageGeo1, fMat);
-                fol1.position.y = 4.2;
-                fol1.castShadow = true;
-                tree.add(fol1);
-
-                const fol2 = new THREE.Mesh(foliageGeo2, fMat);
-                fol2.position.y = 5.8;
-                fol2.castShadow = true;
-                tree.add(fol2);
-
-                tree.position.set(xPos + (Math.random() - 0.5) * 2, 0, z);
-                this.roadsideTreesGroup.add(tree);
+                this.treeData.push({ x: xPos + (Math.random() - 0.5) * 2, z: z });
             });
         }
+        const treeCount = this.treeData.length;
+
+        this.treeTrunkInstanced = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
+        this.treeFol1Instanced = new THREE.InstancedMesh(foliageGeo1, foliageMat1, treeCount);
+        this.treeFol2Instanced = new THREE.InstancedMesh(foliageGeo2, foliageMat2, treeCount);
+
+        // Turn off heavy shadow map passes for tree instances to eliminate GPU fill-rate exhaustion
+        this.treeTrunkInstanced.castShadow = false;
+        this.treeFol1Instanced.castShadow = false;
+        this.treeFol2Instanced.castShadow = false;
+
+        const dummyTree = new THREE.Object3D();
+        for (let i = 0; i < treeCount; i++) {
+            const td = this.treeData[i];
+            dummyTree.position.set(td.x, 1.9, td.z);
+            dummyTree.updateMatrix();
+            this.treeTrunkInstanced.setMatrixAt(i, dummyTree.matrix);
+
+            dummyTree.position.set(td.x, 4.2, td.z);
+            dummyTree.updateMatrix();
+            this.treeFol1Instanced.setMatrixAt(i, dummyTree.matrix);
+
+            dummyTree.position.set(td.x, 5.8, td.z);
+            dummyTree.updateMatrix();
+            this.treeFol2Instanced.setMatrixAt(i, dummyTree.matrix);
+        }
+
+        this.roadsideTreesGroup.add(this.treeTrunkInstanced);
+        this.roadsideTreesGroup.add(this.treeFol1Instanced);
+        this.roadsideTreesGroup.add(this.treeFol2Instanced);
         this.scene.add(this.roadsideTreesGroup);
 
         // City Skyline with Emissive Night Window Glow Mesh
@@ -2137,13 +2150,33 @@ class Game3D {
             }
         }
 
-        if (this.roadsideTreesGroup) {
-            const trees = this.roadsideTreesGroup.children;
-            for (let i = 0, len = trees.length; i < len; i++) {
-                const tree = trees[i];
-                tree.position.z += this.speed * dt * 10.0;
-                if (tree.position.z > 20) tree.position.z -= 440;
+        // Animate Instanced Roadside Trees
+        if (this.roadsideTreesGroup && this.roadsideTreesGroup.visible && this.treeData && this.treeTrunkInstanced) {
+            const dummyTree = new THREE.Object3D();
+            const moveZ = this.speed * dt * 10.0;
+            const treeCount = this.treeData.length;
+
+            for (let i = 0; i < treeCount; i++) {
+                const td = this.treeData[i];
+                td.z += moveZ;
+                if (td.z > 20) td.z -= 440;
+
+                dummyTree.position.set(td.x, 1.9, td.z);
+                dummyTree.updateMatrix();
+                this.treeTrunkInstanced.setMatrixAt(i, dummyTree.matrix);
+
+                dummyTree.position.set(td.x, 4.2, td.z);
+                dummyTree.updateMatrix();
+                this.treeFol1Instanced.setMatrixAt(i, dummyTree.matrix);
+
+                dummyTree.position.set(td.x, 5.8, td.z);
+                dummyTree.updateMatrix();
+                this.treeFol2Instanced.setMatrixAt(i, dummyTree.matrix);
             }
+
+            this.treeTrunkInstanced.instanceMatrix.needsUpdate = true;
+            this.treeFol1Instanced.instanceMatrix.needsUpdate = true;
+            this.treeFol2Instanced.instanceMatrix.needsUpdate = true;
         }
 
         // Smooth Player Lane Lerping & Body Roll Physics

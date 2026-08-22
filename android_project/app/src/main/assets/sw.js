@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v210-auto-low-graphics';
+const CACHE_NAME = 'iranian-highway-v220-tree-instancing-optimization';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
