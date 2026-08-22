@@ -1682,22 +1682,6 @@ class Game3D {
         if (vendEl) vendEl.innerText = diag.vendor;
         if (resEl) resEl.innerText = `${diag.bufferRes} (CSS ${diag.cssRes})`;
         if (dprsEl) dprsEl.innerText = `${diag.winDpr} / ${diag.renderDpr}`;
-
-        const isSoftware = this.isSoftwareRenderer(diag.renderer);
-        const banner = document.getElementById('sw-warning-banner');
-        if (banner) {
-            if (isSoftware) {
-                banner.className = '';
-                banner.style.display = 'block';
-                banner.style.background = 'rgba(255, 0, 85, 0.95)';
-                banner.style.color = '#ffffff';
-                banner.style.border = '1px solid #ffea00';
-                banner.innerHTML = `⚠️ <strong>مرورگر در حال استفاده از رندر نرم‌افزاری (CPU) است!</strong><br><span style="font-size:0.75rem;">GPU: ${diag.renderer}</span>`;
-            } else {
-                banner.className = 'hidden';
-                banner.style.display = 'none';
-            }
-        }
     }
 
     testRawWebGLTriangle(callback) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iranian-highway-v190-banner-display-fix';
+const CACHE_NAME = 'iranian-highway-v200-remove-warning-banner-entirely';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
