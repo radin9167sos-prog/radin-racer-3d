@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سازنده افلاین APK اندروید | Offline APK Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: rgba(18, 26, 43, 0.75);
+            --border-color: rgba(0, 242, 254, 0.2);
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-purple: #7f00ff;
+            --accent-green: #00e676;
+            --accent-red: #ff5252;
+            --text-main: #f0f4f8;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(127, 0, 255, 0.08) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(0, 242, 254, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--accent-cyan);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+        }
+
+        /* Card Sections */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            transition: border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 242, 254, 0.4);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            font-size: 1.4rem;
+        }
+
+        /* Upload Drop Zone */
+        .drop-zone {
+            border: 2px dashed rgba(0, 242, 254, 0.3);
+            border-radius: 14px;
+            padding: 35px 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .drop-zone-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .drop-zone-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .file-chip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quick-fill-btn {
+            margin-top: 16px;
+            width: 100%;
+            padding: 10px;
+            background: rgba(79, 172, 254, 0.15);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            border-radius: 10px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quick-fill-btn:hover {
+            background: rgba(79, 172, 254, 0.25);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+        }
+
+        /* Icon Upload Preview */
+        .icon-preview-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-preview {
+            width: 54px;
+            height: 54px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            overflow: hidden;
+            object-fit: cover;
+        }
+
+        .icon-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.15);
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Action Button */
+        .btn-build {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(127, 0, 255, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-build:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(127, 0, 255, 0.6);
+        }
+
+        .btn-build:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Progress & Terminal */
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            transition: width 0.3s ease;
+        }
+
+        .terminal {
+            background: #050811;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #a0aec0;
+            max-height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .log-line {
+            line-height: 1.4;
+        }
+
+        .log-info { color: #63b3ed; }
+        .log-success { color: #68d391; font-weight: 600; }
+        .log-warn { color: #f6ad55; }
+        .log-error { color: #fc8181; font-weight: 600; }
+
+        /* Result Download Card */
+        .result-box {
+            display: none;
+            background: rgba(0, 230, 118, 0.08);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00e676 0%, #00b0ff 100%);
+            color: #000;
+            font-weight: 800;
+            font-size: 1.05rem;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(0, 230, 118, 0.35);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-download:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.5);
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="badge">⚡ موتور آفلاین ۱۰۰٪ | OFFLINE APK BUILDER</div>
+            <h1>ساخت خروجی APK اندروید از فایل‌های وب</h1>
+            <p class="subtitle">فایل‌های HTML, JS, CSS یا فایل ZIP بازی خود را انتخاب کنید و نسخه نصبی اندروید تحویل بگیرید</p>
+        </header>
+
+        <!-- Step 1: Upload Source Files -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">📁</span> ۱. انتخاب فایل‌های پروژه وب (HTML/JS/CSS یا ZIP)
+            </div>
+            
+            <div class="drop-zone" id="dropZone">
+                <span class="drop-zone-icon">☁️</span>
+                <div class="drop-zone-text">فایل‌ها را اینجا بکشید و رها کنید یا کلیک کنید</div>
+                <div class="drop-zone-sub">پشتیبانی از انواع فایل‌های Web Game (شامل index.html و فایل‌های جانبی) یا فایل ZIP</div>
+                <input type="file" id="fileInput" multiple webkitdirectory>
+            </div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <button class="quick-fill-btn" id="btnLoadCurrentGame">
+                <span>🎮</span> استفاده مستقیم از فایل‌های پروژه موجود (بازی Radin Racer در همین پوشه)
+            </button>
+        </div>
+
+        <!-- Step 2: Settings -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">⚙️</span> ۲. تنظیمات برنامه اندروید
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="appName">نام برنامه (App Name)</label>
+                    <input type="text" id="appName" value="Radin Racer 3D" placeholder="مثال: بازی مسابقه‌ای">
+                </div>
+
+                <div class="form-group">
+                    <label for="packageName">شناسه پکیج (Package Name)</label>
+                    <input type="text" id="packageName" value="com.radinracer.game" placeholder="com.company.app">
+                </div>
+
+                <div class="form-group">
+                    <label for="versionName">نسخه (Version)</label>
+                    <input type="text" id="versionName" value="1.0.0" placeholder="1.0.0">
+                </div>
+
+                <div class="form-group">
+                    <label for="orientation">جهت صفحه (Orientation)</label>
+                    <select id="orientation">
+                        <option value="sensorLandscape" selected>افقی (Landscape)</option>
+                        <option value="portrait">عمودی (Portrait)</option>
+                        <option value="unspecified">خودکار (Auto)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>آیکون برنامه (App Icon)</label>
+                    <div class="icon-preview-box">
+                        <div class="icon-preview" id="iconPreview">📱</div>
+                        <button type="button" class="quick-fill-btn" style="margin:0; width:auto;" onclick="document.getElementById('iconInput').click()">انتخاب تصویر</button>
+                        <input type="file" id="iconInput" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>حالت تمام‌صفحه (Fullscreen)</label>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" id="fullscreenToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size:0.9rem; color:#fff;">حذف نوار وضعیت بالای گوشی</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Build Action -->
+        <div class="card">
+            <button class="btn-build" id="btnBuild">
+                <span>🚀</span> شروع ساخت نسخه APK آفلاین
+            </button>
+
+            <div style="margin-top:20px;">
+                <div class="progress-bar-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="terminal" id="terminal">
+                    <div class="log-line log-info">[آماده به کار] فایل‌ها را انتخاب کرده و روی شروع ساخت کلیک کنید...</div>
+                </div>
+            </div>
+
+            <!-- Download Result Box -->
+            <div class="result-box" id="resultBox">
+                <h3 style="color:#00e676; margin-bottom:8px;">🎉 فایل APK با موفقیت ساخته شد!</h3>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">می‌توانید فایل نصبی را روی دستگاه اندروید خود منتقل و نصب کنید.</p>
+                <a href="#" class="btn-download" id="downloadLink" download="app-release.apk">
+                    <span>📥</span> دانلود فایل APK (دانلود مستقیم)
+                </a>
+            </div>
+        </div>
+
+        <footer>
+            طراحی شده جهت ساخت ۱۰۰٪ آفلاین برنامه‌های WebView و WebGL اندروید
+        </footer>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let iconFile = null;
+        let useExistingProject = false;
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const iconInput = document.getElementById('iconInput');
+        const iconPreview = document.getElementById('iconPreview');
+        const btnLoadCurrentGame = document.getElementById('btnLoadCurrentGame');
+        const btnBuild = document.getElementById('btnBuild');
+        const terminal = document.getElementById('terminal');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const resultBox = document.getElementById('resultBox');
+        const downloadLink = document.getElementById('downloadLink');
+
+        // Drop zone interaction
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFiles(e.target.files);
+            }
+        });
+
+        function handleFiles(files) {
+            useExistingProject = false;
+            btnLoadCurrentGame.style.borderColor = 'rgba(79, 172, 254, 0.3)';
+            selectedFiles = Array.from(files);
+            renderFileList();
+            log('فایل‌های انتخاب شده: ' + selectedFiles.length + ' فایل', 'info');
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.slice(0, 15).forEach(f => {
+                const chip = document.createElement('div');
+                chip.className = 'file-chip';
+                chip.innerHTML = `<span>📄</span> ${f.name || f.webkitRelativePath}`;
+                fileList.appendChild(chip);
+            });
+            if (selectedFiles.length > 15) {
+                const more = document.createElement('div');
+                more.className = 'file-chip';
+                more.innerText = `... و ${selectedFiles.length - 15} فایل دیگر`;
+                fileList.appendChild(more);
+            }
+        }
+
+        // Quick fill with existing game folder
+        btnLoadCurrentGame.addEventListener('click', () => {
+            useExistingProject = true;
+            selectedFiles = [];
+            fileList.innerHTML = '<div class="file-chip" style="background:rgba(0,242,254,0.2); color:#fff;">✅ تمام فایل‌های بازی جاری (Radin Racer) انتخاب شدند</div>';
+            btnLoadCurrentGame.style.borderColor = 'var(--accent-cyan)';
+            log('استفاده مستقیم از فایل‌های پروژه اصلی فعال شد.', 'info');
+        });
+
+        // Icon input
+        iconInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                iconFile = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    iconPreview.innerHTML = `<img src="${evt.target.result}" alt="Icon">`;
+                };
+                reader.readAsDataURL(iconFile);
+            }
+        });
+
+        // Terminal Log
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            const time = new Date().toLocaleTimeString();
+            line.innerText = `[${time}] ${message}`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function setProgress(percent) {
+            progressContainer.style.display = 'block';
+            progressBar.style.width = percent + '%';
+        }
+
+        // Build Process
+        btnBuild.addEventListener('click', async () => {
+            if (!useExistingProject && selectedFiles.length === 0) {
+                alert('لطفاً ابتدا فایل‌های وب/بازی را انتخاب کنید یا از دکمه پروژه جاری استفاده نمایید.');
+                return;
+            }
+
+            btnBuild.disabled = true;
+            resultBox.style.display = 'none';
+            terminal.innerHTML = '';
+            log('شروع فرایند کمپایل و ساخت APK اندروید...', 'info');
+            setProgress(10);
+
+            const formData = new FormData();
+            formData.append('appName', document.getElementById('appName').value);
+            formData.append('packageName', document.getElementById('packageName').value);
+            formData.append('versionName', document.getElementById('versionName').value);
+            formData.append('orientation', document.getElementById('orientation').value);
+            formData.append('fullscreen', document.getElementById('fullscreenToggle').checked);
+            formData.append('useExistingProject', useExistingProject);
+
+            if (iconFile) {
+                formData.append('icon', iconFile);
+            }
+
+            if (!useExistingProject) {
+                selectedFiles.forEach((file) => {
+                    formData.append('files', file, file.webkitRelativePath || file.name);
+                });
+            }
+
+            try {
+                setProgress(30);
+                log('ارسال اطلاعات به موتور ساخت محلی...', 'info');
+
+                const response = await fetch('/api/build', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                setProgress(60);
+                log('پردازش کدهای منابع و کمپایل آفلاین جاوا و DEX...', 'info');
+
+                const result = await response.json();
+
+                if (result.success) {
+                    setProgress(100);
+                    log('کمپایل و امضای فایل APK با موفقیت انجام شد!', 'success');
+                    log(`نام فایل: ${result.fileName} | حجم: ${result.fileSize}`, 'success');
+
+                    downloadLink.href = result.downloadUrl;
+                    downloadLink.download = result.fileName;
+                    resultBox.style.display = 'block';
+                } else {
+                    log('خطا در فرایند ساخت APK: ' + (result.error || 'خطای ناشناخته'), 'error');
+                }
+            } catch (err) {
+                log('ارتباط با موتور ساخت برقرار نشد: ' + err.message, 'error');
+            } finally {
+                btnBuild.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

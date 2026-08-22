@@ -58,8 +58,10 @@ class TuningSystem {
                 level: 1 // 1 to 5
             },
             ecu: {
-                throttleResponse: 1.0, // 1.0 to 2.0
-                revLimitOffset: 0 // 0 to +1500 RPM
+                remapStage: 'STAGE_1', // STAGE_1, STAGE_2, STAGE_3, SHOOTI_MAX
+                revLimitOffset: 0,     // 0 to +1700 RPM (Cutoff 6800 to 8500 RPM)
+                throttleResponse: 1.0, // 1.0 to 2.5
+                popAndBang: 'OFF'      // OFF, POPS, FLAMES
             },
             exhaust: {
                 type: 'Stock' // Stock, Sport, Racing
@@ -197,10 +199,16 @@ class TuningSystem {
         const t = this.data.tires;
         const a = this.data.aero;
         const b = this.data.brakes;
-        const ecu = this.data.ecu;
+        const ecu = this.data.ecu || {};
+
+        // ECU Remap HP & Torque Multipliers
+        const remapHpMap = { 'STAGE_1': 15, 'STAGE_2': 35, 'STAGE_3': 60, 'SHOOTI_MAX': 95 };
+        const remapTorqueMap = { 'STAGE_1': 20, 'STAGE_2': 45, 'STAGE_3': 75, 'SHOOTI_MAX': 120 };
+        const remapHp = remapHpMap[ecu.remapStage] || 15;
+        const remapTorque = remapTorqueMap[ecu.remapStage] || 20;
 
         // Base HP Calculation
-        let hp = 110 + (e.stage - 1) * 65; // Stage 1: 110, Stage 5: 370 HP
+        let hp = 110 + (e.stage - 1) * 65 + remapHp; // Stage 1: 110, Stage 5: 370 HP + Remap Boost
         if (e.turbo === 1) hp += 35;
         if (e.turbo === 2) hp += 70;
         if (e.supercharger === 1) hp += 45;
@@ -209,19 +217,20 @@ class TuningSystem {
         this.physicsStats.hp = Math.round(hp);
 
         // Torque Calculation (Nm)
-        let torque = 155 + (e.stage - 1) * 80 + (e.turbo * 40);
+        let torque = 155 + (e.stage - 1) * 80 + (e.turbo * 40) + remapTorque;
         this.physicsStats.torque = Math.round(torque);
 
         // Weight Reduction
         const weightMap = [1180, 1080, 980, 880];
         this.physicsStats.weightKg = weightMap[w.stage] || 1180;
 
-        // RPM Limit
-        this.physicsStats.rpmLimit = 6800 + (ecu.revLimitOffset || 0);
+        // RPM Limit Cutoff (6800 to 8500 RPM)
+        this.physicsStats.rpmLimit = 6800 + (parseInt(ecu.revLimitOffset) || 0);
+        this.physicsStats.popAndBang = ecu.popAndBang || 'OFF';
 
         // Acceleration Rate (power-to-weight ratio multiplier)
         const powerToWeight = this.physicsStats.hp / this.physicsStats.weightKg;
-        this.physicsStats.accelRate = 1.8 + (powerToWeight * 12.0) * (ecu.throttleResponse || 1.0);
+        this.physicsStats.accelRate = 1.8 + (powerToWeight * 12.0) * (parseFloat(ecu.throttleResponse) || 1.0);
 
         // Top Speed Kmh
         const gearRatioMultiplier = (4.10 / (this.data.transmission.finalDrive || 4.10));
@@ -438,6 +447,10 @@ class TuningSystem {
         bindInput('input-engine-stage', 'engine.stage');
         bindInput('input-turbo', 'engine.turbo');
         bindInput('input-supercharger', 'engine.supercharger');
+        bindSelect('input-remap-stage', 'ecu.remapStage');
+        bindInput('input-rev-limit', 'ecu.revLimitOffset');
+        bindInput('input-throttle-resp', 'ecu.throttleResponse', true);
+        bindSelect('input-pop-bang', 'ecu.popAndBang');
         bindInput('input-weight-stage', 'weight.stage');
         bindSelect('input-drivetrain', 'drivetrain.type');
         bindSelect('input-tire-type', 'tires.type');
@@ -489,15 +502,27 @@ class TuningSystem {
         setTxt('stat-top-speed-val', s.topSpeedKmh + ' km/h');
 
         // Progress bars
-        setBar('bar-hp', (s.hp / 500) * 100);
-        setBar('bar-torque', (s.torque / 600) * 100);
-        setBar('bar-speed', (s.topSpeedKmh / 350) * 100);
+        setBar('bar-hp', (s.hp / 550) * 100);
+        setBar('bar-torque', (s.torque / 650) * 100);
+        setBar('bar-speed', (s.topSpeedKmh / 360) * 100);
         setBar('bar-grip', (s.gripFactor / 2.2) * 100);
 
         // Control Inputs Sync
+        if (!this.data.ecu) {
+            this.data.ecu = { remapStage: 'STAGE_1', revLimitOffset: 0, throttleResponse: 1.0, popAndBang: 'OFF' };
+        }
         setVal('input-engine-stage', this.data.engine.stage);
         setVal('input-turbo', this.data.engine.turbo);
         setVal('input-supercharger', this.data.engine.supercharger);
+
+        // ECU Remap UI Sync
+        setVal('input-remap-stage', this.data.ecu.remapStage || 'STAGE_1');
+        setVal('input-rev-limit', this.data.ecu.revLimitOffset || 0);
+        setTxt('rev-limit-val', (6800 + (parseInt(this.data.ecu.revLimitOffset) || 0)) + ' RPM');
+        setVal('input-throttle-resp', this.data.ecu.throttleResponse || 1.0);
+        setTxt('throttle-resp-val', (parseFloat(this.data.ecu.throttleResponse) || 1.0) + 'x');
+        setVal('input-pop-bang', this.data.ecu.popAndBang || 'OFF');
+
         setVal('input-weight-stage', this.data.weight.stage);
         setVal('input-drivetrain', this.data.drivetrain.type);
         setVal('input-tire-type', this.data.tires.type);

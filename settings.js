@@ -1,28 +1,81 @@
 /*
  * ===================================================================
- * RADIN RACER 3D — PRO SETTINGS SYSTEM & ADAPTIVE AUTO GRAPHICS ENGINE
- * Event-Driven, Performance-First, Stutter-Resistant Architecture
+ * RADIN RACER 3D — PROFESSIONAL GRAPHICS QUALITY SYSTEM
+ * Dynamic AUTO Performance Governor, Hysteresis & Zero-Garbage Pipeline
  * ===================================================================
  */
 
 class SettingsSystem {
     constructor(game) {
         this.game = game;
-        this.STORAGE_KEY = 'radin_racer_settings_v2';
+        this.STORAGE_KEY_SETTINGS = 'radin_racer_settings_v3';
+        this.STORAGE_KEY_GRAPHICS_PROFILE = 'radin_racer_graphics_profile';
         this.activeTab = 'graphics';
 
-        this.defaultSettings = {
-            version: 2,
-            graphics: {
-                preset: 'LOW', // LOW default for automatic high performance
-                autoGraphics: true,
-                targetFps: 60,
-                resolutionScale: 75, // 75% resolution scale
-                shadowQuality: 'OFF',
-                reflections: 'OFF',
+        // High Performance Controlled Quality Profiles
+        this.PROFILES = {
+            LOW: {
+                profileName: 'LOW',
+                renderScale: 70,           // 70% resolution scale
+                shadowQuality: 'OFF',       // Shadows disabled
+                shadowDistance: 50,        // 50m shadow distance
+                treeQuality: 'LOW',        // Low LOD & 150m view distance
+                treeDrawDistance: 150,
+                envQuality: 'LOW',         // View distance 180m
+                viewDistance: 180,
+                textureQuality: 'LOW',
+                particleQuality: 'LOW',    // Max 10 particles
+                reflections: 'OFF',        // Reflections disabled
                 antiAliasing: false,
-                trafficDensity: 'LOW'
+                postProcessing: 'OFF',
+                trafficDensity: 'LOW',     // 4 AI vehicles
+                effectsQuality: 'LOW'
             },
+            MEDIUM: {
+                profileName: 'MEDIUM',
+                renderScale: 85,           // 85% resolution scale
+                shadowQuality: 'MEDIUM',    // Basic 512x512 shadows
+                shadowDistance: 80,        // 80m shadow distance
+                treeQuality: 'MEDIUM',     // Medium LOD & 280m view distance
+                treeDrawDistance: 280,
+                envQuality: 'MEDIUM',      // View distance 300m
+                viewDistance: 300,
+                textureQuality: 'MEDIUM',
+                particleQuality: 'MEDIUM', // Max 25 particles
+                reflections: 'LOW',        // Basic environment reflection
+                antiAliasing: true,
+                postProcessing: 'MEDIUM',
+                trafficDensity: 'MEDIUM',  // 8 AI vehicles
+                effectsQuality: 'MEDIUM'
+            },
+            HIGH: {
+                profileName: 'HIGH',
+                renderScale: 100,          // 100% resolution scale
+                shadowQuality: 'HIGH',     // Soft 1024x1024 shadows
+                shadowDistance: 150,       // 150m shadow distance
+                treeQuality: 'HIGH',       // Full LOD & 450m view distance
+                treeDrawDistance: 450,
+                envQuality: 'HIGH',        // View distance 500m
+                viewDistance: 500,
+                textureQuality: 'HIGH',
+                particleQuality: 'HIGH',   // Max 40 particles
+                reflections: 'HIGH',       // Realtime HD environment map
+                antiAliasing: true,
+                postProcessing: 'HIGH',
+                trafficDensity: 'HIGH',    // 14 AI vehicles
+                effectsQuality: 'HIGH'
+            }
+        };
+
+        // Saved Profile (AUTO, LOW, MEDIUM, HIGH)
+        this.selectedProfile = localStorage.getItem(this.STORAGE_KEY_GRAPHICS_PROFILE) || 'AUTO';
+        this.effectiveProfileLevel = 'MEDIUM'; // Active profile tier when in AUTO mode
+
+        // Active parameter state object (cloned from active preset)
+        this.activeParams = Object.assign({}, this.PROFILES.MEDIUM);
+
+        this.defaultSettings = {
+            version: 3,
             display: {
                 fullscreen: false,
                 fpsCounter: true,
@@ -41,49 +94,37 @@ class SettingsSystem {
             },
             gameplay: {
                 cameraShake: true,
-                unitSystem: 'KM/H', // KM/H, MPH
+                unitSystem: 'KM/H',
                 absEnabled: true
-            },
-            performance: {
-                performanceMode: false,
-                qualityMode: false,
-                dynamicResolution: true
             }
         };
 
         this.data = this.loadSettings();
 
-        // Performance Monitor Telemetry
+        // Performance Telemetry & AUTO Governor State
         this.frameTimes = [];
         this.lastMonitorTime = performance.now();
-        this.stableCycles = 0;
-        this.lowFpsCycles = 0;
+        this.lastAdaptTime = performance.now();
+        this.cooldownMs = 4000; // Minimum 4s between dynamic profile shifts
+        this.lowFpsCount = 0;
+        this.highFpsCount = 0;
         this.measuredFps = 60;
-        this.frameStutterMs = 0;
-
-        this.qualityLevels = {
-            'VERY_LOW': { shadowQuality: 'OFF', reflections: 'OFF', resolutionScale: 75, antiAliasing: false, trafficDensity: 'LOW' },
-            'LOW':      { shadowQuality: 'LOW', reflections: 'OFF', resolutionScale: 85, antiAliasing: false, trafficDensity: 'LOW' },
-            'MEDIUM':   { shadowQuality: 'MEDIUM', reflections: 'LOW', resolutionScale: 95, antiAliasing: true,  trafficDensity: 'MEDIUM' },
-            'HIGH':     { shadowQuality: 'MEDIUM', reflections: 'HIGH', resolutionScale: 100, antiAliasing: true, trafficDensity: 'MEDIUM' },
-            'ULTRA':    { shadowQuality: 'HIGH', reflections: 'HIGH', resolutionScale: 100, antiAliasing: true,  trafficDensity: 'HIGH' }
-        };
 
         this.init();
     }
 
     init() {
-        this.detectHardwareCapabilities();
+        this.setProfile(this.selectedProfile, false);
         this.applySettingsToEngine();
         this.bindUIEvents();
     }
 
     loadSettings() {
         try {
-            const raw = localStorage.getItem(this.STORAGE_KEY);
+            const raw = localStorage.getItem(this.STORAGE_KEY_SETTINGS);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (parsed && parsed.version === 2) {
+                if (parsed && parsed.version === 3) {
                     return parsed;
                 }
             }
@@ -93,192 +134,268 @@ class SettingsSystem {
 
     saveSettings() {
         try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+            localStorage.setItem(this.STORAGE_KEY_SETTINGS, JSON.stringify(this.data));
+            localStorage.setItem(this.STORAGE_KEY_GRAPHICS_PROFILE, this.selectedProfile);
         } catch (e) {}
     }
 
     resetToDefault() {
         this.data = JSON.parse(JSON.stringify(this.defaultSettings));
+        this.setProfile('AUTO', true);
         this.saveSettings();
         this.applySettingsToEngine();
         this.updateUI();
     }
 
-    // Hardware Detection & Initial Benchmark
-    detectHardwareCapabilities() {
-        const cores = navigator.hardwareConcurrency || 4;
-        const memory = navigator.deviceMemory || 4;
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        if (this.data.graphics.preset === 'AUTO') {
-            this.applyPresetValues('LOW');
+    // Set Graphics Profile (AUTO, LOW, MEDIUM, HIGH)
+    setProfile(profileName, userInitiated = true) {
+        if (!['AUTO', 'LOW', 'MEDIUM', 'HIGH'].includes(profileName)) {
+            profileName = 'AUTO';
         }
-    }
 
-    applyPresetValues(presetName) {
-        const p = this.qualityLevels[presetName];
-        if (p) {
-            Object.assign(this.data.graphics, p);
+        this.selectedProfile = profileName;
+
+        if (userInitiated) {
+            this.saveSettings();
         }
-    }
 
-    setPreset(presetName) {
-        this.data.graphics.preset = presetName;
-        if (presetName !== 'AUTO') {
-            this.data.graphics.autoGraphics = false;
-            this.applyPresetValues(presetName);
+        if (profileName === 'AUTO') {
+            // In AUTO mode, start from current effective profile or MEDIUM
+            this.effectiveProfileLevel = this.effectiveProfileLevel || 'MEDIUM';
+            this.activeParams = Object.assign({}, this.PROFILES[this.effectiveProfileLevel]);
         } else {
-            this.data.graphics.autoGraphics = true;
-            this.detectHardwareCapabilities();
+            // Manual profile choice lock
+            this.effectiveProfileLevel = profileName;
+            this.activeParams = Object.assign({}, this.PROFILES[profileName]);
         }
-        this.saveSettings();
+
         this.applySettingsToEngine();
         this.updateUI();
     }
 
-    // Apply Settings Directly to Three.js Renderer & Game Logic (Zero Garbage)
+    // Direct Engine Parameter Applicator (Zero Allocation, Instant Parameters Update)
     applySettingsToEngine() {
         if (!this.game) return;
 
-        const g = this.data.graphics;
-        const disp = this.data.display;
-        const perf = this.data.performance;
+        const p = this.activeParams;
+        const renderer = this.game.renderer;
+        const camera = this.game.camera;
+        const scene = this.game.scene;
+        const sunLight = this.game.sunLight;
 
-        // 1. Resolution Scale & Pixel Ratio
-        let scale = (g.resolutionScale || 100) / 100;
-        if (perf.performanceMode) scale = Math.min(scale, 0.85);
-
-        const dpr = Math.min(window.devicePixelRatio || 1, 2.0) * scale;
-        if (this.game.renderer) {
-            this.game.renderer.setPixelRatio(dpr);
+        // 1. Render Resolution Scale & Pixel Ratio
+        if (renderer) {
+            const baseDpr = Math.min(window.devicePixelRatio || 1, 2.0);
+            const targetDpr = baseDpr * (p.renderScale / 100);
+            renderer.setPixelRatio(targetDpr);
         }
 
-        // 2. Shadows Quality
-        if (this.game.renderer && this.game.renderer.shadowMap) {
-            const shadowState = (g.shadowQuality !== 'OFF') && !perf.performanceMode;
-            this.game.renderer.shadowMap.enabled = shadowState;
-            if (this.game.dirLight) {
-                this.game.dirLight.castShadow = shadowState;
-                if (g.shadowQuality === 'HIGH') {
-                    this.game.dirLight.shadow.mapSize.width = 1024;
-                    this.game.dirLight.shadow.mapSize.height = 1024;
-                } else {
-                    this.game.dirLight.shadow.mapSize.width = 512;
-                    this.game.dirLight.shadow.mapSize.height = 512;
+        // 2. Shadows Quality & Shadow Distance
+        if (renderer && renderer.shadowMap) {
+            const shadowEnabled = (p.shadowQuality !== 'OFF');
+            renderer.shadowMap.enabled = shadowEnabled;
+
+            if (sunLight) {
+                sunLight.castShadow = shadowEnabled;
+                if (shadowEnabled) {
+                    const mapSize = (p.shadowQuality === 'HIGH') ? 1024 : 512;
+                    sunLight.shadow.mapSize.set(mapSize, mapSize);
+                    sunLight.shadow.camera.far = p.shadowDistance || 80;
                 }
             }
         }
 
-        // 3. Audio Volume Sync
-        const a = this.data.audio;
-        if (window.audioMgr) {
-            if (window.audioMgr.setMasterVolume) {
-                window.audioMgr.setMasterVolume(a.masterVolume / 100);
+        // 3. Camera View Distance & Environment Fog
+        if (camera && scene) {
+            camera.far = p.viewDistance || 300;
+            camera.updateProjectionMatrix();
+
+            if (scene.fog) {
+                scene.fog.far = p.viewDistance * 0.85;
+                scene.fog.near = Math.max(10, p.viewDistance * 0.12);
             }
         }
 
-        // 4. FPS Counter Badge Display
+        // 4. Traffic Density
+        if (this.game.trafficManager) {
+            let maxCars = 8;
+            if (p.trafficDensity === 'LOW') maxCars = 4;
+            else if (p.trafficDensity === 'MEDIUM') maxCars = 8;
+            else if (p.trafficDensity === 'HIGH') maxCars = 14;
+            this.game.trafficManager.maxActiveVehicles = maxCars;
+        }
+
+        // 5. Environmental Reflections
+        if (scene) {
+            if (p.reflections === 'OFF') {
+                scene.environment = null;
+            } else {
+                scene.environment = this.game.envMap || null;
+            }
+        }
+
+        // 6. Active Particle Limit
+        if (this.game) {
+            let maxParticles = 25;
+            if (p.particleQuality === 'LOW') maxParticles = 10;
+            else if (p.particleQuality === 'MEDIUM') maxParticles = 25;
+            else if (p.particleQuality === 'HIGH') maxParticles = 40;
+            this.game.maxActiveParticles = maxParticles;
+        }
+
+        // 7. FPS Counter Display
         const fpsBadge = document.getElementById('fps-badge');
         if (fpsBadge) {
-            if (disp.fpsCounter) fpsBadge.classList.remove('hidden');
+            if (this.data.display.fpsCounter) fpsBadge.classList.remove('hidden');
             else fpsBadge.classList.add('hidden');
         }
+
+        // 8. Audio Master Volume
+        if (window.audioMgr && window.audioMgr.setMasterVolume) {
+            window.audioMgr.setMasterVolume((this.data.audio.masterVolume || 100) / 100);
+        }
+
+        this.updateUIValuesOnly();
     }
 
-    // Record Frame Telemetry inside loop(dt)
+    // Telemetry Recorder invoked inside loop(dt)
     recordFrame(dt) {
         const frameMs = dt * 1000;
         this.frameTimes.push(frameMs);
-        if (this.frameTimes.length > 120) this.frameTimes.shift();
+        if (this.frameTimes.length > 90) this.frameTimes.shift();
 
-        // Check Adaptive Auto Graphics every 3000ms
         const now = performance.now();
-        if (now - this.lastMonitorTime > 3000) {
+        if (now - this.lastMonitorTime > 2500) {
             this.evaluatePerformance(now);
             this.lastMonitorTime = now;
         }
     }
 
-    // Adaptive Performance Evaluation Logic (Rules 26-34)
+    // AUTO Mode Dynamic Performance Governor (Hysteresis & Cooldown Protected)
     evaluatePerformance(now) {
-        if (this.frameTimes.length < 30) return;
+        if (this.frameTimes.length < 20) return;
 
         const totalMs = this.frameTimes.reduce((a, b) => a + b, 0);
         const avgMs = totalMs / this.frameTimes.length;
         this.measuredFps = Math.round(1000 / (avgMs || 16.6));
 
-        // Update FPS badge text
+        // Update FPS badge UI
         const fpsValEl = document.getElementById('fps-badge-val');
         if (fpsValEl) {
             fpsValEl.innerText = this.measuredFps + ' FPS';
         }
 
-        if (!this.data.graphics.autoGraphics) return;
+        // Update Status Overlay Live Items
+        this.updateStatusOverlayLive();
 
-        const targetFps = this.data.graphics.targetFps || 60;
+        // If not in AUTO mode, exit governor
+        if (this.selectedProfile !== 'AUTO') return;
 
-        // If FPS is significantly below target (< 80% target FPS)
-        if (this.measuredFps < targetFps * 0.8) {
-            this.lowFpsCycles++;
-            this.stableCycles = 0;
+        // Check cooldown
+        if (now - this.lastAdaptTime < this.cooldownMs) return;
 
-            if (this.lowFpsCycles >= 2) {
-                this.stepDownGraphicsQuality();
-                this.lowFpsCycles = 0;
+        // Rule A: FPS < 25 for several seconds -> Step DOWN 1 quality tier or decrease bottleneck parameter
+        if (this.measuredFps < 25) {
+            this.lowFpsCount++;
+            this.highFpsCount = 0;
+
+            if (this.lowFpsCount >= 2) {
+                this.stepDownAutoQuality(now);
+                this.lowFpsCount = 0;
             }
-        } else if (this.measuredFps >= targetFps - 3) {
-            this.stableCycles++;
-            this.lowFpsCycles = 0;
+        }
+        // Rule B: FPS 25 to 50 -> Hold current quality (Hysteresis - prevent oscillation)
+        else if (this.measuredFps >= 25 && this.measuredFps <= 50) {
+            this.lowFpsCount = 0;
+            this.highFpsCount = 0;
+        }
+        // Rule C: FPS > 50 for several seconds -> Step UP 1 quality tier
+        else if (this.measuredFps > 50) {
+            this.highFpsCount++;
+            this.lowFpsCount = 0;
 
-            if (this.stableCycles >= 4) {
-                this.stepUpGraphicsQuality();
-                this.stableCycles = 0;
+            if (this.highFpsCount >= 4) {
+                this.stepUpAutoQuality(now);
+                this.highFpsCount = 0;
             }
         }
     }
 
-    // Smart Tiered Reduction (Shadows -> Traffic -> DPR -> Resolution Scale)
-    stepDownGraphicsQuality() {
-        const g = this.data.graphics;
+    // Step DOWN Quality (Ordered Reduction: RenderScale -> Shadows -> Trees -> View Distance -> Traffic)
+    stepDownAutoQuality(now) {
+        const p = this.activeParams;
 
-        if (g.shadowQuality === 'HIGH' || g.shadowQuality === 'MEDIUM') {
-            g.shadowQuality = 'LOW';
-        } else if (g.trafficDensity === 'ULTRA' || g.trafficDensity === 'HIGH') {
-            g.trafficDensity = 'MEDIUM';
-        } else if (g.reflections === 'HIGH' || g.reflections === 'MEDIUM') {
-            g.reflections = 'OFF';
-        } else if (g.trafficDensity === 'MEDIUM') {
-            g.trafficDensity = 'LOW'; // Drops to 4 AI cars for low-end devices
-        } else if (g.resolutionScale > 75) {
-            g.resolutionScale = Math.max(70, g.resolutionScale - 10);
-        } else if (g.shadowQuality === 'LOW') {
-            g.shadowQuality = 'OFF';
+        if (p.renderScale > 85) {
+            p.renderScale = 85;
+        } else if (p.shadowQuality === 'HIGH') {
+            p.shadowQuality = 'MEDIUM';
+            p.shadowDistance = 80;
+        } else if (p.treeQuality === 'HIGH') {
+            p.treeQuality = 'MEDIUM';
+            p.treeDrawDistance = 280;
+        } else if (p.viewDistance > 300) {
+            p.envQuality = 'MEDIUM';
+            p.viewDistance = 300;
+        } else if (p.renderScale > 70) {
+            p.renderScale = 70;
+        } else if (p.shadowQuality === 'MEDIUM') {
+            p.shadowQuality = 'OFF';
+            p.shadowDistance = 40;
+        } else if (p.treeQuality === 'MEDIUM') {
+            p.treeQuality = 'LOW';
+            p.treeDrawDistance = 150;
+        } else if (p.viewDistance > 180) {
+            p.envQuality = 'LOW';
+            p.viewDistance = 180;
+        } else if (p.trafficDensity === 'HIGH' || p.trafficDensity === 'MEDIUM') {
+            p.trafficDensity = 'LOW';
         }
 
-        // Apply low-end DPR cap on WebGL renderer
-        if (this.game && this.game.renderer) {
-            const currentDpr = Math.min(window.devicePixelRatio, 1.0);
-            this.game.renderer.setPixelRatio(currentDpr);
+        // Update effective tier label
+        if (p.renderScale <= 70 && p.shadowQuality === 'OFF') {
+            this.effectiveProfileLevel = 'LOW';
+        } else {
+            this.effectiveProfileLevel = 'MEDIUM';
         }
 
+        this.lastAdaptTime = now;
         this.applySettingsToEngine();
-        this.updateUIValuesOnly();
     }
 
-    // Gradual Quality Restoration
-    stepUpGraphicsQuality() {
-        const g = this.data.graphics;
+    // Step UP Quality
+    stepUpAutoQuality(now) {
+        const p = this.activeParams;
 
-        if (g.resolutionScale < 100) {
-            g.resolutionScale = Math.min(100, g.resolutionScale + 10);
-        } else if (g.shadowQuality === 'OFF') {
-            g.shadowQuality = 'LOW';
-        } else if (g.shadowQuality === 'LOW') {
-            g.shadowQuality = 'MEDIUM';
+        if (p.renderScale < 85) {
+            p.renderScale = 85;
+            p.viewDistance = 300;
+        } else if (p.shadowQuality === 'OFF') {
+            p.shadowQuality = 'MEDIUM';
+            p.shadowDistance = 80;
+        } else if (p.treeQuality === 'LOW') {
+            p.treeQuality = 'MEDIUM';
+            p.treeDrawDistance = 280;
+        } else if (p.renderScale < 100) {
+            p.renderScale = 100;
+        } else if (p.shadowQuality === 'MEDIUM') {
+            p.shadowQuality = 'HIGH';
+            p.shadowDistance = 150;
+        } else if (p.treeQuality === 'MEDIUM') {
+            p.treeQuality = 'HIGH';
+            p.treeDrawDistance = 450;
+        } else if (p.viewDistance < 500) {
+            p.envQuality = 'HIGH';
+            p.viewDistance = 500;
         }
 
+        if (p.renderScale >= 100 && p.shadowQuality === 'HIGH') {
+            this.effectiveProfileLevel = 'HIGH';
+        } else {
+            this.effectiveProfileLevel = 'MEDIUM';
+        }
+
+        this.lastAdaptTime = now;
         this.applySettingsToEngine();
-        this.updateUIValuesOnly();
     }
 
     bindUIEvents() {
@@ -316,38 +433,18 @@ class SettingsSystem {
             btnReset.addEventListener('click', () => this.resetToDefault());
         }
 
-        // Preset Buttons
-        const presetBtns = modal.querySelectorAll('.set-preset-btn');
-        presetBtns.forEach(btn => {
+        // Graphics Quality Profile Buttons [ AUTO ] [ LOW ] [ MEDIUM ] [ HIGH ]
+        const gfxBtns = modal.querySelectorAll('.gfx-btn');
+        gfxBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const p = e.currentTarget.getAttribute('data-preset');
-                if (p) this.setPreset(p);
+                const profile = e.currentTarget.getAttribute('data-gfx-profile');
+                if (profile) {
+                    this.setProfile(profile, true);
+                }
             });
         });
 
-        // Mode Toggles (Performance 🚀 vs Quality 🎨)
-        const btnPerfMode = document.getElementById('btn-mode-performance');
-        if (btnPerfMode) {
-            btnPerfMode.addEventListener('click', () => {
-                this.data.performance.performanceMode = !this.data.performance.performanceMode;
-                if (this.data.performance.performanceMode) this.data.performance.qualityMode = false;
-                this.saveSettings();
-                this.applySettingsToEngine();
-                this.updateUIValuesOnly();
-            });
-        }
-
-        const bindInput = (id, fn) => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.addEventListener('input', (e) => {
-                fn(e);
-                this.saveSettings();
-                this.applySettingsToEngine();
-                this.updateUIValuesOnly();
-            });
-        };
-
+        // Dropdown Select Binding
         const bindSelect = (id, fn) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -355,52 +452,85 @@ class SettingsSystem {
                 fn(e);
                 this.saveSettings();
                 this.applySettingsToEngine();
-                this.updateUIValuesOnly();
             });
         };
 
-        bindSelect('set-input-traffic-density', (e) => { this.data.graphics.trafficDensity = e.target.value; });
-        bindSelect('set-input-preset', (e) => this.setPreset(e.target.value));
-        bindSelect('set-input-target-fps', (e) => { this.data.graphics.targetFps = parseInt(e.target.value); });
-        bindInput('set-input-res-scale', (e) => { this.data.graphics.resolutionScale = parseInt(e.target.value); });
-        bindSelect('set-input-shadows', (e) => { this.data.graphics.shadowQuality = e.target.value; });
-        bindSelect('set-input-reflections', (e) => { this.data.graphics.reflections = e.target.value; });
-        bindInput('set-input-master-vol', (e) => { this.data.audio.masterVolume = parseInt(e.target.value); });
-        bindSelect('set-input-fps-badge', (e) => { this.data.display.fpsCounter = (e.target.value === 'true'); });
-        bindSelect('set-input-unit-system', (e) => { this.data.gameplay.unitSystem = e.target.value; });
+        bindSelect('set-input-preset', (e) => this.setProfile(e.target.value, true));
+        bindSelect('set-input-traffic-density', (e) => {
+            this.activeParams.trafficDensity = e.target.value;
+        });
+        bindSelect('set-input-fps-badge', (e) => {
+            this.data.display.fpsCounter = (e.target.value === 'true');
+        });
+        bindSelect('set-input-unit-system', (e) => {
+            this.data.gameplay.unitSystem = e.target.value;
+        });
     }
 
     updateUI() {
-        this.updateUIValuesOnly();
+        // Highlight active profile button
+        const modal = document.getElementById('settings-screen');
+        if (modal) {
+            const gfxBtns = modal.querySelectorAll('.gfx-btn');
+            gfxBtns.forEach(btn => {
+                if (btn.getAttribute('data-gfx-profile') === this.selectedProfile) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            const selPreset = document.getElementById('set-input-preset');
+            if (selPreset) selPreset.value = this.selectedProfile;
+
+            const selTraffic = document.getElementById('set-input-traffic-density');
+            if (selTraffic) selTraffic.value = this.activeParams.trafficDensity;
+        }
+
+        this.updateStatusOverlayLive();
     }
 
     updateUIValuesOnly() {
-        const setVal = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.value = val;
-        };
-        const setTxt = (id, txt) => {
-            const el = document.getElementById(id);
-            if (el) el.innerText = txt;
-        };
+        this.updateUI();
+    }
 
-        const g = this.data.graphics;
-        setVal('set-input-traffic-density', g.trafficDensity || 'MEDIUM');
-        setVal('set-input-preset', g.preset);
-        setVal('set-input-target-fps', g.targetFps);
-        setVal('set-input-res-scale', g.resolutionScale);
-        setTxt('set-res-scale-val', g.resolutionScale + '%');
-        setVal('set-input-shadows', g.shadowQuality);
-        setVal('set-input-reflections', g.reflections);
-        setVal('set-input-master-vol', this.data.audio.masterVolume);
-        setVal('set-input-fps-badge', this.data.display.fpsCounter ? 'true' : 'false');
-        setVal('set-input-unit-system', this.data.gameplay.unitSystem);
+    // Live Status Monitor Card Updater
+    updateStatusOverlayLive() {
+        const p = this.activeParams;
 
-        const btnPerf = document.getElementById('btn-mode-performance');
-        if (btnPerf) {
-            if (this.data.performance.performanceMode) btnPerf.classList.add('active');
-            else btnPerf.classList.remove('active');
+        // Profile Text
+        const profileEl = document.getElementById('gfx-stat-profile');
+        if (profileEl) {
+            if (this.selectedProfile === 'AUTO') {
+                profileEl.innerText = `AUTO (${this.effectiveProfileLevel} Active)`;
+            } else {
+                profileEl.innerText = `${this.selectedProfile} (Locked)`;
+            }
         }
+
+        // FPS
+        const fpsEl = document.getElementById('gfx-stat-fps');
+        if (fpsEl) fpsEl.innerText = `${this.measuredFps} FPS`;
+
+        // Render Scale
+        const scaleEl = document.getElementById('gfx-stat-scale');
+        if (scaleEl) scaleEl.innerText = `${p.renderScale}%`;
+
+        // Shadows
+        const shadowEl = document.getElementById('gfx-stat-shadows');
+        if (shadowEl) shadowEl.innerText = p.shadowQuality;
+
+        // Trees
+        const treeEl = document.getElementById('gfx-stat-trees');
+        if (treeEl) treeEl.innerText = p.treeQuality;
+
+        // Distance
+        const distEl = document.getElementById('gfx-stat-distance');
+        if (distEl) distEl.innerText = `${p.viewDistance}m`;
+
+        // Traffic
+        const trafficEl = document.getElementById('gfx-stat-traffic');
+        if (trafficEl) trafficEl.innerText = p.trafficDensity;
     }
 
     openSettings() {

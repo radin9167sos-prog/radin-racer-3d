@@ -765,3 +765,113 @@ body, html {
     outline: none;
 }
 
+/* PRO GRAPHICS QUALITY SYSTEM STYLES */
+.gfx-quality-section {
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.gfx-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.gfx-btn-group {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.gfx-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #a0aab8;
+    padding: 10px 6px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25 ease;
+    text-align: center;
+}
+
+.gfx-btn:hover {
+    background: rgba(0, 240, 255, 0.15);
+    color: #fff;
+}
+
+.gfx-btn.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.3) 0%, rgba(127, 0, 255, 0.3) 100%);
+    border-color: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.gfx-status-card {
+    background: rgba(5, 8, 18, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+}
+
+.gfx-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.gfx-status-label {
+    font-size: 0.82rem;
+    color: #a0aab8;
+    font-weight: 600;
+}
+
+.gfx-status-val {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--accent-green);
+}
+
+.gfx-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.gfx-stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.gfx-stat-name {
+    font-size: 0.7rem;
+    color: #718096;
+    margin-bottom: 2px;
+}
+
+.gfx-stat-num {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+

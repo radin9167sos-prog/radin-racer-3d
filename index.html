@@ -16,9 +16,9 @@
     <link rel="icon" href="data:image/x-icon;base64,=">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css?v=150.0.0">
-    <!-- Local & CDN Three.js and PeerJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- Offline Three.js and PeerJS -->
+    <script src="three.min.js"></script>
+    <script src="peer.min.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -234,30 +234,72 @@
 
                 <!-- Tab Contents -->
                 <div id="set-tab-graphics" class="settings-tab-content">
+                    <!-- Pro Graphics Quality System Control Card -->
+                    <div class="gfx-quality-section">
+                        <div class="gfx-title">⚡ GRAPHICS QUALITY — سیستم مدیریت کیفیت گرافیک</div>
+                        <div class="gfx-btn-group">
+                            <button class="gfx-btn active" data-gfx-profile="AUTO">⚡ AUTO</button>
+                            <button class="gfx-btn" data-gfx-profile="LOW">🍃 LOW</button>
+                            <button class="gfx-btn" data-gfx-profile="MEDIUM">⚖️ MEDIUM</button>
+                            <button class="gfx-btn" data-gfx-profile="HIGH">🔥 HIGH</button>
+                        </div>
+
+                        <!-- Real-time Live Status Monitor Card -->
+                        <div class="gfx-status-card">
+                            <div class="gfx-status-row">
+                                <span class="gfx-status-label">پروفایل فعال (Quality Profile):</span>
+                                <span id="gfx-stat-profile" class="gfx-status-val">AUTO (Medium Active)</span>
+                            </div>
+                            <div class="gfx-status-grid">
+                                <div class="gfx-stat-item">
+                                    <span class="gfx-stat-name">FPS فعلی</span>
+                                    <span id="gfx-stat-fps" class="gfx-stat-num">60 FPS</span>
+                                </div>
+                                <div class="gfx-stat-item">
+                                    <span class="gfx-stat-name">Render Scale</span>
+                                    <span id="gfx-stat-scale" class="gfx-stat-num">85%</span>
+                                </div>
+                                <div class="gfx-stat-item">
+                                    <span class="gfx-stat-name">Shadows</span>
+                                    <span id="gfx-stat-shadows" class="gfx-stat-num">Medium</span>
+                                </div>
+                                <div class="gfx-stat-item">
+                                    <span class="gfx-stat-name">Trees LOD</span>
+                                    <span id="gfx-stat-trees" class="gfx-stat-num">Medium</span>
+                                </div>
+                                <div class="gfx-stat-item">
+                                    <span class="gfx-stat-name">View Distance</span>
+                                    <span id="gfx-stat-distance" class="gfx-stat-num">300m</span>
+                                </div>
+                                <div class="gfx-stat-item">
+                                    <span class="gfx-stat-name">Traffic</span>
+                                    <span id="gfx-stat-traffic" class="gfx-stat-num">Medium</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="settings-row">
                         <div class="settings-row-info">
                             <span class="settings-row-label">تراکم ترافیک (Traffic Density)</span>
                             <span class="settings-row-desc">تعداد خودروهای هوشمند AI در آزادراه</span>
                         </div>
                         <select id="set-input-traffic-density" class="settings-ctrl">
-                            <option value="LOW">کم (Low - 6 AI)</option>
-                            <option value="MEDIUM">متوسط (Medium - 12 AI)</option>
-                            <option value="HIGH">زیاد (High - 20 AI)</option>
-                            <option value="ULTRA">حداکثر (Ultra - 30 AI)</option>
+                            <option value="LOW">کم (Low - 4 AI)</option>
+                            <option value="MEDIUM">متوسط (Medium - 8 AI)</option>
+                            <option value="HIGH">زیاد (High - 14 AI)</option>
                         </select>
                     </div>
                     <div class="settings-row">
                         <div class="settings-row-info">
-                            <span class="settings-row-label">کیفیت پیش‌فرض (Quality Preset)</span>
-                            <span class="settings-row-desc">تنظیم پریست آماده کیفیت گرافیکی</span>
+                            <span class="settings-row-label">پریست سیستم گرافیک (Graphics System Preset)</span>
+                            <span class="settings-row-desc">انتخاب پروفایل پیش‌فرض عملکرد</span>
                         </div>
                         <select id="set-input-preset" class="settings-ctrl">
-                            <option value="AUTO">⚡ گرافیک خودکار (AUTO - پیشنهادی)</option>
-                            <option value="VERY_LOW">خیلی پایین (Very Low)</option>
-                            <option value="LOW">پایین (Low)</option>
-                            <option value="MEDIUM">متوسط (Medium)</option>
-                            <option value="HIGH">بالا (High)</option>
-                            <option value="ULTRA">فوق‌العاده (Ultra HD)</option>
+                            <option value="AUTO">⚡ گرافیک هوشمند خودکار (AUTO)</option>
+                            <option value="LOW">گرافیک پایین (LOW)</option>
+                            <option value="MEDIUM">گرافیک متوسط (MEDIUM)</option>
+                            <option value="HIGH">گرافیک بالا (HIGH)</option>
                         </select>
                     </div>
                     <div class="settings-row">
@@ -399,6 +441,7 @@
                 <!-- Tabs -->
                 <div class="tuning-tabs">
                     <button class="tuning-tab-btn active" data-tab="engine">⚡ موتور</button>
+                    <button class="tuning-tab-btn" data-tab="remap">💻 ریمپ ECU</button>
                     <button class="tuning-tab-btn" data-tab="weight">⚖️ وزن</button>
                     <button class="tuning-tab-btn" data-tab="drivetrain">⚙️ دیفرانسیل</button>
                     <button class="tuning-tab-btn" data-tab="tires">🛞 لاستیک</button>
@@ -429,6 +472,41 @@
                         <select id="input-supercharger" class="tuning-ctrl-input">
                             <option value="0">خاموش (None)</option>
                             <option value="1">سوپرشارژر Roots (High Boost)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ECU Remap Tuning Tab -->
+                <div id="tab-content-remap" class="tuning-tab-content hidden">
+                    <div class="tuning-row">
+                        <span class="tuning-label">برنامه ریمپ ای‌سی‌یو (ECU Mapping Stage)</span>
+                        <select id="input-remap-stage" class="tuning-ctrl-input">
+                            <option value="STAGE_1">ریمپ استیج ۱ (شهری - بهینه‌سازی شتاب و گشتاور)</option>
+                            <option value="STAGE_2">ریمپ استیج ۲ (اسپرت - شتاب و گشتاور بالا)</option>
+                            <option value="STAGE_3">ریمپ استیج ۳ (مسابقه‌ای + پاپ اند بنگ Pop & Bang)</option>
+                            <option value="SHOOTI_MAX">ریمپ شوتی سلطان (حد اکثر قدرت + کات‌آف رگباری 🔥)</option>
+                        </select>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">محدوده کات‌آف و دور موتور (RPM Cutoff Limit)</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input id="input-rev-limit" class="tuning-slider" type="range" min="0" max="1700" step="100" value="0">
+                            <span id="rev-limit-val" style="color:var(--accent-gold); font-weight:800; font-size:0.85rem; min-width:65px; text-align:left;">6800 RPM</span>
+                        </div>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">حساسیت پدال گاز (Throttle Response Map)</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input id="input-throttle-resp" class="tuning-slider" type="range" min="1.0" max="2.5" step="0.1" value="1.0">
+                            <span id="throttle-resp-val" style="color:var(--accent); font-weight:800; font-size:0.85rem; min-width:40px; text-align:left;">1.0x</span>
+                        </div>
+                    </div>
+                    <div class="tuning-row">
+                        <span class="tuning-label">سیستم پاپ اند بنگ و بک‌فایر (Pops & Bangs)</span>
+                        <select id="input-pop-bang" class="tuning-ctrl-input">
+                            <option value="OFF">غیرفعال (Off)</option>
+                            <option value="POPS">پاپ اند بنگ شهری (Street Pops)</option>
+                            <option value="FLAMES">بک‌فایر شوتی و آتشین (Flames & Backfire 🔥)</option>
                         </select>
                     </div>
                 </div>
