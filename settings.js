@@ -14,14 +14,22 @@ class SettingsSystem {
         this.defaultSettings = {
             version: 2,
             graphics: {
-                preset: 'LOW', // LOW default for automatic high performance
-                autoGraphics: true,
+                preset: 'LOW',
+                autoGraphics: false,
                 targetFps: 60,
-                resolutionScale: 75, // 75% resolution scale
+                resolutionScale: 75,
                 shadowQuality: 'OFF',
+                shadowDistance: 50,
+                treeQuality: 'LOW',
+                viewDistance: 200,
+                textureQuality: 'MEDIUM',
+                particleQuality: 'LOW',
+                reflectionQuality: 'OFF',
                 reflections: 'OFF',
                 antiAliasing: false,
-                trafficDensity: 'LOW'
+                postProcessing: 'OFF',
+                trafficDensity: 'LOW',
+                effectsQuality: 'LOW'
             },
             display: {
                 fullscreen: false,
@@ -41,7 +49,7 @@ class SettingsSystem {
             },
             gameplay: {
                 cameraShake: true,
-                unitSystem: 'KM/H', // KM/H, MPH
+                unitSystem: 'KM/H',
                 absEnabled: true
             },
             performance: {
@@ -62,11 +70,11 @@ class SettingsSystem {
         this.frameStutterMs = 0;
 
         this.qualityLevels = {
-            'VERY_LOW': { shadowQuality: 'OFF', reflections: 'OFF', resolutionScale: 75, antiAliasing: false, trafficDensity: 'LOW' },
-            'LOW':      { shadowQuality: 'LOW', reflections: 'OFF', resolutionScale: 85, antiAliasing: false, trafficDensity: 'LOW' },
-            'MEDIUM':   { shadowQuality: 'MEDIUM', reflections: 'LOW', resolutionScale: 95, antiAliasing: true,  trafficDensity: 'MEDIUM' },
-            'HIGH':     { shadowQuality: 'MEDIUM', reflections: 'HIGH', resolutionScale: 100, antiAliasing: true, trafficDensity: 'MEDIUM' },
-            'ULTRA':    { shadowQuality: 'HIGH', reflections: 'HIGH', resolutionScale: 100, antiAliasing: true,  trafficDensity: 'HIGH' }
+            'VERY_LOW': { preset: 'VERY_LOW', shadowQuality: 'OFF', shadowDistance: 30, reflections: 'OFF', reflectionQuality: 'OFF', resolutionScale: 50, antiAliasing: false, trafficDensity: 'LOW', treeQuality: 'LOW', effectsQuality: 'OFF', viewDistance: 150, textureQuality: 'LOW', particleQuality: 'LOW', postProcessing: 'OFF' },
+            'LOW':      { preset: 'LOW', shadowQuality: 'OFF', shadowDistance: 50, reflections: 'OFF', reflectionQuality: 'OFF', resolutionScale: 75, antiAliasing: false, trafficDensity: 'LOW', treeQuality: 'LOW', effectsQuality: 'LOW', viewDistance: 200, textureQuality: 'MEDIUM', particleQuality: 'LOW', postProcessing: 'OFF' },
+            'MEDIUM':   { preset: 'MEDIUM', shadowQuality: 'LOW', shadowDistance: 80, reflections: 'LOW', reflectionQuality: 'LOW', resolutionScale: 85, antiAliasing: true,  trafficDensity: 'MEDIUM', treeQuality: 'MEDIUM', effectsQuality: 'MEDIUM', viewDistance: 300, textureQuality: 'MEDIUM', particleQuality: 'MEDIUM', postProcessing: 'OFF' },
+            'HIGH':     { preset: 'HIGH', shadowQuality: 'MEDIUM', shadowDistance: 120, reflections: 'HIGH', reflectionQuality: 'HIGH', resolutionScale: 100, antiAliasing: true, trafficDensity: 'HIGH', treeQuality: 'HIGH', effectsQuality: 'HIGH', viewDistance: 400, textureQuality: 'HIGH', particleQuality: 'HIGH', postProcessing: 'LOW' },
+            'AUTO':     { preset: 'AUTO', autoGraphics: true }
         };
 
         this.init();
@@ -79,16 +87,36 @@ class SettingsSystem {
     }
 
     loadSettings() {
+        const defaults = JSON.parse(JSON.stringify(this.defaultSettings));
         try {
             const raw = localStorage.getItem(this.STORAGE_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (parsed && parsed.version === 2) {
-                    return parsed;
+                if (parsed && typeof parsed === 'object') {
+                    if (parsed.graphics && typeof parsed.graphics === 'object') {
+                        Object.assign(defaults.graphics, parsed.graphics);
+                    }
+                    if (parsed.display && typeof parsed.display === 'object') {
+                        Object.assign(defaults.display, parsed.display);
+                    }
+                    if (parsed.audio && typeof parsed.audio === 'object') {
+                        Object.assign(defaults.audio, parsed.audio);
+                    }
+                    if (parsed.controls && typeof parsed.controls === 'object') {
+                        Object.assign(defaults.controls, parsed.controls);
+                    }
+                    if (parsed.gameplay && typeof parsed.gameplay === 'object') {
+                        Object.assign(defaults.gameplay, parsed.gameplay);
+                    }
+                    if (parsed.performance && typeof parsed.performance === 'object') {
+                        Object.assign(defaults.performance, parsed.performance);
+                    }
+                    defaults.version = 2;
+                    return defaults;
                 }
             }
         } catch (e) {}
-        return JSON.parse(JSON.stringify(this.defaultSettings));
+        return defaults;
     }
 
     saveSettings() {

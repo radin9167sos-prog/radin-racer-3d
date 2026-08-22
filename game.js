@@ -83,10 +83,16 @@ class Game3D {
             physics: true,
             isMinRender: false
         };
+        // 1. Unified Graphics Config & Settings Initialization (MUST happen first!)
+        this.settingsSystem = new SettingsSystem(this);
+        this.graphicsConfig = this.settingsSystem.data.graphics;
+
+        // 2. DOM & Three.js Engine Initialization
         this.initDOM();
         this.initThreeJS();
+
+        // 3. Subsystems & Vehicle Building
         this.tuning = new TuningSystem(this);
-        this.settingsSystem = new SettingsSystem(this);
         this.trafficManager = new TrafficManager(this);
         this.buildPlayer3DCar();
         this.setupEvents();
@@ -1291,7 +1297,7 @@ class Game3D {
 
     applyCanvasResolutionScale() {
         if (!this.renderer || !this.canvas) return;
-        const scalePct = (this.testConfig ? this.testConfig.resolutionScale : (this.settingsSystem ? this.settingsSystem.data.graphics.resolutionScale : 100)) || 100;
+        const scalePct = (this.graphicsConfig ? this.graphicsConfig.resolutionScale : 75) || 75;
         const scale = scalePct / 100;
 
         let dpr = Math.min(window.devicePixelRatio || 1, 1.25);
@@ -1354,6 +1360,9 @@ class Game3D {
     }
 
     setMasterPreset(preset) {
+        if (this.settingsSystem) {
+            this.settingsSystem.setPreset(preset);
+        }
         if (preset === 'NORMAL') {
             this.testConfig.traffic = true;
             this.testConfig.shadows = true;
@@ -1379,7 +1388,7 @@ class Game3D {
             this.testConfig.physics = true;
             this.testConfig.isMinRender = false;
         } else if (preset === 'EXTREME') {
-            this.testConfig.traffic = false;
+            this.testConfig.traffic = true;
             this.testConfig.shadows = false;
             this.testConfig.reflections = false;
             this.testConfig.environment = 'OFF';
@@ -1387,8 +1396,8 @@ class Game3D {
             this.testConfig.playerQuality = 'LOW';
             this.testConfig.dpr = '0.50';
             this.testConfig.resolutionScale = 50;
-            this.testConfig.ai = false;
-            this.testConfig.physics = false;
+            this.testConfig.ai = true;
+            this.testConfig.physics = true;
             this.testConfig.isMinRender = false;
         } else if (preset === 'MINRENDER') {
             this.testConfig.traffic = false;
@@ -1431,8 +1440,8 @@ class Game3D {
         if (this.streetLightsGroup) this.streetLightsGroup.visible = isEnvVisible;
 
         // 4. DPR & Resolution Scale (Physical Canvas Buffer Downscaling)
-        if (this.settingsSystem) {
-            this.settingsSystem.data.graphics.resolutionScale = c.resolutionScale;
+        if (this.graphicsConfig) {
+            this.graphicsConfig.resolutionScale = c.resolutionScale;
         }
         this.applyCanvasResolutionScale();
 
@@ -1839,7 +1848,7 @@ class Game3D {
 
             const activeAI = (this.trafficManager && this.testConfig.traffic ? this.trafficManager.activeVehicles.length : 0);
             const currentDpr = (this.renderer ? this.renderer.getPixelRatio().toFixed(2) : '1.0');
-            const resScale = (this.settingsSystem ? this.settingsSystem.data.graphics.resolutionScale : 100) + '%';
+            const resScale = (this.graphicsConfig ? this.graphicsConfig.resolutionScale : 75) + '%';
 
             const dc = this.calculateDrawCallBreakdown();
 
